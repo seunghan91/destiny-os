@@ -110,9 +110,9 @@ class _SharePageState extends State<SharePage> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _cardTypes.length,
+        itemCount: _getCardTypes(context).length,
         itemBuilder: (context, index) {
-          final type = _cardTypes[index];
+          final type = _getCardTypes(context)[index];
           final isSelected = index == _selectedCardIndex;
 
           return Padding(

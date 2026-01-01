@@ -10,6 +10,7 @@ import '../../features/compatibility/presentation/pages/compatibility_page.dart'
 import '../../features/ai_consultation/presentation/pages/consultation_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/share/presentation/pages/share_page.dart';
+import '../../features/admin/presentation/pages/admin_page.dart';
 
 /// 앱 라우터 설정
 class AppRouter {
@@ -88,6 +89,13 @@ class AppRouter {
         name: Routes.shareName,
         builder: (context, state) => const SharePage(),
       ),
+
+      // 관리자
+      GoRoute(
+        path: Routes.admin,
+        name: Routes.adminName,
+        builder: (context, state) => const AdminPage(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -130,4 +138,7 @@ class Routes {
 
   static const String share = '/share';
   static const String shareName = 'share';
+
+  static const String admin = '/admin';
+  static const String adminName = 'admin';
 }

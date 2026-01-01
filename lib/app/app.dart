@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -69,6 +70,20 @@ class _DestinyAppState extends State<DestinyApp> {
 
               // 빌더 (전역 설정)
               builder: (context, child) {
+                // 다크모드에 맞춰 상태바 스타일 동적 설정
+                final isDark = _themeController.isDarkMode(context);
+                SystemChrome.setSystemUIOverlayStyle(
+                  SystemUiOverlayStyle(
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                    statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+                    systemNavigationBarColor: isDark 
+                        ? const Color(0xFF0D1117)  // AppColors.backgroundDark
+                        : const Color(0xFFF9FAFB), // AppColors.background
+                    systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                  ),
+                );
+                
                 return MediaQuery(
                   // 시스템 폰트 스케일 제한 (접근성)
                   data: MediaQuery.of(context).copyWith(

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/saju_chart.dart';
 import '../../domain/entities/ten_gods.dart';
 import '../../domain/entities/daewoon.dart';
@@ -23,6 +24,7 @@ class AnalyzeFortune extends DestinyEvent {
   final bool isLunar;
   final String mbtiType;
   final String gender;
+  final String? name;
   final bool useNightSubhour;  // 야자시 사용 여부
 
   const AnalyzeFortune({
@@ -30,11 +32,12 @@ class AnalyzeFortune extends DestinyEvent {
     required this.isLunar,
     required this.mbtiType,
     required this.gender,
+    this.name,
     this.useNightSubhour = false,
   });
 
   @override
-  List<Object?> get props => [birthDateTime, isLunar, mbtiType, gender, useNightSubhour];
+  List<Object?> get props => [birthDateTime, isLunar, mbtiType, gender, name, useNightSubhour];
 }
 
 /// 생년월일 업데이트
@@ -275,6 +278,9 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       final sajuBasedMbti = _calculator.inferMbtiFromSaju(sajuChart, tenGods);
       final gapAnalysis = _performGapAnalysis(sajuBasedMbti, mbtiType);
 
+      // DB 저장
+      _saveUserResult(event);
+
       debugPrint('🔮 [DestinyBloc] Analysis complete, emitting DestinySuccess');
       emit(DestinySuccess(
         sajuChart: sajuChart,
@@ -288,6 +294,21 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       debugPrint('❌ [DestinyBloc] Error: $e');
       debugPrint('❌ [DestinyBloc] StackTrace: $stackTrace');
       emit(DestinyFailure(errorMessage: '분석 중 오류가 발생했습니다: $e'));
+    }
+  }
+
+  Future<void> _saveUserResult(AnalyzeFortune event) async {
+    try {
+      await Supabase.instance.client.from('user_results').insert({
+        'birth_date': event.birthDateTime.toIso8601String(),
+        'birth_hour': event.birthDateTime.hour,
+        'is_lunar': event.isLunar,
+        'gender': event.gender,
+        'mbti': event.mbtiType,
+        'name': event.name,
+      });
+    } catch (e) {
+      debugPrint('Error saving result: $e');
     }
   }
 

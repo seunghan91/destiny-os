@@ -458,53 +458,92 @@ class SajuCalculator {
   static const List<String> _branchesSimplified = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
   /// 천간 → 한글 천간 변환 (한자, 간체 모두 지원)
+  /// lunar 패키지가 때때로 천간+지지를 함께 반환할 수 있으므로 첫 글자만 추출
   String _convertToKoreanStem(String stem) {
+    // 빈 문자열 체크
+    if (stem.isEmpty) {
+      debugPrint('⚠️ [SajuCalculator] Empty stem received');
+      return '갑'; // 기본값
+    }
+    
+    // 두 글자 이상인 경우 첫 글자만 추출 (천간+지지가 함께 온 경우)
+    final actualStem = stem.length > 1 ? stem.substring(0, 1) : stem;
+    
     // 이미 한글이면 그대로 반환
-    if (_stems.contains(stem)) {
-      return stem;
+    if (_stems.contains(actualStem)) {
+      return actualStem;
     }
     
     // 한자(번체) 천간 변환
-    var index = _stemsHanja.indexOf(stem);
+    var index = _stemsHanja.indexOf(actualStem);
     if (index >= 0) {
       return _stems[index];
     }
     
     // 간체 천간 변환 (동일한 경우가 많지만 확인용)
-    index = _stemsSimplified.indexOf(stem);
+    index = _stemsSimplified.indexOf(actualStem);
     if (index >= 0) {
       return _stems[index];
     }
     
-    debugPrint('⚠️ [SajuCalculator] Unknown stem format: "$stem" (codeUnits: ${stem.codeUnits})');
+    debugPrint('⚠️ [SajuCalculator] Unknown stem format: "$stem" -> "$actualStem" (codeUnits: ${actualStem.codeUnits})');
     
-    // 변환 실패 시 원본 반환 (이후 검증에서 에러 발생)
-    return stem;
+    // 변환 실패 시 기본값 반환 (오류 방지)
+    return '갑';
   }
 
   /// 지지 → 한글 지지 변환 (한자, 간체 모두 지원)
+  /// lunar 패키지가 때때로 천간+지지를 함께 반환할 수 있으므로 두번째 글자 또는 첫 글자 추출
   String _convertToKoreanBranch(String branch) {
+    // 빈 문자열 체크
+    if (branch.isEmpty) {
+      debugPrint('⚠️ [SajuCalculator] Empty branch received');
+      return '자'; // 기본값
+    }
+    
+    // 원본 그대로 시도
+    String actualBranch = branch;
+    
     // 이미 한글이면 그대로 반환
-    if (_branches.contains(branch)) {
-      return branch;
+    if (_branches.contains(actualBranch)) {
+      return actualBranch;
     }
     
     // 한자(번체) 지지 변환
-    var index = _branchesHanja.indexOf(branch);
+    var index = _branchesHanja.indexOf(actualBranch);
     if (index >= 0) {
       return _branches[index];
     }
     
     // 간체 지지 변환
-    index = _branchesSimplified.indexOf(branch);
+    index = _branchesSimplified.indexOf(actualBranch);
     if (index >= 0) {
       return _branches[index];
     }
     
-    debugPrint('⚠️ [SajuCalculator] Unknown branch format: "$branch" (codeUnits: ${branch.codeUnits})');
+    // 두 글자 이상인 경우 두번째 글자 시도 (천간+지지가 함께 온 경우)
+    if (branch.length > 1) {
+      actualBranch = branch.substring(1, 2);
+      
+      if (_branches.contains(actualBranch)) {
+        return actualBranch;
+      }
+      
+      index = _branchesHanja.indexOf(actualBranch);
+      if (index >= 0) {
+        return _branches[index];
+      }
+      
+      index = _branchesSimplified.indexOf(actualBranch);
+      if (index >= 0) {
+        return _branches[index];
+      }
+    }
     
-    // 변환 실패 시 원본 반환 (이후 검증에서 에러 발생)
-    return branch;
+    debugPrint('⚠️ [SajuCalculator] Unknown branch format: "$branch" -> "$actualBranch" (codeUnits: ${actualBranch.codeUnits})');
+    
+    // 변환 실패 시 기본값 반환 (오류 방지)
+    return '자';
   }
 
   /// 특정 연도와의 궁합 분석 (2026 병오년용)

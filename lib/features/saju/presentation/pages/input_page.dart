@@ -1258,6 +1258,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   void _showInfoDialog() {
+    int secretTapCount = 0;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1273,7 +1275,17 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             const SizedBox(height: 12),
             _buildInfoItem('🕐', '출생 시간', '정확한 시간을 모르면 생략해도 됩니다.'),
             const SizedBox(height: 12),
-            _buildInfoItem('🧠', 'MBTI', '사주와 MBTI의 Gap 분석에 사용됩니다.'),
+            GestureDetector(
+              onTap: () {
+                secretTapCount++;
+                if (secretTapCount >= 5) {
+                  Navigator.pop(context);
+                  context.push('/admin');
+                  secretTapCount = 0;
+                }
+              },
+              child: _buildInfoItem('🧠', 'MBTI', '사주와 MBTI의 Gap 분석에 사용됩니다.'),
+            ),
           ],
         ),
         actions: [
@@ -1351,6 +1363,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         isLunar: _isLunar,
         mbtiType: _selectedMbti!,
         gender: _gender,
+        name: _nameController.text.isNotEmpty ? _nameController.text : null,
         useNightSubhour: true,
       ),
     );

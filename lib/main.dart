@@ -40,12 +40,11 @@ void main() async {
     // Firebase 없이도 앱 실행 가능 (알림 기능만 비활성화)
   }
 
-  // 상태바 스타일 설정
+  // 상태바 스타일은 테마에서 동적으로 처리
+  // (AppTheme.light/dark의 appBarTheme.systemOverlayStyle에서 정의)
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
     ),
   );
 

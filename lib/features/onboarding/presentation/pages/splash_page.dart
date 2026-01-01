@@ -206,7 +206,7 @@ class _SplashPageState extends State<SplashPage>
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        '운명을 데이터로 분석하다',
+        '사주 × MBTI, AI가 분석하는 운명',
         style: AppTypography.bodyMedium.copyWith(
           color: AppColors.white.withValues(alpha: 0.95),
           fontWeight: FontWeight.w500,

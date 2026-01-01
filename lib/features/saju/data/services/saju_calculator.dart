@@ -216,8 +216,8 @@ class SajuCalculator {
         return samePolarity ? '비견' : '겁재';
       case 'generates': // 식상 (내가 생하는 오행)
         return samePolarity ? '식신' : '상관';
-      case 'overcomes': // 재성 (내가 극하는 오행)
-        return samePolarity ? '편재' : '정재';
+      case 'overcomes': // 재성 (내가 극하는 오행) - 같은 음양=정재, 다른 음양=편재
+        return samePolarity ? '정재' : '편재';
       case 'generated': // 인성 (나를 생하는 오행)
         return samePolarity ? '편인' : '정인';
       case 'overcome': // 관성 (나를 극하는 오행)

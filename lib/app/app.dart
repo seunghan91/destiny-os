@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../core/theme/app_theme.dart';
 import '../features/saju/presentation/bloc/destiny_bloc.dart';
@@ -20,6 +21,18 @@ class DestinyApp extends StatelessWidget {
       child: MaterialApp.router(
         title: 'Destiny.OS',
         debugShowCheckedModeBanner: false,
+
+        // 한국어 로케일 설정
+        locale: const Locale('ko', 'KR'),
+        supportedLocales: const [
+          Locale('ko', 'KR'),
+          Locale('en', 'US'),
+        ],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
 
         // 테마
         theme: AppTheme.light,

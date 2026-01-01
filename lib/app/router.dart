@@ -9,6 +9,8 @@ import '../features/fortune_2026/presentation/pages/fortune_2026_page.dart';
 import '../features/daewoon/presentation/pages/daewoon_page.dart';
 import '../features/compatibility/presentation/pages/compatibility_page.dart';
 import '../features/ai_consultation/presentation/pages/consultation_page.dart';
+import '../features/share/presentation/pages/share_page.dart';
+import '../features/settings/presentation/pages/settings_page.dart';
 
 /// 앱 라우터 설정
 final GoRouter appRouter = GoRouter(
@@ -71,9 +73,19 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const ConsultationPage(),
     ),
 
-    // TODO: 추가 라우트
-    // - /share (공유)
-    // - /settings (설정)
+    // 공유
+    GoRoute(
+      path: '/share',
+      name: 'share',
+      builder: (context, state) => const SharePage(),
+    ),
+
+    // 설정
+    GoRoute(
+      path: '/settings',
+      name: 'settings',
+      builder: (context, state) => const SettingsPage(),
+    ),
   ],
 
   // 에러 페이지

@@ -7,6 +7,9 @@ import '../../features/saju/presentation/pages/result_page.dart';
 import '../../features/fortune_2026/presentation/pages/fortune_2026_page.dart';
 import '../../features/daewoon/presentation/pages/daewoon_page.dart';
 import '../../features/compatibility/presentation/pages/compatibility_page.dart';
+import '../../features/ai_consultation/presentation/pages/consultation_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/share/presentation/pages/share_page.dart';
 
 /// 앱 라우터 설정
 class AppRouter {
@@ -64,6 +67,27 @@ class AppRouter {
         name: Routes.compatibilityName,
         builder: (context, state) => const CompatibilityPage(),
       ),
+
+      // AI 상담
+      GoRoute(
+        path: Routes.consultation,
+        name: Routes.consultationName,
+        builder: (context, state) => const ConsultationPage(),
+      ),
+
+      // 설정
+      GoRoute(
+        path: Routes.settings,
+        name: Routes.settingsName,
+        builder: (context, state) => const SettingsPage(),
+      ),
+
+      // 공유
+      GoRoute(
+        path: Routes.share,
+        name: Routes.shareName,
+        builder: (context, state) => const SharePage(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -97,4 +121,13 @@ class Routes {
 
   static const String compatibility = '/compatibility';
   static const String compatibilityName = 'compatibility';
+
+  static const String consultation = '/consultation';
+  static const String consultationName = 'consultation';
+
+  static const String settings = '/settings';
+  static const String settingsName = 'settings';
+
+  static const String share = '/share';
+  static const String shareName = 'share';
 }

@@ -65,6 +65,9 @@ dependencies:
   # Charts (운세 시각화)
   fl_chart: ^0.70.2
 
+  # Web APIs (PWA, Notifications)
+  web: ^1.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

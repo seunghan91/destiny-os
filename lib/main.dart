@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -9,6 +10,8 @@ import 'app/app.dart';
 import 'core/config/env_config.dart';
 import 'core/di/injection.dart';
 import 'core/services/notifications/firebase_notification_service.dart';
+import 'core/services/pwa/pwa_service.dart';
+import 'core/services/pwa/web_notification_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -78,6 +81,21 @@ void main() async {
 
   // 의존성 주입 초기화
   await configureDependencies();
+
+  // PWA 서비스 초기화 (웹 플랫폼에서만)
+  if (kIsWeb) {
+    try {
+      final pwaService = PwaService();
+      await pwaService.initialize();
+      
+      final webNotificationService = WebNotificationService();
+      await webNotificationService.initialize();
+      
+      debugPrint('✅ PWA services initialized');
+    } catch (e) {
+      debugPrint('⚠️  PWA services initialization failed: $e');
+    }
+  }
 
   runApp(const DestinyApp());
 }

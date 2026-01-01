@@ -344,7 +344,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             Text(
               label,
               style: AppTypography.labelMedium.copyWith(
-                color: isSelected ? AppColors.white : AppColors.textPrimaryOf(context),
+                color: isSelected
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : AppColors.textPrimaryOf(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -353,7 +355,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               isSelected ? Icons.check_circle : Icons.circle_outlined,
               size: 16,
               color: isSelected
-                  ? AppColors.white.withValues(alpha: 0.9)
+                  ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9)
                   : AppColors.textTertiaryOf(context),
             ),
           ],
@@ -458,12 +460,12 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           color: _isLunar
               ? AppColors.earth.withValues(alpha: 0.1)
-              : AppColors.surface,
+              : AppColors.surfaceOf(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: _isLunar
                 ? AppColors.earth.withValues(alpha: 0.3)
-                : AppColors.border,
+                : AppColors.borderOf(context),
           ),
         ),
         child: Row(
@@ -473,7 +475,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             Text(
               '음력으로 입력',
               style: AppTypography.bodyMedium.copyWith(
-                color: _isLunar ? AppColors.earth : AppColors.textSecondary,
+                color: _isLunar ? AppColors.earth : AppColors.textSecondaryOf(context),
                 fontWeight: _isLunar ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
@@ -511,12 +513,12 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.surfaceOf(context),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _selectedSiju != null
                     ? AppColors.wood.withValues(alpha: 0.3)
-                    : AppColors.border,
+                    : AppColors.borderOf(context),
                 width: _selectedSiju != null ? 1.5 : 1,
               ),
             ),
@@ -528,7 +530,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     color: _selectedSiju != null
                         ? AppColors.wood.withValues(alpha: 0.1)
-                        : AppColors.surfaceVariant,
+                        : AppColors.surfaceVariantOf(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -539,7 +541,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                           )
                         : Icon(
                             Icons.access_time_rounded,
-                            color: AppColors.textTertiary,
+                            color: AppColors.textTertiaryOf(context),
                             size: 24,
                           ),
                   ),
@@ -555,8 +557,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                             : '출생 시간을 선택하세요',
                         style: AppTypography.titleMedium.copyWith(
                           color: _selectedSiju != null
-                              ? AppColors.textPrimary
-                              : AppColors.textTertiary,
+                              ? AppColors.textPrimaryOf(context)
+                              : AppColors.textTertiaryOf(context),
                           fontWeight: _selectedSiju != null
                               ? FontWeight.w600
                               : FontWeight.w400,
@@ -576,7 +578,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiaryOf(context),
                 ),
               ],
             ),
@@ -634,10 +636,10 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? color : AppColors.surface,
+          color: isSelected ? color : AppColors.surfaceOf(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? color : AppColors.border,
+            color: isSelected ? color : AppColors.borderOf(context),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
@@ -655,14 +657,18 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppColors.white : AppColors.textSecondary,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : AppColors.textSecondaryOf(context),
               size: 24,
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: AppTypography.labelLarge.copyWith(
-                color: isSelected ? AppColors.white : AppColors.textPrimary,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : AppColors.textPrimaryOf(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -681,7 +687,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         Text(
           '각 차원에서 자신에게 맞는 유형을 선택하세요',
           style: AppTypography.caption.copyWith(
-            color: AppColors.textTertiary,
+            color: AppColors.textTertiaryOf(context),
           ),
         ),
         const SizedBox(height: 16),
@@ -725,7 +731,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           Text(
             subtitle,
             style: AppTypography.caption.copyWith(
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiaryOf(context),
             ),
           ),
         ],
@@ -747,8 +753,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               disabledBackgroundColor: AppColors.grey300,
-              foregroundColor: AppColors.white,
-              disabledForegroundColor: AppColors.textTertiary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              disabledForegroundColor: AppColors.textTertiaryOf(context),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -762,7 +768,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 Text(
                   '2026년 운세 분석하기',
                   style: AppTypography.labelLarge.copyWith(
-                    color: canProceed ? AppColors.white : AppColors.textTertiary,
+                    color: canProceed
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : AppColors.textTertiaryOf(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -774,7 +782,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         Text(
           '입력된 정보는 분석에만 사용되며 저장되지 않습니다',
           style: AppTypography.caption.copyWith(
-            color: AppColors.textTertiary,
+            color: AppColors.textTertiaryOf(context),
           ),
           textAlign: TextAlign.center,
         ),
@@ -790,7 +798,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           end: Alignment.bottomCenter,
           colors: [
             AppColors.primary.withValues(alpha: 0.05),
-            AppColors.background,
+            AppColors.backgroundOf(context),
           ],
         ),
       ),
@@ -826,15 +834,15 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                             height: 80,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppColors.background,
+                              color: AppColors.backgroundOf(context),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
                                 '命',
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                                  color: AppColors.textPrimaryOf(context),
                                 ),
                               ),
                             ),
@@ -856,7 +864,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 Text(
                   '천간과 지지의 조화를 분석하고 있어요',
                   style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryOf(context),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -944,7 +952,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             }
 
             return AlertDialog(
-              backgroundColor: AppColors.surface,
+              backgroundColor: AppColors.surfaceOf(context),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -1074,7 +1082,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                   child: Text(
                     '취소',
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryOf(context),
                     ),
                   ),
                 ),
@@ -1122,7 +1130,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         Text(
           label,
           style: AppTypography.bodySmall.copyWith(
-            color: AppColors.textSecondary,
+            color: AppColors.textSecondaryOf(context),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1136,10 +1144,10 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             child: DropdownButton<T>(
               value: items.contains(value) ? value : items.first,
               isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+              icon: Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondaryOf(context), size: 20),
               borderRadius: BorderRadius.circular(10),
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              dropdownColor: AppColors.surface,
+              dropdownColor: AppColors.surfaceOf(context),
               menuMaxHeight: 300,
               items: items.map((item) {
                 return DropdownMenuItem<T>(
@@ -1147,7 +1155,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                   child: Text(
                     itemLabel(item),
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryOf(context),
                     ),
                   ),
                 );
@@ -1169,8 +1177,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
       isScrollControlled: true,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.45,
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceOf(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -1194,7 +1202,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     child: Text(
                       '취소',
                       style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryOf(context),
                       ),
                     ),
                   ),
@@ -1317,7 +1325,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               Text(
                 desc,
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryOf(context),
                 ),
               ),
             ],

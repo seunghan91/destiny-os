@@ -77,11 +77,11 @@ class _AdminPageState extends State<AdminPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
         title: const Text('관리자 페이지'),
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.backgroundOf(context),
+        foregroundColor: AppColors.textPrimaryOf(context),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -96,14 +96,16 @@ class _AdminPageState extends State<AdminPage> {
                 
                 return ListTile(
                   onTap: () => _replayResult(user),
-                  tileColor: AppColors.surface,
+                  tileColor: AppColors.surfaceOf(context),
                   title: Row(
                     children: [
                       Text(
                         name.isNotEmpty ? name : '무명',
                         style: AppTypography.titleMedium.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: name.isNotEmpty ? AppColors.textPrimary : AppColors.textTertiary,
+                          color: name.isNotEmpty
+                              ? AppColors.textPrimaryOf(context)
+                              : AppColors.textTertiaryOf(context),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -126,11 +128,15 @@ class _AdminPageState extends State<AdminPage> {
                       const SizedBox(height: 4),
                       Text(
                         '생일: ${DateFormat('yyyy-MM-dd').format(birthDate)} (${user['gender'] == 'male' ? '남' : '여'})',
-                        style: AppTypography.bodySmall,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondaryOf(context),
+                        ),
                       ),
                       Text(
                         '조회: ${DateFormat('MM/dd HH:mm').format(createdAt)}',
-                        style: AppTypography.caption.copyWith(color: AppColors.textTertiary),
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textTertiaryOf(context),
+                        ),
                       ),
                     ],
                   ),

@@ -6,6 +6,7 @@ import '../../features/ai_consultation/data/services/supabase_consultation_servi
 import '../../features/saju/data/services/saju_calculator.dart';
 import '../../features/saju/presentation/bloc/destiny_bloc.dart';
 import '../services/notifications/firebase_notification_service.dart';
+import '../services/usage/usage_service.dart';
 
 /// 전역 서비스 로케이터
 final GetIt getIt = GetIt.instance;
@@ -45,6 +46,11 @@ Future<void> configureDependencies() async {
   if (getIt.isRegistered<SupabaseClient>()) {
     getIt.registerLazySingleton<SupabaseConsultationService>(
       () => SupabaseConsultationService(client: getIt<SupabaseClient>()),
+    );
+
+    // 사용량 관리 서비스
+    getIt.registerLazySingleton<UsageService>(
+      () => UsageService(client: getIt<SupabaseClient>()),
     );
   }
 

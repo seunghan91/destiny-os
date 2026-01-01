@@ -39,10 +39,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -50,10 +47,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -71,22 +65,43 @@ class DefaultFirebaseOptions {
     }
   }
 
-  // ⚠️  TODO: FlutterFire CLI로 생성된 실제 값으로 교체 필요
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
+    apiKey: 'AIzaSyCa0084HsSWRdUOYsYpbERZQYQ2dcQ6JGg',
+    appId: '1:16973939404:android:99ce055820d4c7331df869',
+    messagingSenderId: '16973939404',
+    projectId: 'destiny-os-2026',
+    storageBucket: 'destiny-os-2026.firebasestorage.app',
   );
 
   // ⚠️  TODO: FlutterFire CLI로 생성된 실제 값으로 교체 필요
+
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-    iosBundleId: 'com.example.destinyOs',
+    apiKey: 'AIzaSyCyNUf-sQLemTCjR_0DgMH9mVwFZkelqsM',
+    appId: '1:16973939404:ios:f2ac5836a4eb8c521df869',
+    messagingSenderId: '16973939404',
+    projectId: 'destiny-os-2026',
+    storageBucket: 'destiny-os-2026.firebasestorage.app',
+    iosBundleId: 'com.destinyos.destinyOs',
   );
+
+  // ⚠️  TODO: FlutterFire CLI로 생성된 실제 값으로 교체 필요
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDBLkjvI3cEJh71UN7KaVvoiNLNy1Iih3o',
+    appId: '1:16973939404:web:2cf031a507fd1a861df869',
+    messagingSenderId: '16973939404',
+    projectId: 'destiny-os-2026',
+    authDomain: 'destiny-os-2026.firebaseapp.com',
+    storageBucket: 'destiny-os-2026.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCyNUf-sQLemTCjR_0DgMH9mVwFZkelqsM',
+    appId: '1:16973939404:ios:f2ac5836a4eb8c521df869',
+    messagingSenderId: '16973939404',
+    projectId: 'destiny-os-2026',
+    storageBucket: 'destiny-os-2026.firebasestorage.app',
+    iosBundleId: 'com.destinyos.destinyOs',
+  );
+
 }

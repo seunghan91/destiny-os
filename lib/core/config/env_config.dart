@@ -45,15 +45,15 @@ class EnvConfig {
   static String get supabaseUrl {
     const compileTimeUrl = String.fromEnvironment(
       'SUPABASE_URL',
-      defaultValue: 'https://darrlxppnvdntdxtystb.supabase.co',
+      defaultValue: 'https://eunnaxqjyitxjdkrjaau.supabase.co',
     );
-    if (compileTimeUrl != 'https://darrlxppnvdntdxtystb.supabase.co') {
+    if (compileTimeUrl != 'https://eunnaxqjyitxjdkrjaau.supabase.co') {
       return compileTimeUrl;
     }
 
     return dotenv.get(
       'SUPABASE_URL',
-      fallback: 'https://darrlxppnvdntdxtystb.supabase.co',
+      fallback: 'https://eunnaxqjyitxjdkrjaau.supabase.co',
     );
   }
 

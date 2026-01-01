@@ -121,7 +121,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final isLastPage = _currentPage == _pages.length - 1;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundOf(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -162,7 +162,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           Text(
             '${_currentPage + 1}/${_pages.length}',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiaryOf(context),
             ),
           ),
           if (_currentPage < _pages.length - 1)
@@ -171,7 +171,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               child: Text(
                 '건너뛰기',
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiaryOf(context),
                 ),
               ),
             ),
@@ -261,7 +261,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           Text(
             data.description,
             style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
               height: 1.6,
             ),
             textAlign: TextAlign.center,
@@ -275,9 +275,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: AppColors.surfaceOf(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderOf(context)),
               ),
               child: Row(
                 children: [
@@ -298,7 +298,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   Text(
                     feature,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryOf(context),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -342,7 +342,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               onPressed: _nextPage,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isLastPage ? AppColors.primary : AppColors.primary,
-                foregroundColor: AppColors.white,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -355,7 +355,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   Text(
                     isLastPage ? '무료로 시작하기' : '다음',
                     style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -384,7 +384,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             Text(
               '가입 없이 바로 시작할 수 있어요',
               style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiaryOf(context),
               ),
             ),
           ],

@@ -417,7 +417,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
                     '• 친구 초대 시 3회 추가\n'
                     '• 앱 리뷰 작성 시 2회 추가',
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryOf(context),
                     ),
                   ),
                 ],
@@ -685,7 +685,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
               decoration: BoxDecoration(
                 color: message.isUser
                     ? AppColors.primary
-                    : AppColors.surface,
+                    : AppColors.surfaceOf(context),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -694,7 +694,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),
@@ -703,7 +703,9 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
               child: Text(
                 message.content,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: message.isUser ? Colors.white : AppColors.textPrimary,
+                  color: message.isUser
+                      ? Theme.of(context).colorScheme.onPrimary
+                      : AppColors.textPrimaryOf(context),
                   height: 1.5,
                 ),
               ),
@@ -729,7 +731,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.surfaceOf(context),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -756,7 +758,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
           width: 8,
           height: 8,
           decoration: BoxDecoration(
-            color: AppColors.textTertiary.withValues(alpha: 0.3 + (value * 0.7)),
+            color: AppColors.textTertiaryOf(context).withValues(alpha: 0.3 + (value * 0.7)),
             shape: BoxShape.circle,
           ),
         );
@@ -803,10 +805,10 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
         bottom: 12 + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -820,10 +822,10 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
               decoration: InputDecoration(
                 hintText: '질문을 입력하세요...',
                 hintStyle: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiaryOf(context),
                 ),
                 filled: true,
-                fillColor: AppColors.background,
+                fillColor: AppColors.backgroundOf(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
@@ -845,9 +847,9 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
                 color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.send,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                 size: 20,
               ),
             ),
@@ -1110,20 +1112,20 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
           Icon(
             Icons.chat_bubble_outline,
             size: 64,
-            color: AppColors.textTertiary.withAlpha(100),
+            color: AppColors.textTertiaryOf(context).withAlpha(100),
           ),
           const SizedBox(height: 16),
           Text(
             '저장된 대화가 없습니다',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             '대화를 저장하면 여기에 표시됩니다',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiaryOf(context),
             ),
           ),
         ],
@@ -1139,7 +1141,7 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
         color: AppColors.error,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: Icon(Icons.delete, color: Theme.of(context).colorScheme.onError),
       ),
       confirmDismiss: (_) async {
         await _deleteConversation(conversation.id);
@@ -1180,7 +1182,7 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
             Text(
               '${conversation.messageCount}개 메시지',
               style: AppTypography.labelSmall.copyWith(
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiaryOf(context),
               ),
             ),
           ],
@@ -1188,7 +1190,7 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
         trailing: Text(
           conversation.formattedDate,
           style: AppTypography.labelSmall.copyWith(
-            color: AppColors.textTertiary,
+            color: AppColors.textTertiaryOf(context),
           ),
         ),
         onTap: () => widget.onSelectConversation(

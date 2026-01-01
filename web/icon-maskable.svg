@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <!-- 배경 그라디언트 (신비로운 보라색) -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d1b4e"/>
+      <stop offset="50%" style="stop-color:#1a0a2e"/>
+      <stop offset="100%" style="stop-color:#3d2066"/>
+    </linearGradient>
+
+    <!-- 금색 그라디언트 -->
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd700"/>
+      <stop offset="50%" style="stop-color:#ffec8b"/>
+      <stop offset="100%" style="stop-color:#daa520"/>
+    </linearGradient>
+
+    <!-- 별 빛 효과 -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 배경 (전체 - maskable용) -->
+  <rect width="512" height="512" fill="url(#bgGradient)"/>
+
+  <!-- 작은 별들 (장식 - 가장자리, 잘릴 수 있음) -->
+  <circle cx="60" cy="60" r="5" fill="#fff" opacity="0.5"/>
+  <circle cx="452" cy="60" r="4" fill="#ffd700" opacity="0.6"/>
+  <circle cx="60" cy="452" r="4" fill="#ffd700" opacity="0.5"/>
+  <circle cx="452" cy="452" r="5" fill="#fff" opacity="0.4"/>
+
+  <!-- 메인 8포인트 별 (중앙 safe zone - 80% 영역) -->
+  <g transform="translate(256, 256)" filter="url(#glow)">
+    <!-- 8포인트 별 (safe zone 내 - 약 100px 반경) -->
+    <polygon
+      points="0,-100 24,-24 100,0 24,24 0,100 -24,24 -100,0 -24,-24"
+      fill="url(#goldGradient)"
+    />
+    <!-- 내부 원과 D -->
+    <circle cx="0" cy="0" r="42" fill="none" stroke="#1a0a2e" stroke-width="10"/>
+    <text x="0" y="15" font-family="Georgia, serif" font-size="48" font-weight="bold" fill="#1a0a2e" text-anchor="middle">D</text>
+  </g>
+
+  <!-- 하단 작은 별 3개 (safe zone 내) -->
+  <g transform="translate(256, 380)">
+    <polygon points="0,-10 2.5,-2.5 10,0 2.5,2.5 0,10 -2.5,2.5 -10,0 -2.5,-2.5" fill="#ffd700" transform="translate(-40, 0)"/>
+    <polygon points="0,-12 3,-3 12,0 3,3 0,12 -3,3 -12,0 -3,-3" fill="#ffd700"/>
+    <polygon points="0,-10 2.5,-2.5 10,0 2.5,2.5 0,10 -2.5,2.5 -10,0 -2.5,-2.5" fill="#ffd700" transform="translate(40, 0)"/>
+  </g>
+</svg>

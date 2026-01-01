@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,19 +18,344 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO & Description - AdSense 승인을 위한 고품질 메타 정보 -->
+  <meta name="description" content="사주와 MBTI를 결합한 새로운 운세 서비스. 나의 2026년 운세를 무료로 확인하세요! 회원가입 없이 1분만에 결과 확인. 사주팔자, 토정비결, 신년운세를 AI가 분석해드립니다.">
+  <meta name="keywords" content="운세, 사주, MBTI, 2026운세, 신년운세, 무료운세, 사주팔자, 토정비결, AI운세, 사주분석, 병오년운세">
+  <meta name="author" content="Destiny.OS">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://destiny-os-2026.web.app">
+
+  <!-- Open Graph (Facebook, KakaoTalk) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Destiny.OS - 나의 2026년 운세는? 무료로 확인하기">
+  <meta property="og:description" content="사주 × MBTI 하이브리드 운세 🔮 회원가입 없이 완전 무료! 1분만에 나만의 운세를 확인하세요.">
+  <meta property="og:image" content="https://destiny-os-2026.web.app/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://destiny-os-2026.web.app">
+  <meta property="og:site_name" content="Destiny.OS">
+  <meta property="og:locale" content="ko_KR">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Destiny.OS - 나의 2026년 운세는? 무료로 확인하기">
+  <meta name="twitter:description" content="사주 × MBTI 하이브리드 운세 🔮 회원가입 없이 완전 무료!">
+  <meta name="twitter:image" content="https://destiny-os-2026.web.app/og-image.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="destiny_os">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Destiny.OS">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>destiny_os</title>
+  <title>Destiny.OS - 사주 × MBTI 운세 | 무료로 나의 2026년 운세 확인</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Google AdSense 자동 광고 코드 -->
+  <!--
+    AdSense 베스트 프랙티스:
+    1. 자동 광고는 콘텐츠와 충돌하지 않는 최적 위치에 배치됨
+    2. 반응형 광고로 모바일/데스크톱 자동 대응
+    3. 기존 콘텐츠 레이아웃을 해치지 않음
+    4. 광고가 표시되기까지 최대 1시간 소요 가능
+  -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9883980748568710"
+     crossorigin="anonymous"></script>
+
+  <!-- 카카오톡 인앱 브라우저 → 기본 브라우저 리다이렉트 -->
+  <script>
+    (function() {
+      'use strict';
+
+      // 카카오톡 인앱 브라우저 감지
+      function isKakaoInAppBrowser() {
+        return /KAKAOTALK/i.test(navigator.userAgent);
+      }
+
+      // iOS 감지
+      function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent);
+      }
+
+      // Android 감지
+      function isAndroid() {
+        return /Android/i.test(navigator.userAgent);
+      }
+
+      // 리다이렉트 상태 확인 (무한 루프 방지)
+      function hasRedirected() {
+        return sessionStorage.getItem('kakao_redirected') === 'true';
+      }
+
+      // 리다이렉트 상태 저장
+      function markAsRedirected() {
+        sessionStorage.setItem('kakao_redirected', 'true');
+      }
+
+      // Android: Chrome으로 리다이렉트
+      function redirectToChrome() {
+        console.log('🔄 카카오톡 인앱 → Chrome 리다이렉트 시작');
+
+        try {
+          const currentUrl = window.location.href;
+          const intentUrl =
+            'intent://' +
+            currentUrl.replace(/https?:\/\//i, '') +
+            '#Intent;' +
+            'scheme=https;' +
+            'package=com.android.chrome;' +
+            'S.browser_fallback_url=' + encodeURIComponent(currentUrl) +
+            ';end';
+
+          markAsRedirected();
+          window.location.replace(intentUrl);
+        } catch (error) {
+          console.error('❌ Chrome 리다이렉트 실패:', error);
+          showAndroidFallbackMessage();
+        }
+      }
+
+      // Android: 리다이렉트 실패 시 안내 메시지
+      function showAndroidFallbackMessage() {
+        const message = document.createElement('div');
+        message.style.cssText = `
+          position: fixed;
+          top: 20px;
+          left: 20px;
+          right: 20px;
+          background: #ff6b6b;
+          color: white;
+          padding: 15px;
+          border-radius: 8px;
+          z-index: 99999;
+          text-align: center;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        `;
+        message.innerHTML = '⚠️ Chrome 브라우저에서 열어주세요';
+        document.body.appendChild(message);
+
+        setTimeout(() => message.remove(), 5000);
+      }
+
+      // iOS: Safari에서 열기 안내
+      function showIOSGuide() {
+        console.log('📱 iOS 카카오톡 인앱: Safari 안내 표시');
+
+        const guide = document.createElement('div');
+        guide.id = 'kakao-ios-guide';
+        guide.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.85);
+          display: flex;
+          align-items: flex-end;
+          z-index: 99999;
+          animation: fadeIn 0.3s ease;
+        `;
+
+        guide.innerHTML = `
+          <style>
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes slideUp {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+            #kakao-ios-content {
+              animation: slideUp 0.3s ease;
+            }
+          </style>
+          <div id="kakao-ios-content" style="
+            width: 100%;
+            background: white;
+            padding: 24px;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          ">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <div style="font-size: 48px; margin-bottom: 12px;">🌟</div>
+              <h3 style="margin: 0 0 8px 0; font-size: 20px; color: #1a1a1a; font-weight: 700;">
+                더 나은 환경에서 이용하세요
+              </h3>
+              <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5;">
+                PWA 설치와 알림 기능을 위해<br>Safari 브라우저가 필요합니다
+              </p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+              <p style="margin: 0 0 12px 0; color: #495057; font-size: 14px; font-weight: 600;">
+                📌 Safari에서 열기
+              </p>
+              <ol style="margin: 0; padding-left: 20px; color: #6c757d; font-size: 14px; line-height: 1.8;">
+                <li>화면 하단의 <strong style="color: #495057;">공유 버튼</strong> (📤) 탭</li>
+                <li><strong style="color: #495057;">'Safari에서 열기'</strong> 선택</li>
+              </ol>
+            </div>
+
+            <button onclick="document.getElementById('kakao-ios-guide').remove(); sessionStorage.setItem('kakao_redirected', 'true');" style="
+              width: 100%;
+              padding: 16px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              border: none;
+              border-radius: 12px;
+              font-size: 16px;
+              font-weight: 700;
+              cursor: pointer;
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+              transition: transform 0.2s ease;
+            " onmouseover="this.style.transform='scale(0.98)'" onmouseout="this.style.transform='scale(1)'">
+              알겠습니다
+            </button>
+          </div>
+        `;
+
+        document.body.appendChild(guide);
+      }
+
+      // 메인 실행 로직
+      function handleKakaoInAppRedirect() {
+        // 카카오톡 인앱 브라우저가 아니면 실행 중단
+        if (!isKakaoInAppBrowser()) {
+          console.log('✅ 카카오톡 인앱 브라우저 아님 - 리다이렉트 불필요');
+          return;
+        }
+
+        // 이미 리다이렉트 시도했으면 중단 (무한 루프 방지)
+        if (hasRedirected()) {
+          console.log('⏭️ 이미 리다이렉트 시도됨 - 스킵');
+          return;
+        }
+
+        console.log('🔍 카카오톡 인앱 브라우저 감지됨');
+
+        // Android: Intent URI로 Chrome 리다이렉트
+        if (isAndroid()) {
+          redirectToChrome();
+        }
+        // iOS: 사용자 안내 표시
+        else if (isIOS()) {
+          showIOSGuide();
+        }
+      }
+
+      // 페이지 로드 완료 시 실행
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', handleKakaoInAppRedirect);
+      } else {
+        handleKakaoInAppRedirect();
+      }
+    })();
+  </script>
+
+  <!-- PWA 설치 프롬프트 & 푸시 알림 스크립트 -->
+  <script>
+    // PWA 설치 프롬프트 저장
+    var deferredInstallPrompt = null;
+    var isPwaInstalled = false;
+
+    // beforeinstallprompt 이벤트 캡처
+    window.addEventListener('beforeinstallprompt', function(e) {
+      console.log('✅ beforeinstallprompt event fired');
+      // 기본 프롬프트 방지
+      e.preventDefault();
+      // 프롬프트 저장
+      deferredInstallPrompt = e;
+      // Flutter에 알림
+      window.dispatchEvent(new CustomEvent('pwaInstallAvailable'));
+    });
+
+    // 앱 설치 완료 이벤트
+    window.addEventListener('appinstalled', function() {
+      console.log('✅ PWA was installed');
+      isPwaInstalled = true;
+      deferredInstallPrompt = null;
+    });
+
+    // Flutter에서 호출하는 설치 프롬프트 트리거 함수
+    async function triggerInstallPrompt() {
+      if (!deferredInstallPrompt) {
+        console.log('⚠️ No install prompt available');
+        return null;
+      }
+
+      try {
+        // 프롬프트 표시
+        deferredInstallPrompt.prompt();
+        // 사용자 응답 대기
+        const result = await deferredInstallPrompt.userChoice;
+        console.log('📱 User choice:', result.outcome);
+        
+        // 프롬프트는 한 번만 사용 가능
+        if (result.outcome === 'accepted') {
+          deferredInstallPrompt = null;
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('❌ Install prompt error:', error);
+        return null;
+      }
+    }
+
+    // 웹 푸시 알림 권한 요청 함수
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        console.log('⚠️ This browser does not support notifications');
+        return 'unsupported';
+      }
+
+      if (Notification.permission === 'granted') {
+        console.log('✅ Notification permission already granted');
+        return 'granted';
+      }
+
+      if (Notification.permission === 'denied') {
+        console.log('❌ Notification permission was denied');
+        return 'denied';
+      }
+
+      try {
+        const permission = await Notification.requestPermission();
+        console.log('📱 Notification permission:', permission);
+        return permission;
+      } catch (error) {
+        console.error('❌ Notification permission error:', error);
+        return 'error';
+      }
+    }
+
+    // 서비스 워커가 푸시 알림을 지원하는지 확인
+    function isPushSupported() {
+      return 'serviceWorker' in navigator && 'PushManager' in window;
+    }
+
+    // Standalone 모드 확인 (이미 설치된 앱)
+    function isRunningStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.matchMedia('(display-mode: fullscreen)').matches ||
+             window.navigator.standalone === true;
+    }
+
+    // 초기화 시 standalone 모드 확인
+    if (isRunningStandalone()) {
+      isPwaInstalled = true;
+      console.log('✅ Running in standalone mode (PWA installed)');
+    }
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

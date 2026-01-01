@@ -216,24 +216,29 @@ class CompatibilityCalculator {
       score -= 12;
     }
 
-    // 같은 오행 확인
-    final element1 = _stemToElement[day1.heavenlyStem]!;
-    final element2 = _stemToElement[day2.heavenlyStem]!;
-    if (element1 == element2) {
-      relations.add('동일오행');
-      score += 5;
-    }
+    // 같은 오행/상생/상극 확인 (천간이 깨진 경우에도 크래시 방지)
+    final element1 = _stemToElement[day1.heavenlyStem];
+    final element2 = _stemToElement[day2.heavenlyStem];
+    if (element1 != null && element2 != null) {
+      if (element1 == element2) {
+        relations.add('동일오행');
+        score += 5;
+      }
 
-    // 상생 관계 확인
-    if (_isGenerating(element1, element2)) {
-      relations.add('상생');
-      score += 10;
-    }
+      // 상생 관계 확인
+      if (_isGenerating(element1, element2)) {
+        relations.add('상생');
+        score += 10;
+      }
 
-    // 상극 관계 확인
-    if (_isOvercoming(element1, element2)) {
-      relations.add('상극');
-      score -= 5;
+      // 상극 관계 확인
+      if (_isOvercoming(element1, element2)) {
+        relations.add('상극');
+        score -= 5;
+      }
+    } else {
+      relations.add('천간오류');
+      score -= 20;
     }
 
     return DayPillarAnalysis(
@@ -437,7 +442,8 @@ class CompatibilityCalculator {
       chart.dayPillar.heavenlyStem,
       chart.hourPillar.heavenlyStem,
     ]) {
-      final element = _stemToElement[stem]!;
+      final element = _stemToElement[stem];
+      if (element == null) continue;
       counts[element] = counts[element]! + 1;
     }
 
@@ -448,7 +454,8 @@ class CompatibilityCalculator {
       chart.dayPillar.earthlyBranch,
       chart.hourPillar.earthlyBranch,
     ]) {
-      final element = _branchToElement[branch]!;
+      final element = _branchToElement[branch];
+      if (element == null) continue;
       counts[element] = counts[element]! + 1;
     }
 

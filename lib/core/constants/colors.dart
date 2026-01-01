@@ -228,6 +228,20 @@ class AppColors {
     return isDarkMode(context) ? borderLightDark : borderLight;
   }
 
+  /// 다크모드 대응 그림자/음영 색 (라이트: 검정, 다크: 흰색 기반)
+  ///
+  /// 화면에 `Colors.black.withOpacity(...)` 같은 하드코딩이 남아있으면
+  /// 다크모드에서 "먼지/회색 막"처럼 보일 수 있어, 상황별로 이 헬퍼를 사용합니다.
+  static Color shadowOf(
+    BuildContext context, {
+    double lightOpacity = 0.05,
+    double darkOpacity = 0.12,
+  }) {
+    final base = isDarkMode(context) ? white : black;
+    final opacity = isDarkMode(context) ? darkOpacity : lightOpacity;
+    return base.withValues(alpha: opacity.clamp(0.0, 1.0));
+  }
+
   static Color getElementColor(String element) {
     switch (element.toLowerCase()) {
       case '목':

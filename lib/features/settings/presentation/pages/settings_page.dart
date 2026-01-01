@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,9 @@ import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/theme/theme_notifier.dart';
 import '../../../../core/services/notifications/firebase_notification_service.dart';
+import '../../../../core/services/pwa/pwa_service.dart';
+import '../../../../core/services/pwa/web_notification_service.dart';
+import '../../../../core/services/usage/usage_service.dart';
 import '../../../../core/di/injection.dart';
 
 /// 설정 페이지
@@ -25,6 +29,12 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = false; // 알림 설정
   ThemeMode _themeMode = ThemeMode.system; // 테마 모드
   String _appVersion = '';
+
+  // 개발자 모드
+  bool _developerMode = false;
+  int _versionTapCount = 0;
+  UsageStatus? _usageStatus;
+  bool _isLoadingUsage = false;
 
   @override
   void initState() {
@@ -157,6 +167,55 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  /// 앱 버전 탭 처리 (5번 탭시 개발자 모드 활성화)
+  void _handleVersionTap() {
+    _versionTapCount++;
+    if (_versionTapCount >= 5) {
+      _versionTapCount = 0;
+      setState(() => _developerMode = !_developerMode);
+      if (_developerMode) {
+        _loadUsageStatus();
+        _showSnackBar('🔧 개발자 모드가 활성화되었습니다');
+      } else {
+        _showSnackBar('개발자 모드가 비활성화되었습니다');
+      }
+    }
+  }
+
+  /// 사용량 상태 로드
+  Future<void> _loadUsageStatus() async {
+    if (!getIt.isRegistered<UsageService>()) return;
+
+    setState(() => _isLoadingUsage = true);
+    try {
+      final usageService = getIt<UsageService>();
+      final status = await usageService.getUsageStatus();
+      setState(() {
+        _usageStatus = status;
+        _isLoadingUsage = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingUsage = false);
+      debugPrint('❌ Failed to load usage status: $e');
+    }
+  }
+
+  /// 서비스 일시 중단/재개 토글
+  Future<void> _toggleServicePause() async {
+    if (_usageStatus == null || !getIt.isRegistered<UsageService>()) return;
+
+    final usageService = getIt<UsageService>();
+    final newPauseState = !_usageStatus!.isPaused;
+
+    final success = await usageService.toggleServicePause(newPauseState);
+    if (success) {
+      await _loadUsageStatus();
+      _showSnackBar(newPauseState ? '⏸️ 서비스가 일시 중단되었습니다' : '▶️ 서비스가 재개되었습니다');
+    } else {
+      _showSnackBar('설정 변경에 실패했습니다');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,15 +276,26 @@ class _SettingsPageState extends State<SettingsPage> {
 
               const SizedBox(height: 24),
 
+              // PWA 설치 섹션 (웹에서만 표시)
+              if (kIsWeb) ...[
+                _buildSectionHeader('앱 설치'),
+                _buildPwaInstallCard(),
+                const SizedBox(height: 24),
+              ],
+
               // 알림 설정 섹션
               _buildSectionHeader('알림'),
               _buildSettingsCard([
-                _buildSwitchTile(
-                  title: '오늘의 운세 알림',
-                  subtitle: '매일 아침 오늘의 운세를 알려드립니다',
-                  value: _notificationsEnabled,
-                  onChanged: _handleNotificationToggle,
-                ),
+                // 웹에서는 웹 알림 사용
+                if (kIsWeb)
+                  _buildWebNotificationTile()
+                else
+                  _buildSwitchTile(
+                    title: '오늘의 운세 알림',
+                    subtitle: '매일 아침 오늘의 운세를 알려드립니다',
+                    value: _notificationsEnabled,
+                    onChanged: _handleNotificationToggle,
+                  ),
               ]),
 
               const SizedBox(height: 24),
@@ -254,15 +324,21 @@ class _SettingsPageState extends State<SettingsPage> {
               _buildSectionHeader('정보'),
               _buildSettingsCard([
                 _buildActionTile(
+                  title: '서비스 소개',
+                  icon: Icons.info_outline,
+                  onTap: () => _openUrl('https://destiny-os-2026.web.app/about'),
+                ),
+                Divider(height: 1, color: AppColors.borderLightOf(context)),
+                _buildActionTile(
                   title: '개인정보처리방침',
                   icon: Icons.privacy_tip_outlined,
-                  onTap: () => _openUrl('https://destinyos.app/privacy'),
+                  onTap: () => _openUrl('https://destiny-os-2026.web.app/privacy'),
                 ),
                 Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildActionTile(
                   title: '이용약관',
                   icon: Icons.description_outlined,
-                  onTap: () => _openUrl('https://destinyos.app/terms'),
+                  onTap: () => _openUrl('https://destiny-os-2026.web.app/terms'),
                 ),
                 Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildActionTile(
@@ -271,16 +347,20 @@ class _SettingsPageState extends State<SettingsPage> {
                   onTap: () => _showLicensePage(context),
                 ),
                 Divider(height: 1, color: AppColors.borderLightOf(context)),
-                _buildInfoTile(
-                  title: '앱 버전',
-                  value: _appVersion,
-                ),
+                _buildVersionTile(),
               ]),
 
               const SizedBox(height: 24),
 
               // 법적 고지
               _buildDisclaimerCard(),
+
+              // 개발자 모드 (앱 버전 5번 탭시 활성화)
+              if (_developerMode) ...[
+                const SizedBox(height: 24),
+                _buildSectionHeader('🔧 개발자 모드'),
+                _buildUsageMonitorCard(),
+              ],
 
               const SizedBox(height: 40),
             ],
@@ -296,7 +376,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Text(
         title,
         style: AppTypography.caption.copyWith(
-          color: AppColors.textSecondary,
+          color: AppColors.textSecondaryOf(context),
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -311,7 +391,7 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.shadowOf(context, lightOpacity: 0.04, darkOpacity: 0.12),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -514,40 +594,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildInfoTile({
-    required String title,
-    required String value,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 22,
-            color: AppColors.textSecondaryOf(context),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: AppTypography.bodyLarge.copyWith(
-                color: AppColors.textPrimaryOf(context),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondaryOf(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDisclaimerCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -627,11 +673,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            '모든 데이터가 초기화되었습니다',
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.white),
-          ),
-          backgroundColor: AppColors.textPrimary,
+          content: const Text('모든 데이터가 초기화되었습니다'),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -717,7 +759,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           Text(
                             '정통 명리학 기반 분석',
                             style: AppTypography.bodyLarge.copyWith(
-                              color: AppColors.textPrimary,
+                              color: AppColors.textPrimaryOf(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -725,7 +767,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           Text(
                             '검증된 만세력과 명리 이론 적용',
                             style: AppTypography.caption.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.textSecondaryOf(context),
                             ),
                           ),
                         ],
@@ -733,7 +775,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     Icon(
                       Icons.chevron_right,
-                      color: AppColors.textTertiary,
+                      color: AppColors.textTertiaryOf(context),
                     ),
                   ],
                 ),
@@ -761,22 +803,22 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.borderLight,
+          color: AppColors.borderLightOf(context),
           width: 1,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.textSecondary),
+          Icon(icon, size: 14, color: AppColors.textSecondaryOf(context)),
           const SizedBox(width: 4),
           Text(
             label,
             style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -797,7 +839,7 @@ class _SettingsPageState extends State<SettingsPage> {
         maxChildSize: 0.95,
         builder: (context, scrollController) => Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.surfaceOf(context),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -839,14 +881,14 @@ class _SettingsPageState extends State<SettingsPage> {
                           Text(
                             '사주 분석 기술',
                             style: AppTypography.headlineSmall.copyWith(
-                              color: AppColors.textPrimary,
+                              color: AppColors.textPrimaryOf(context),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             'Destiny.OS의 핵심 기술',
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.textSecondaryOf(context),
                             ),
                           ),
                         ],
@@ -855,7 +897,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close),
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryOf(context),
                     ),
                   ],
                 ),
@@ -935,7 +977,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.grey50,
+        color: AppColors.surfaceVariantOf(context),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -955,7 +997,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Text(
                 title,
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimaryOf(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -970,14 +1012,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 Text(
                   '•  ',
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryOf(context),
                   ),
                 ),
                 Expanded(
                   child: Text(
                     item,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryOf(context),
                       height: 1.4,
                     ),
                   ),
@@ -1017,7 +1059,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Text(
                 '현재 버전 분석 정확도',
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimaryOf(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1056,7 +1098,7 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Text(
             label,
             style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
           ),
         ),
@@ -1064,7 +1106,7 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Container(
             height: 6,
             decoration: BoxDecoration(
-              color: AppColors.grey200,
+              color: AppColors.surfaceVariantOf(context),
               borderRadius: BorderRadius.circular(3),
             ),
             child: FractionallySizedBox(
@@ -1103,7 +1145,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.grey100,
+        color: AppColors.surfaceVariantOf(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1112,7 +1154,7 @@ class _SettingsPageState extends State<SettingsPage> {
           Icon(
             Icons.info_outline,
             size: 18,
-            color: AppColors.textSecondary,
+            color: AppColors.textSecondaryOf(context),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1121,13 +1163,630 @@ class _SettingsPageState extends State<SettingsPage> {
               '재미와 참고용으로 활용해 주세요. '
               '중요한 결정은 전문가와 상담하시기 바랍니다.',
               style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryOf(context),
                 height: 1.5,
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// PWA 설치 카드
+  Widget _buildPwaInstallCard() {
+    final pwaService = PwaService();
+    
+    return FutureBuilder(
+      future: pwaService.initialize().then((_) => null),
+      builder: (context, snapshot) {
+        final isInstalled = pwaService.isInstalled;
+        final isInstallable = pwaService.isInstallable || pwaService.isIosSafari;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isInstalled
+                  ? [
+                      AppColors.success.withAlpha(20),
+                      AppColors.success.withAlpha(10),
+                    ]
+                  : [
+                      AppColors.primary.withAlpha(15),
+                      AppColors.primaryLight.withAlpha(10),
+                    ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isInstalled
+                  ? AppColors.success.withAlpha(40)
+                  : AppColors.primary.withAlpha(30),
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: isInstalled
+                  ? null
+                  : () async {
+                      if (pwaService.isIosSafari) {
+                        _showIosInstallGuide();
+                      } else {
+                        final result = await pwaService.showInstallPrompt();
+                        if (result == PwaInstallResult.accepted && mounted) {
+                          setState(() {});
+                          _showSnackBar('앱이 설치되었습니다! 🎉');
+                        }
+                      }
+                    },
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: isInstalled
+                            ? AppColors.success.withAlpha(30)
+                            : AppColors.primary.withAlpha(25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          isInstalled
+                              ? Icons.check_circle
+                              : Icons.download_rounded,
+                          color: isInstalled
+                              ? AppColors.success
+                              : AppColors.primary,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isInstalled ? '앱이 설치됨' : '홈 화면에 추가',
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.textPrimaryOf(context),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isInstalled
+                                ? '홈 화면에서 바로 실행하세요'
+                                : '앱처럼 빠르게 실행하고 알림 받기',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textSecondaryOf(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (!isInstalled && isInstallable)
+                      Icon(
+                        Icons.chevron_right,
+                        color: AppColors.textTertiaryOf(context),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// iOS 설치 가이드 표시
+  void _showIosInstallGuide() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom: 24 + MediaQuery.of(context).padding.bottom,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceOf(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 핸들
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // 아이콘
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryLight],
+                ),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Center(
+                child: Text('📲', style: TextStyle(fontSize: 36)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            Text(
+              'iPhone/iPad에 설치하기',
+              style: AppTypography.titleLarge.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // 단계별 안내
+            _buildIosStep(1, '하단의 공유 버튼을 탭하세요', '📤'),
+            const SizedBox(height: 12),
+            _buildIosStep(2, '"홈 화면에 추가"를 선택하세요', '➕'),
+            const SizedBox(height: 12),
+            _buildIosStep(3, '추가 버튼을 탭하면 완료!', '✅'),
+            
+            const SizedBox(height: 24),
+            
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  '확인',
+                  style: AppTypography.labelLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIosStep(int step, String text, String emoji) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariantOf(context),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(25),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                '$step',
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textPrimaryOf(context),
+              ),
+            ),
+          ),
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+        ],
+      ),
+    );
+  }
+
+  /// 웹 알림 설정 타일
+  Widget _buildWebNotificationTile() {
+    final webNotificationService = WebNotificationService();
+    
+    return FutureBuilder(
+      future: webNotificationService.initialize().then((_) => webNotificationService.isNotificationsEnabled()),
+      builder: (context, snapshot) {
+        final isEnabled = snapshot.data ?? false;
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '오늘의 운세 알림',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimaryOf(context),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isEnabled ? '매일 아침 운세를 알려드립니다' : '알림을 받지 않음',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textSecondaryOf(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : CupertinoSwitch(
+                      value: isEnabled,
+                      onChanged: (value) async {
+                        if (value) {
+                          final result = await webNotificationService.requestPermission();
+                          if (result == NotificationPermissionStatus.granted) {
+                            await webNotificationService.subscribeToTopic(NotificationTopics.dailyFortune);
+                            setState(() {});
+                            if (mounted) {
+                              _showSnackBar('알림이 활성화되었습니다 ✅');
+                            }
+                          } else if (result == NotificationPermissionStatus.denied) {
+                            if (mounted) {
+                              _showNotificationPermissionDialog();
+                            }
+                          }
+                        } else {
+                          await webNotificationService.disableNotifications();
+                          setState(() {});
+                          if (mounted) {
+                            _showSnackBar('알림이 비활성화되었습니다');
+                          }
+                        }
+                      },
+                      activeTrackColor: AppColors.primary,
+                    ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 앱 버전 타일 (5번 탭시 개발자 모드)
+  Widget _buildVersionTile() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _handleVersionTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 22,
+                color: AppColors.textSecondaryOf(context),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '앱 버전',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textPrimaryOf(context),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Text(
+                _appVersion,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondaryOf(context),
+                ),
+              ),
+              if (_developerMode) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'DEV',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 사용량 모니터링 카드 (개발자 모드)
+  Widget _buildUsageMonitorCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1a0a2e).withValues(alpha: 0.9),
+            const Color(0xFF2d1b4e).withValues(alpha: 0.9),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // 헤더
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.analytics, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '오늘의 사용량',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        _usageStatus != null
+                            ? '${_usageStatus!.date.month}/${_usageStatus!.date.day} 기준'
+                            : '로딩 중...',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: _loadUsageStatus,
+                  icon: _isLoadingUsage
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.refresh, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+
+          // 사용량 현황
+          if (_usageStatus != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  // 프로그레스 바
+                  Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: (_usageStatus!.usagePercentage / 100).clamp(0, 1),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: _usageStatus!.usagePercentage >= 80
+                                ? [Colors.red, Colors.orange]
+                                : [const Color(0xFFFFD700), const Color(0xFFDAA520)],
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${_usageStatus!.totalCount.toStringAsFixed(0)} / ${_usageStatus!.dailyLimit}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '${_usageStatus!.usagePercentage.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          color: _usageStatus!.usagePercentage >= 80 ? Colors.orange : Colors.white70,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 상세 통계
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatItem('사주', _usageStatus!.sajuCount, Icons.auto_awesome),
+                  _buildStatItem('MBTI', _usageStatus!.mbtiCount, Icons.psychology),
+                  _buildStatItem('궁합', _usageStatus!.compatibilityCount, Icons.favorite),
+                  _buildStatItem('상담', _usageStatus!.consultationCount, Icons.chat),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 알림 표시
+            if (_usageStatus!.alerts.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning, color: Colors.orange, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _usageStatus!.alerts.first.message,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // 서비스 제어 버튼
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _toggleServicePause,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _usageStatus!.isPaused
+                            ? Colors.green
+                            : Colors.red.withValues(alpha: 0.8),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: Icon(_usageStatus!.isPaused ? Icons.play_arrow : Icons.pause),
+                      label: Text(_usageStatus!.isPaused ? '서비스 재개' : '서비스 일시 중단'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ] else if (!_isLoadingUsage) ...[
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Supabase 연결을 확인해주세요',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, int count, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white70, size: 18),
+        const SizedBox(height: 4),
+        Text(
+          count.toString(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 11,
+          ),
+        ),
+      ],
     );
   }
 }

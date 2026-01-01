@@ -350,6 +350,11 @@ class AppColors {
     return isDarkMode(context) ? surfaceVariantDark : grey200;
   }
 
+  /// 다크모드 대응 primary light 색상
+  static Color primaryLightOf(BuildContext context) {
+    return isDarkMode(context) ? primaryLightDarkMode : primaryLight;
+  }
+
   /// 다크모드 대응 grey 색상 (진한 톤)
   static Color grey400Of(BuildContext context) {
     return isDarkMode(context) ? textTertiaryDark : grey400;

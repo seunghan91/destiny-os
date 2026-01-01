@@ -27,10 +27,11 @@ class _SharePageState extends State<SharePage> {
   bool _isGenerating = false;
   int _selectedCardIndex = 0;
 
-  final List<_ShareCardType> _cardTypes = [
-    _ShareCardType('2026 운세', Icons.auto_awesome, AppColors.fire),
-    _ShareCardType('사주 분석', Icons.stars, AppColors.primary),
-    _ShareCardType('Gap 분석', Icons.compare_arrows, AppColors.wood),
+  // 카드 타입 목록 (context 필요해서 build에서 초기화)
+  List<_ShareCardType> _getCardTypes(BuildContext context) => [
+    _ShareCardType('2026 운세', Icons.auto_awesome, AppColors.fireOf(context)),
+    _ShareCardType('사주 분석', Icons.stars, AppColors.primaryOf(context)),
+    _ShareCardType('Gap 분석', Icons.compare_arrows, AppColors.woodOf(context)),
   ];
 
   @override
@@ -81,20 +82,20 @@ class _SharePageState extends State<SharePage> {
           Icon(
             Icons.info_outline,
             size: 64,
-            color: AppColors.textTertiary,
+            color: AppColors.textTertiaryOf(context),
           ),
           const SizedBox(height: 16),
           Text(
             '공유할 운세 데이터가 없습니다',
             style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             '먼저 사주 분석을 완료해주세요',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiaryOf(context),
             ),
           ),
         ],
@@ -301,7 +302,7 @@ class _SharePageState extends State<SharePage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: AppColors.primaryOf(context).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -570,7 +571,7 @@ class _SharePageState extends State<SharePage> {
         color: AppColors.surfaceOf(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -947,7 +948,7 @@ class _SharePageState extends State<SharePage> {
               const Text('링크가 클립보드에 복사되었습니다'),
             ],
           ),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.successOf(context),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -961,7 +962,7 @@ class _SharePageState extends State<SharePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.errorOf(context),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -971,7 +972,7 @@ class _SharePageState extends State<SharePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.successOf(context),
         behavior: SnackBarBehavior.floating,
       ),
     );

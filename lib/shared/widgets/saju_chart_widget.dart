@@ -143,11 +143,11 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.surfaceOf(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withAlpha(13),
+              color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -242,7 +242,7 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: AppColors.textPrimaryOf(context),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -250,7 +250,7 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
                                 _currentExplanation!.shortDesc,
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.textSecondaryOf(context),
                                   height: 1.4,
                                 ),
                               ),
@@ -260,7 +260,7 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
                                   _currentExplanation!.detailDesc!,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textTertiary,
+                                    color: AppColors.textTertiaryOf(context),
                                     height: 1.4,
                                   ),
                                 ),
@@ -276,7 +276,7 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
                             child: Icon(
                               Icons.close,
                               size: 18,
-                              color: AppColors.textTertiary,
+                              color: AppColors.textTertiaryOf(context),
                             ),
                           ),
                         ),

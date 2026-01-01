@@ -91,8 +91,8 @@ class _SplashPageState extends State<SplashPage>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.destinyGradient,
+        decoration: BoxDecoration(
+          gradient: AppColors.destinyGradientOf(context),
         ),
         child: SafeArea(
           child: Center(

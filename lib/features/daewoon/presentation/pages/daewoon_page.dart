@@ -213,16 +213,20 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
     // 데이터가 없으면 빈 상태 표시
     if (_daewoonChart == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundOf(context),
         appBar: _buildAppBar(),
-        body: const Center(
-          child: Text('대운 데이터를 불러올 수 없습니다.\n먼저 사주 분석을 진행해주세요.'),
+        body: Center(
+          child: Text(
+            '대운 데이터를 불러올 수 없습니다.\n먼저 사주 분석을 진행해주세요.',
+            style: TextStyle(color: AppColors.textSecondaryOf(context)),
+            textAlign: TextAlign.center,
+          ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: _buildAppBar(),
       body: Column(
         children: [
@@ -249,13 +253,13 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
 
   Widget _buildTabBar() {
     return Container(
-      color: AppColors.surface,
+      color: AppColors.surfaceOf(context),
       child: TabBar(
         controller: _tabController,
-        indicatorColor: AppColors.primary,
+        indicatorColor: AppColors.primaryOf(context),
         indicatorWeight: 3,
-        labelColor: AppColors.primary,
-        unselectedLabelColor: AppColors.textSecondary,
+        labelColor: AppColors.primaryOf(context),
+        unselectedLabelColor: AppColors.textSecondaryOf(context),
         labelStyle: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w600),
         tabs: const [
           Tab(text: '종합 분석'),
@@ -523,11 +527,11 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -541,7 +545,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: AppColors.primaryOf(context).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text('📊', style: TextStyle(fontSize: 24)),
@@ -551,10 +555,10 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('인생 대운 종합 분석', style: AppTypography.headlineSmall),
+                    Text('인생 대운 종합 분석', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
                     Text(
                       '${chart.currentAge}세 기준',
-                      style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                      style: AppTypography.caption.copyWith(color: AppColors.textSecondaryOf(context)),
                     ),
                   ],
                 ),
@@ -566,15 +570,15 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           // 핵심 분석
           Text(
             overview['summary'] ?? '',
-            style: AppTypography.bodyLarge.copyWith(height: 1.8),
+            style: AppTypography.bodyLarge.copyWith(height: 1.8, color: AppColors.textPrimaryOf(context)),
           ),
           
           const SizedBox(height: 20),
-          const Divider(),
+          Divider(color: AppColors.borderOf(context)),
           const SizedBox(height: 16),
           
           // 대운 흐름 요약
-          Text('대운 흐름 요약', style: AppTypography.titleMedium),
+          Text('대운 흐름 요약', style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimaryOf(context))),
           const SizedBox(height: 12),
           
           ...List.generate(3, (index) {
@@ -594,7 +598,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
   }
 
   Widget _buildPhaseItem(String period, String theme, String description, int index) {
-    final colors = [AppColors.fire, AppColors.water, AppColors.wood];
+    final colors = [AppColors.fireOf(context), AppColors.waterOf(context), AppColors.woodOf(context)];
     final color = colors[index % colors.length];
     
     return Container(
@@ -645,7 +649,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 Text(
                   description,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryOf(context),
                   ),
                 ),
               ],
@@ -817,39 +821,39 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('항목별 분석', style: AppTypography.headlineSmall),
+          Text('항목별 분석', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
           const SizedBox(height: 8),
           Text(
             '선택한 대운 기준으로 영역별 포인트를 정리했어요. (눌러서 펼치기)',
-            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.5),
+            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context), height: 1.5),
           ),
           const SizedBox(height: 12),
           ...categories.entries.map((e) {
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: AppColors.surfaceVariantOf(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderOf(context)),
               ),
               child: ExpansionTile(
                 tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                 title: Text(
                   e.key,
-                  style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600, color: AppColors.textPrimaryOf(context)),
                 ),
                 children: [
                   Text(
                     e.value,
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryOf(context),
                       height: 1.6,
                     ),
                   ),
@@ -869,17 +873,17 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('오행 균형 분석', style: AppTypography.headlineSmall),
+          Text('오행 균형 분석', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
           const SizedBox(height: 8),
           Text(
             '대운 흐름에서의 오행 에너지 분포',
-            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)),
           ),
           const SizedBox(height: 20),
           
@@ -893,13 +897,13 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           }),
           
           const SizedBox(height: 16),
-          const Divider(),
+          Divider(color: AppColors.borderOf(context)),
           const SizedBox(height: 12),
           
           // 분석 결과
           Text(
             _generateElementAnalysisText(elementBalance),
-            style: AppTypography.bodyMedium.copyWith(height: 1.6),
+            style: AppTypography.bodyMedium.copyWith(height: 1.6, color: AppColors.textPrimaryOf(context)),
           ),
         ],
       ),
@@ -907,6 +911,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
   }
 
   Widget _buildElementBar(String element, int value, double percentage) {
+    final elementColor = AppColors.getElementColorOf(context, element);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -915,13 +920,13 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
             width: 40,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: _getElementColor(element).withValues(alpha: 0.1),
+              color: elementColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               element,
               style: AppTypography.labelMedium.copyWith(
-                color: _getElementColor(element),
+                color: elementColor,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -934,7 +939,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 Container(
                   height: 24,
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceVariant,
+                    color: AppColors.surfaceVariantOf(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
@@ -945,8 +950,8 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        _getElementColor(element),
-                        _getElementColor(element).withValues(alpha: 0.7),
+                        elementColor,
+                        elementColor.withValues(alpha: 0.7),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -960,7 +965,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
             width: 30,
             child: Text(
               '$value',
-              style: AppTypography.labelMedium,
+              style: AppTypography.labelMedium.copyWith(color: AppColors.textPrimaryOf(context)),
               textAlign: TextAlign.right,
             ),
           ),
@@ -972,13 +977,14 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
   /// 인생 조언 카드
   Widget _buildLifeAdviceCard() {
     final advice = _generateLifeAdvice();
+    final primaryColor = AppColors.primaryOf(context);
     
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight.withValues(alpha: 0.1),
+        color: primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.3)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -987,7 +993,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
             children: [
               const Text('💫', style: TextStyle(fontSize: 24)),
               const SizedBox(width: 12),
-              Text('인생 조언', style: AppTypography.headlineSmall),
+              Text('인생 조언', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
             ],
           ),
           const SizedBox(height: 16),
@@ -996,12 +1002,12 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+                Icon(Icons.check_circle, color: primaryColor, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     item,
-                    style: AppTypography.bodyMedium.copyWith(height: 1.5),
+                    style: AppTypography.bodyMedium.copyWith(height: 1.5, color: AppColors.textPrimaryOf(context)),
                   ),
                 ),
               ],
@@ -1014,16 +1020,17 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
 
   /// 대운 선택기
   Widget _buildDaewoonSelector() {
+    final primaryColor = AppColors.primaryOf(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('대운 선택', style: AppTypography.titleMedium),
+          Text('대운 선택', style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimaryOf(context))),
           const SizedBox(height: 12),
           SizedBox(
             height: 60,
@@ -1042,11 +1049,11 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: isSelected 
-                          ? AppColors.primary 
-                          : (isCurrent ? AppColors.primaryLight.withValues(alpha: 0.2) : AppColors.surfaceVariant),
+                          ? primaryColor 
+                          : (isCurrent ? primaryColor.withValues(alpha: 0.2) : AppColors.surfaceVariantOf(context)),
                       borderRadius: BorderRadius.circular(12),
                       border: isCurrent && !isSelected 
-                          ? Border.all(color: AppColors.primary, width: 2) 
+                          ? Border.all(color: primaryColor, width: 2) 
                           : null,
                     ),
                     child: Column(
@@ -1055,14 +1062,14 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                         Text(
                           daewoon.pillar.hanjaRepresentation,
                           style: AppTypography.titleMedium.copyWith(
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            color: isSelected ? Theme.of(context).colorScheme.onPrimary : AppColors.textPrimaryOf(context),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           '${daewoon.startAge}~${daewoon.endAge - 1}세',
                           style: AppTypography.caption.copyWith(
-                            color: isSelected ? Colors.white70 : AppColors.textSecondary,
+                            color: isSelected ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7) : AppColors.textSecondaryOf(context),
                           ),
                         ),
                       ],
@@ -1087,11 +1094,12 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       chart: _sajuChart,
       daewoon: daewoon,
     );
+    final primaryColor = AppColors.primaryOf(context);
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -1108,10 +1116,10 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(daewoon.theme, style: AppTypography.headlineSmall),
+                    Text(daewoon.theme, style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
                     Text(
                       '${daewoon.pillar.fullPillar} (${daewoon.pillar.hanjaRepresentation})',
-                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)),
                     ),
                   ],
                 ),
@@ -1124,21 +1132,21 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           // 상세 설명
           Text(
             daewoon.description,
-            style: AppTypography.bodyMedium.copyWith(height: 1.8),
+            style: AppTypography.bodyMedium.copyWith(height: 1.8, color: AppColors.textPrimaryOf(context)),
           ),
 
           const SizedBox(height: 16),
-          const Divider(),
+          Divider(color: AppColors.borderOf(context)),
           const SizedBox(height: 16),
 
           // 종합분석 (선택 대운 기준)
-          Text('종합분석', style: AppTypography.titleMedium),
+          Text('종합분석', style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimaryOf(context))),
           const SizedBox(height: 8),
           Text(
             comprehensiveText,
             style: AppTypography.bodyMedium.copyWith(
               height: 1.8,
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
           ),
           
@@ -1152,12 +1160,12 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   keyword,
-                  style: AppTypography.labelSmall.copyWith(color: AppColors.primary),
+                  style: AppTypography.labelSmall.copyWith(color: primaryColor),
                 ),
               );
             }).toList(),
@@ -1166,28 +1174,28 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           const SizedBox(height: 20),
 
           // 항목별 분석 (선택 대운 기준)
-          Text('항목별 분석', style: AppTypography.titleMedium),
+          Text('항목별 분석', style: AppTypography.titleMedium.copyWith(color: AppColors.textPrimaryOf(context))),
           const SizedBox(height: 8),
           ...categories.entries.map((e) {
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: AppColors.surfaceVariantOf(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderOf(context)),
               ),
               child: ExpansionTile(
                 tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                 title: Text(
                   e.key,
-                  style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600),
+                  style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600, color: AppColors.textPrimaryOf(context)),
                 ),
                 children: [
                   Text(
                     e.value,
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryOf(context),
                       height: 1.6,
                     ),
                   ),
@@ -1237,7 +1245,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -1248,7 +1256,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: tenGodInfo['color'].withValues(alpha: 0.1),
+                  color: (tenGodInfo['color'] as Color).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -1261,19 +1269,19 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('십신 분석', style: AppTypography.headlineSmall),
+                    Text('십신 분석', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
                     Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: tenGodInfo['color'].withValues(alpha: 0.2),
+                            color: (tenGodInfo['color'] as Color).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             tenGod,
                             style: AppTypography.labelMedium.copyWith(
-                              color: tenGodInfo['color'],
+                              color: tenGodInfo['color'] as Color,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1281,7 +1289,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                         const SizedBox(width: 8),
                         Text(
                           tenGodInfo['name'] as String,
-                          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)),
                         ),
                       ],
                     ),
@@ -1293,16 +1301,16 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           const SizedBox(height: 16),
           Text(
             tenGodInfo['description'] as String,
-            style: AppTypography.bodyMedium.copyWith(height: 1.6),
+            style: AppTypography.bodyMedium.copyWith(height: 1.6, color: AppColors.textPrimaryOf(context)),
           ),
           const SizedBox(height: 16),
           
           // 십신 특성
           Row(
             children: [
-              Expanded(child: _buildTenGodTrait('강점', tenGodInfo['strength'] as String, Colors.green)),
+              Expanded(child: _buildTenGodTrait('강점', tenGodInfo['strength'] as String, AppColors.successOf(context))),
               const SizedBox(width: 12),
-              Expanded(child: _buildTenGodTrait('주의점', tenGodInfo['weakness'] as String, Colors.orange)),
+              Expanded(child: _buildTenGodTrait('주의점', tenGodInfo['weakness'] as String, AppColors.warningOf(context))),
             ],
           ),
         ],
@@ -1327,7 +1335,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           const SizedBox(height: 4),
           Text(
             value,
-            style: AppTypography.bodySmall,
+            style: AppTypography.bodySmall.copyWith(color: AppColors.textPrimaryOf(context)),
           ),
         ],
       ),
@@ -1338,6 +1346,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
   Widget _buildElementAnalysis(Daewoon daewoon) {
     final element = _getPillarElement(daewoon.pillar.heavenlyStem);
     final elementInfo = _getElementInfo(element);
+    final elementColor = AppColors.getElementColorOf(context, element);
     
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1346,12 +1355,12 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _getElementColor(element).withValues(alpha: 0.1),
-            _getElementColor(element).withValues(alpha: 0.05),
+            elementColor.withValues(alpha: 0.1),
+            elementColor.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _getElementColor(element).withValues(alpha: 0.3)),
+        border: Border.all(color: elementColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1362,7 +1371,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: _getElementColor(element),
+                  color: elementColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -1380,10 +1389,10 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('오행 분석', style: AppTypography.headlineSmall),
+                    Text('오행 분석', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
                     Text(
                       '$element(${elementInfo['hanja']}) 기운의 대운',
-                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)),
                     ),
                   ],
                 ),
@@ -1394,7 +1403,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           
           Text(
             elementInfo['description'] as String,
-            style: AppTypography.bodyMedium.copyWith(height: 1.6),
+            style: AppTypography.bodyMedium.copyWith(height: 1.6, color: AppColors.textPrimaryOf(context)),
           ),
           
           const SizedBox(height: 16),
@@ -1413,7 +1422,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.5),
+              color: AppColors.surfaceOf(context).withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -1423,7 +1432,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 Expanded(
                   child: Text(
                     elementInfo['advice'] as String,
-                    style: AppTypography.bodySmall,
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.textPrimaryOf(context)),
                   ),
                 ),
               ],
@@ -1439,12 +1448,12 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       children: [
         Text(
           label,
-          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          style: AppTypography.caption.copyWith(color: AppColors.textSecondaryOf(context)),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w600),
+          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w600, color: AppColors.textPrimaryOf(context)),
         ),
       ],
     );
@@ -1457,20 +1466,20 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${daewoon.periodString} 조언', style: AppTypography.headlineSmall),
+          Text('${daewoon.periodString} 조언', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
           const SizedBox(height: 16),
           
           // 해야 할 것
           _buildAdviceSection(
             '✅ 이 시기에 해야 할 것',
             advice['do'] as List<String>,
-            Colors.green,
+            AppColors.successOf(context),
           ),
           
           const SizedBox(height: 16),
@@ -1479,7 +1488,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           _buildAdviceSection(
             '⚠️ 주의해야 할 것',
             advice['dont'] as List<String>,
-            Colors.orange,
+            AppColors.warningOf(context),
           ),
           
           const SizedBox(height: 16),
@@ -1488,7 +1497,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           _buildAdviceSection(
             '🍀 행운의 요소',
             advice['lucky'] as List<String>,
-            AppColors.primary,
+            AppColors.primaryOf(context),
           ),
         ],
       ),
@@ -1519,7 +1528,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 ),
               ),
               Expanded(
-                child: Text(item, style: AppTypography.bodySmall),
+                child: Text(item, style: AppTypography.bodySmall.copyWith(color: AppColors.textPrimaryOf(context))),
               ),
             ],
           ),
@@ -1530,20 +1539,20 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surfaceOf(context),
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+        icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimaryOf(context)),
         onPressed: () => context.pop(),
       ),
       title: Text(
         '대운 타임라인',
-        style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimary),
+        style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context)),
       ),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: const Icon(Icons.info_outline, color: AppColors.textPrimary),
+          icon: Icon(Icons.info_outline, color: AppColors.textPrimaryOf(context)),
           onPressed: () => _showDaewoonInfo(context),
         ),
       ],
@@ -1694,7 +1703,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text('인생 타임라인', style: AppTypography.headlineSmall),
+          child: Text('인생 타임라인', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -1734,7 +1743,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                     height: 2,
                     color: index == 0
                         ? Colors.transparent
-                        : (isPast || isCurrent ? AppColors.primary : AppColors.grey300),
+                        : (isPast || isCurrent ? AppColors.primaryOf(context) : AppColors.grey300Of(context)),
                   ),
                 ),
                 // 대운 노드
@@ -1744,15 +1753,15 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                   height: isSelected ? 20 : 14,
                   decoration: BoxDecoration(
                     color: isCurrent
-                        ? AppColors.primary
-                        : (isPast ? AppColors.primaryLight : AppColors.grey300),
+                        ? AppColors.primaryOf(context)
+                        : (isPast ? AppColors.primaryLightOf(context) : AppColors.grey300Of(context)),
                     shape: BoxShape.circle,
                     border: isSelected
-                        ? Border.all(color: AppColors.primary, width: 3)
+                        ? Border.all(color: AppColors.primaryOf(context), width: 3)
                         : null,
                     boxShadow: isCurrent ? [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4),
+                        color: AppColors.primaryOf(context).withValues(alpha: 0.4),
                         blurRadius: 8,
                         spreadRadius: 2,
                       ),
@@ -1764,7 +1773,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                     height: 2,
                     color: index == _daewoonChart!.daewoons.length - 1
                         ? Colors.transparent
-                        : (isPast ? AppColors.primary : AppColors.grey300),
+                        : (isPast ? AppColors.primaryOf(context) : AppColors.grey300Of(context)),
                   ),
                 ),
               ],
@@ -1777,12 +1786,12 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
               decoration: BoxDecoration(
                 color: isSelected
                     ? _getScoreColor(daewoon.fortuneScore).withValues(alpha: 0.1)
-                    : AppColors.surface,
+                    : AppColors.surfaceOf(context),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isSelected
                       ? _getScoreColor(daewoon.fortuneScore)
-                      : (isCurrent ? AppColors.primary : AppColors.border),
+                      : (isCurrent ? AppColors.primaryOf(context) : AppColors.borderOf(context)),
                   width: isSelected || isCurrent ? 2 : 1,
                 ),
               ),
@@ -1794,7 +1803,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                     style: AppTypography.titleMedium.copyWith(
                       color: isSelected
                           ? _getScoreColor(daewoon.fortuneScore)
-                          : (isPast ? AppColors.textSecondary : AppColors.textPrimary),
+                          : (isPast ? AppColors.textSecondaryOf(context) : AppColors.textPrimaryOf(context)),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1802,7 +1811,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                   Text(
                     '${daewoon.startAge}~${daewoon.endAge - 1}세',
                     style: AppTypography.caption.copyWith(
-                      color: isPast ? AppColors.textTertiary : AppColors.textSecondary,
+                      color: isPast ? AppColors.textTertiaryOf(context) : AppColors.textSecondaryOf(context),
                     ),
                   ),
                   if (isCurrent)
@@ -1810,13 +1819,13 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                       margin: const EdgeInsets.only(top: 4),
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: AppColors.primaryOf(context),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         '현재',
                         style: AppTypography.caption.copyWith(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           fontSize: 9,
                         ),
                       ),
@@ -1833,16 +1842,17 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
   Widget _buildSelectedDaewoonDetail() {
     final daewoon = _daewoonChart!.daewoons[_selectedDaewoonIndex];
     final element = _getPillarElement(daewoon.pillar.heavenlyStem);
+    final elementColor = AppColors.getElementColorOf(context, element);
 
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1856,7 +1866,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.getElementColor(element).withValues(alpha: 0.1),
+                  color: elementColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -1869,7 +1879,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(daewoon.theme, style: AppTypography.headlineSmall),
+                    Text(daewoon.theme, style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -1877,7 +1887,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                         const SizedBox(width: 8),
                         Text(
                           daewoon.periodString,
-                          style: AppTypography.bodySmall,
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)),
                         ),
                       ],
                     ),
@@ -1887,12 +1897,13 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(),
+          Divider(color: AppColors.borderOf(context)),
           const SizedBox(height: 16),
           Text(
             daewoon.description,
             style: AppTypography.bodyMedium.copyWith(
               height: 1.6,
+              color: AppColors.textPrimaryOf(context),
             ),
           ),
           const SizedBox(height: 20),
@@ -1904,12 +1915,12 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
+                  color: AppColors.surfaceVariantOf(context),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   keyword,
-                  style: AppTypography.labelSmall,
+                  style: AppTypography.labelSmall.copyWith(color: AppColors.textPrimaryOf(context)),
                 ),
               );
             }).toList(),
@@ -1924,26 +1935,27 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
     if (nextDaewoon == null) return const SizedBox.shrink();
 
     final yearsUntil = _daewoonChart!.yearsUntilNextDaewoon ?? 0;
+    final primaryColor = AppColors.primaryOf(context);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight.withValues(alpha: 0.1),
+        color: primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primaryLight),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.arrow_forward,
-              color: AppColors.primary,
+              color: primaryColor,
               size: 20,
             ),
           ),
@@ -1955,20 +1967,20 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 Text(
                   '$yearsUntil년 후 다음 대운',
                   style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.primary,
+                    color: primaryColor,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${nextDaewoon.pillar.hanjaRepresentation} · ${nextDaewoon.theme}',
-                  style: AppTypography.bodySmall,
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)),
                 ),
               ],
             ),
           ),
           Icon(
             Icons.chevron_right,
-            color: AppColors.textSecondary,
+            color: AppColors.textSecondaryOf(context),
           ),
         ],
       ),
@@ -1980,13 +1992,13 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('대운별 운세 흐름', style: AppTypography.headlineSmall),
+          Text('대운별 운세 흐름', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
           const SizedBox(height: 20),
           SizedBox(
             height: 150,
@@ -1998,6 +2010,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                 final isSelected = index == _selectedDaewoonIndex;
                 final isCurrent = daewoon.isCurrentDaewoon(_daewoonChart!.currentAge);
                 final barHeight = (daewoon.fortuneScore / 100) * 120;
+                final primaryColor = AppColors.primaryOf(context);
 
                 return Expanded(
                   child: GestureDetector(
@@ -2010,7 +2023,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                           style: AppTypography.caption.copyWith(
                             color: isSelected || isCurrent
                                 ? _getScoreColor(daewoon.fortuneScore)
-                                : AppColors.textTertiary,
+                                : AppColors.textTertiaryOf(context),
                             fontWeight: isSelected || isCurrent
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -2026,7 +2039,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                                 ? _getScoreColor(daewoon.fortuneScore)
                                 : (isSelected
                                     ? _getScoreColor(daewoon.fortuneScore).withValues(alpha: 0.7)
-                                    : AppColors.grey300),
+                                    : AppColors.grey300Of(context)),
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(4),
                             ),
@@ -2037,7 +2050,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
                           '${daewoon.startAge}',
                           style: AppTypography.caption.copyWith(
                             fontSize: 10,
-                            color: isCurrent ? AppColors.primary : AppColors.textTertiary,
+                            color: isCurrent ? primaryColor : AppColors.textTertiaryOf(context),
                           ),
                         ),
                       ],
@@ -2051,7 +2064,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
           Center(
             child: Text(
               '나이 (세)',
-              style: AppTypography.caption,
+              style: AppTypography.caption.copyWith(color: AppColors.textSecondaryOf(context)),
             ),
           ),
         ],
@@ -2060,16 +2073,17 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
   }
 
   Widget _buildElementBadge(String element) {
+    final elementColor = AppColors.getElementColorOf(context, element);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.getElementColor(element).withValues(alpha: 0.1),
+        color: elementColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         '$element 기운',
         style: AppTypography.caption.copyWith(
-          color: AppColors.getElementColor(element),
+          color: elementColor,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -2077,10 +2091,10 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
   }
 
   Color _getScoreColor(double score) {
-    if (score >= 80) return AppColors.fortuneGood;
-    if (score >= 70) return AppColors.primary;
-    if (score >= 60) return AppColors.warning;
-    return AppColors.fortuneBad;
+    if (score >= 80) return AppColors.fortuneGoodOf(context);
+    if (score >= 70) return AppColors.primaryOf(context);
+    if (score >= 60) return AppColors.warningOf(context);
+    return AppColors.fortuneBadOf(context);
   }
 
   String _getPillarElement(String stem) {
@@ -2389,7 +2403,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       '비겁': {
         'name': '비겁 (比劫)',
         'emoji': '🤝',
-        'color': AppColors.wood,
+        'color': AppColors.woodOf(context),
         'description': '비겁은 나와 같은 오행으로, 자아 정체성과 독립심을 나타냅니다. 이 시기에는 경쟁심이 강해지고 자기 주장이 분명해집니다. 협력과 경쟁이 공존하는 시기입니다.',
         'strength': '자신감, 리더십, 독립심이 강화됩니다.',
         'weakness': '고집이 세지고 타협이 어려울 수 있습니다.',
@@ -2397,7 +2411,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       '식상': {
         'name': '식상 (食傷)',
         'emoji': '🎨',
-        'color': AppColors.fire,
+        'color': AppColors.fireOf(context),
         'description': '식상은 내가 생하는 오행으로, 표현력과 창의성을 나타냅니다. 이 시기에는 아이디어가 넘치고 재능을 발휘할 기회가 많습니다. 새로운 것을 창조하는 에너지가 강해집니다.',
         'strength': '창의력, 표현력, 말솜씨가 향상됩니다.',
         'weakness': '생각이 많아지고 결정이 어려울 수 있습니다.',
@@ -2405,7 +2419,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       '재성': {
         'name': '재성 (財星)',
         'emoji': '💰',
-        'color': AppColors.earth,
+        'color': AppColors.earthOf(context),
         'description': '재성은 내가 극하는 오행으로, 재물과 현실적 성취를 나타냅니다. 이 시기에는 경제적 기회가 많아지고 물질적 욕구가 강해집니다. 돈을 벌고 관리하는 능력이 중요해집니다.',
         'strength': '재정 능력, 현실 감각이 좋아집니다.',
         'weakness': '물질에 집착하거나 인색해질 수 있습니다.',
@@ -2413,7 +2427,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       '관성': {
         'name': '관성 (官星)',
         'emoji': '👔',
-        'color': AppColors.metal,
+        'color': AppColors.metalOf(context),
         'description': '관성은 나를 극하는 오행으로, 명예와 사회적 지위를 나타냅니다. 이 시기에는 책임감이 커지고 사회적 인정을 받을 기회가 많습니다. 직장이나 조직에서의 역할이 중요해집니다.',
         'strength': '책임감, 규율, 사회적 인정이 높아집니다.',
         'weakness': '스트레스와 부담감이 커질 수 있습니다.',
@@ -2421,7 +2435,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
       '인성': {
         'name': '인성 (印星)',
         'emoji': '📚',
-        'color': AppColors.water,
+        'color': AppColors.waterOf(context),
         'description': '인성은 나를 생하는 오행으로, 학습과 지혜를 나타냅니다. 이 시기에는 배움의 욕구가 강해지고 멘토나 후원자를 만날 수 있습니다. 정신적 성장과 지식 축적이 이루어집니다.',
         'strength': '학습 능력, 통찰력, 후원운이 좋아집니다.',
         'weakness': '의존적이 되거나 행동력이 떨어질 수 있습니다.',
@@ -2480,20 +2494,7 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
   }
 
   Color _getElementColor(String element) {
-    switch (element) {
-      case '목':
-        return AppColors.wood;
-      case '화':
-        return AppColors.fire;
-      case '토':
-        return AppColors.earth;
-      case '금':
-        return AppColors.metal;
-      case '수':
-        return AppColors.water;
-      default:
-        return AppColors.textSecondary;
-    }
+    return AppColors.getElementColorOf(context, element);
   }
 
   String _getBranchElement(String branch) {
@@ -2584,13 +2585,13 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('대운이란?', style: AppTypography.headlineMedium),
+              Text('대운이란?', style: AppTypography.headlineMedium.copyWith(color: AppColors.textPrimaryOf(context))),
               const SizedBox(height: 16),
               Text(
                 '대운(大運)은 10년 단위로 변화하는 인생의 큰 흐름입니다. '
                 '사주팔자의 월주(月柱)를 기준으로 순행 또는 역행하며, '
                 '각 대운마다 특별한 테마와 에너지가 있습니다.',
-                style: AppTypography.bodyMedium.copyWith(height: 1.6),
+                style: AppTypography.bodyMedium.copyWith(height: 1.6, color: AppColors.textPrimaryOf(context)),
               ),
               const SizedBox(height: 20),
               _buildInfoRow('순행', '양년생 남자, 음년생 여자'),
@@ -2614,12 +2615,12 @@ class _DaewoonPageState extends State<DaewoonPage> with SingleTickerProviderStat
             child: Text(
               label,
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.primary,
+                color: AppColors.primaryOf(context),
               ),
             ),
           ),
           Expanded(
-            child: Text(value, style: AppTypography.bodySmall),
+            child: Text(value, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context))),
           ),
         ],
       ),

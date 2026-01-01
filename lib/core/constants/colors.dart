@@ -280,4 +280,116 @@ class AppColors {
         return fortuneNeutral;
     }
   }
+
+  // ============================================
+  // 추가 다크모드 헬퍼 (WCAG 4.5:1 대비 준수)
+  // ============================================
+
+  /// 다크모드 대응 primary 색상 (채도 조정)
+  static Color primaryOf(BuildContext context) {
+    return isDarkMode(context) ? primaryDarkMode : primary;
+  }
+
+  /// 다크모드 대응 error 색상
+  static Color errorOf(BuildContext context) {
+    return isDarkMode(context) ? errorDark : error;
+  }
+
+  /// 다크모드 대응 success 색상
+  static Color successOf(BuildContext context) {
+    return isDarkMode(context) ? successDark : success;
+  }
+
+  /// 다크모드 대응 warning 색상
+  static Color warningOf(BuildContext context) {
+    return isDarkMode(context) ? warningDark : warning;
+  }
+
+  /// 다크모드 대응 info 색상
+  static Color infoOf(BuildContext context) {
+    return isDarkMode(context) ? infoDark : info;
+  }
+
+  /// 다크모드 대응 오방색 - 목(木)
+  static Color woodOf(BuildContext context) {
+    return isDarkMode(context) ? woodDarkMode : wood;
+  }
+
+  /// 다크모드 대응 오방색 - 화(火)
+  static Color fireOf(BuildContext context) {
+    return isDarkMode(context) ? fireDarkMode : fire;
+  }
+
+  /// 다크모드 대응 오방색 - 토(土)
+  static Color earthOf(BuildContext context) {
+    return isDarkMode(context) ? earthDarkMode : earth;
+  }
+
+  /// 다크모드 대응 오방색 - 금(金)
+  static Color metalOf(BuildContext context) {
+    return isDarkMode(context) ? metalDarkMode : metalAccent;
+  }
+
+  /// 다크모드 대응 오방색 - 수(水)
+  static Color waterOf(BuildContext context) {
+    return isDarkMode(context) ? waterDarkMode : water;
+  }
+
+  /// 다크모드 대응 그라디언트
+  static LinearGradient destinyGradientOf(BuildContext context) {
+    return isDarkMode(context) ? destinyGradientDark : destinyGradient;
+  }
+
+  /// 다크모드 대응 grey 색상 (중간 톤)
+  static Color grey300Of(BuildContext context) {
+    return isDarkMode(context) ? borderDark : grey300;
+  }
+
+  /// 다크모드 대응 grey 색상 (밝은 톤)
+  static Color grey200Of(BuildContext context) {
+    return isDarkMode(context) ? surfaceVariantDark : grey200;
+  }
+
+  /// 다크모드 대응 grey 색상 (진한 톤)
+  static Color grey400Of(BuildContext context) {
+    return isDarkMode(context) ? textTertiaryDark : grey400;
+  }
+
+  /// 다크모드 대응 textDisabled 색상
+  static Color textDisabledOf(BuildContext context) {
+    return isDarkMode(context) ? textDisabledDark : textDisabled;
+  }
+
+  /// 다크모드 대응 fortuneGood 색상
+  static Color fortuneGoodOf(BuildContext context) {
+    return isDarkMode(context) ? successDark : fortuneGood;
+  }
+
+  /// 다크모드 대응 fortuneBad 색상
+  static Color fortuneBadOf(BuildContext context) {
+    return isDarkMode(context) ? warningDark : fortuneBad;
+  }
+
+  /// 오행 색상 다크모드 대응
+  static Color getElementColorOf(BuildContext context, String element) {
+    switch (element.toLowerCase()) {
+      case '목':
+      case 'wood':
+        return woodOf(context);
+      case '화':
+      case 'fire':
+        return fireOf(context);
+      case '토':
+      case 'earth':
+        return earthOf(context);
+      case '금':
+      case 'metal':
+        return metalOf(context);
+      case '수':
+      case 'water':
+        return waterOf(context);
+      default:
+        return textSecondaryOf(context);
+    }
+  }
 }

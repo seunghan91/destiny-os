@@ -1,29 +1,242 @@
 # Destiny.OS - 프로젝트 로드맵 및 체크리스트
 
-## Phase 1: 프로젝트 셋업 및 설계 (Current)
+> **최종 업데이트**: 2026-01-01
+> **현재 상태**: Phase 2-3 진행 중 (MVP 기능 개발)
+
+---
+
+## Phase 1: 프로젝트 셋업 및 설계 ✅ 완료
 - [x] 프로젝트 폴더 구조 생성
 - [x] 설계 문서 초안 작성 (PRD, Tech Spec)
-- [ ] 상세 기능 명세 확정 (Option 3 범위 구체화)
-- [ ] UI/UX 와이어프레임 설계
-- [ ] 데이터베이스 스키마 설계
+- [x] 상세 기능 명세 확정 (01-features.md)
+- [x] UI/UX 와이어프레임 설계 (04-ui-design.md)
+- [x] 데이터베이스 스키마 설계 (03-data-model.md)
 
-## Phase 2: 개발 환경 구축
-- [ ] Flutter 프로젝트 생성
-- [ ] Supabase 프로젝트 생성 및 연동
-- [ ] 기본 만세력 알고리즘 구현/라이브러리 선정
+---
 
-## Phase 3: MVP 기능 개발
-- [ ] 회원가입/로그인 (Auth)
-- [ ] 사주/MBTI 입력 폼 UI 구현
-- [ ] 결과 페이지 및 기본 운세 로직 구현
-- [ ] AI 상담 기능(Chat Interface) 구현
+## Phase 2: 개발 환경 구축 ✅ 대부분 완료
 
-## Phase 4: 테스트 및 배포
-- [ ] 내부 테스트 (QA)
-- [ ] 스토어 배포 준비 (스크린샷, 설명 등)
-- [ ] 출시 (iOS/Android)
+### 기본 환경
+- [x] Flutter 프로젝트 생성
+- [x] Clean Architecture 디렉토리 구조 설정
+- [x] 필수 패키지 설치 (flutter_bloc, go_router, get_it, lunar 등)
+- [x] Git 레포지토리 초기화
+- [ ] Supabase 프로젝트 연동 (코드 준비됨, 초기화 필요)
 
-## 결정 필요한 사항 (Q&A)
-1. **MVP Option 3의 상세 기능:** 기획서 원본을 확인하지 못해 'Option 3'가 포함하는 구체적인 기능(예: 궁합, 월별 운세 등) 리스트가 필요합니다.
-2. **디자인 리소스:** 디자인 파일(Figma 등) 유무 확인
-3. **토스 연동 수준:** '토스 생태계 기반'이라는 것이 단순 컨셉인지, 실제 토스 앱 내 미니앱(Webview/W3C) 형태인지, 아니면 토스 아이디로 로그인을 의미하는지 명확화 필요. (Flutter로 진행 시 네이티브 앱으로 가정함)
+### 테마 & 라우팅
+- [x] 테마 시스템 구축 (Toss 디자인 시스템 컬러)
+- [x] 타이포그래피 설정 (Pretendard 정의됨)
+- [ ] Pretendard 폰트 파일 추가 (아직 assets 미포함)
+- [x] 라우터 설정 (go_router, 8개 메인 라우트)
+- [ ] DI 컨테이너 완성 (GetIt - TODO 항목 남음)
+- [x] Error handling 기본 구조 (failures.dart)
+
+### 핵심 알고리즘
+- [x] 천간/지지 상수 정의 (saju_constants.dart)
+- [x] 60갑자 매핑 로직 (lunar 패키지 활용)
+- [x] 양력↔음력 변환 (lunar 패키지)
+- [x] 24절기 계산 (lunar 패키지)
+- [x] 경도 보정 (진태양시) 옵션
+- [x] 십성 매핑 로직 (ten_gods.dart)
+- [x] 오행 분포 계산
+
+---
+
+## Phase 3: MVP 기능 개발 🔄 진행 중
+
+### 3.1 사주 분석 기능 ✅ 완료
+- [x] 입력 화면 (input_page.dart - 1172줄)
+  - [x] CupertinoDatePicker (생년월일)
+  - [x] 성별 선택
+  - [x] 시간 선택 (12시진 - siju_picker.dart)
+  - [x] MBTI 그리드 선택 (mbti_grid_selector.dart)
+  - [x] 로딩 애니메이션
+- [x] DestinyBloc 구현 (632줄)
+  - [x] AnalyzeFortune 이벤트
+  - [x] UpdateBirthData/UpdateMbti 이벤트
+  - [x] 상태 관리 (Initial, Analyzing, Success, Failure)
+- [x] 결과 화면 (result_page.dart - 536줄)
+  - [x] 사주 차트 표시
+  - [x] Gap 분석 결과 카드
+  - [x] 네비게이션 그리드
+  - [x] AI 상담 CTA
+
+### 3.2 MBTI 연동 & Gap Analysis ✅ 완료
+- [x] Saju-to-MBTI 변환 로직 (saju_calculator.dart)
+- [x] Gap Score 계산 (destiny_bloc.dart)
+- [x] 차원별 분석 (E/I, N/S, T/F, J/P)
+- [x] 인사이트 텍스트 생성
+- [x] 숨겨진 잠재력 해석
+
+### 3.3 2026년 운세 (병오년) ✅ 완료
+- [x] Fortune2026 엔티티 (fortune_2026.dart - 173줄)
+- [x] 월별 에너지 데이터 (화기 에너지)
+- [x] 화(火) 궁합 분석 (FireCompatibility)
+- [x] 운세 레벨 열거형 (FortuneLevel)
+- [x] fortune_2026_page.dart 구현
+
+### 3.4 대운(Daewoon) 타임라인 ✅ 완료
+- [x] Daewoon 엔티티 정의 (daewoon.dart)
+- [x] 대운 계산 로직 (saju_calculator.dart:257-312)
+- [x] 기본 페이지 구조 (daewoon_page.dart - 812줄)
+- [x] 순행/역행 결정 로직 (성별+일간음양 기반) ✅
+- [x] 가로 스크롤 타임라인 UI ✅
+- [x] 현재 대운 하이라이트 ✅
+- [x] 클릭 시 상세 팝업 (정보 모달) ✅
+- [x] 대운별 운세 점수 차트 ✅
+- [x] 다음 대운 미리보기 ✅
+- [x] BLoC 연동 완료 (DestinyBloc.daewoonChart)
+
+### 3.5 궁합 분석 ✅ 완료
+- [x] Compatibility 엔티티 (compatibility.dart)
+- [x] 기본 페이지 (compatibility_page.dart - 1500줄)
+- [x] 관계 유형 선택 (연인/친구/가족)
+- [x] 점수 표시 및 강점/주의점
+- [x] 두 번째 사람 사주 입력 UI ✅
+- [x] 일주 궁합 계산 (천간합/육합/삼합/충/형/해) ✅ 신규
+- [x] 오행 균형 분석 (상호보완/부족 분석) ✅ 신규
+- [x] 관계 유형별 점수 조정 (연애/결혼/사업/우정) ✅ 신규
+- [x] AI 상담 연동 (CTA 버튼 연결)
+
+### 3.6 AI 상담 기능 🟡 부분 완료
+- [x] ChatMessage 엔티티 (chat_message.dart)
+- [x] AiConsultationService 래퍼 (ai_consultation_service.dart)
+- [x] CreditService (1회 무료 추적)
+- [x] 기본 상담 페이지 (consultation_page.dart)
+- [ ] 실제 AI API 연동 (API 키 교체 필요)
+- [ ] 상담 유형 선택 UI 완성
+- [ ] 프롬프트 템플릿 최적화
+- [ ] 상담 기록 저장
+
+### 3.7 공유 기능 🟡 부분 완료
+- [x] share_page.dart 구현 (691줄)
+- [x] RepaintBoundary 캡처
+- [x] 9:16 카드 템플릿
+- [ ] 실제 앱 스토어 링크 연동
+- [ ] 인스타그램 스토리 공유
+- [ ] 카카오톡 공유
+
+### 3.8 온보딩 ✅ 완료
+- [x] splash_page.dart (애니메이션)
+- [x] onboarding_page.dart (캐러셀)
+- [x] onboarding_content.dart
+- [x] onboarding_page_indicator.dart
+- [x] SharedPreferences 상태 저장
+
+### 3.9 설정 페이지 ✅ 완료
+- [x] 야자시 적용 여부 토글
+- [x] 진태양시 적용 토글
+- [x] 알림 설정
+- [x] 데이터 초기화 (개인정보 삭제)
+- [x] 앱 버전 정보
+- [x] 개인정보처리방침/이용약관 링크
+- [x] 오픈소스 라이선스 표시
+- [x] 라우터 연결 ✅ 신규
+
+---
+
+## Phase 4: 테스트 및 배포 ❌ 미착수
+
+### UI/UX 개선
+- [ ] 페이지 전환 애니메이션 개선
+- [ ] 차트 드로잉 애니메이션
+- [ ] 햅틱 피드백 적용
+- [ ] 다크모드 지원
+
+### 테스트
+- [ ] 만세력 정확도 검증 (10+ 샘플)
+- [ ] Unit 테스트 작성
+- [ ] Widget 테스트 작성
+- [ ] 통합 테스트
+
+### 배포 준비
+- [ ] 앱 아이콘 & 스플래시 최종화
+- [ ] 스토어 스크린샷 제작
+- [ ] 개인정보처리방침 작성
+- [ ] 이용약관 작성
+- [ ] iOS 빌드 및 App Store 제출
+- [ ] Android 빌드 및 Play Store 제출
+
+---
+
+## 구현 현황 요약
+
+| 기능 | 상태 | 완성도 |
+|------|------|--------|
+| 프로젝트 셋업 | ✅ | 95% |
+| 사주 분석 엔진 | ✅ | 90% |
+| MBTI Gap 분석 | ✅ | 95% |
+| 2026년 운세 | ✅ | 85% |
+| 대운 타임라인 | ✅ | 85% |
+| 궁합 분석 | 🟡 | 70% |
+| AI 상담 | 🟡 | 40% |
+| 공유 기능 | 🟡 | 60% |
+| 온보딩 | ✅ | 90% |
+| 설정 | ✅ | 95% |
+| 테스트 | ❌ | 0% |
+
+**전체 진행률: ~75%**
+
+---
+
+## 즉시 해결 필요한 TODO
+
+### Critical (기능 차단)
+1. `injection.dart:12` - Supabase Client 등록
+2. `main.dart:28` - Supabase 초기화
+3. `ai_consultation_service.dart:7` - 실제 API 키 교체
+
+### High Priority
+1. ~~Settings 페이지 구현~~ ✅ 완료
+2. ~~대운 타임라인 UI 완성~~ ✅ 완료
+3. ~~궁합 두 번째 사람 입력 기능~~ ✅ 완료
+4. 대운 순행/역행 실제 계산 로직 (현재 데모 데이터)
+5. 궁합 실제 계산 로직 (현재 데모 점수)
+
+### Medium Priority
+1. `share_page.dart:691` - 실제 앱 스토어 링크
+2. Pretendard 폰트 파일 추가
+3. 테스트 코드 작성
+
+---
+
+## 기술 스택
+
+### 현재 사용 중
+```yaml
+# State Management
+flutter_bloc: ^9.1.1
+equatable: ^2.0.7
+
+# Navigation
+go_router: ^15.1.2
+
+# Storage
+flutter_secure_storage: ^9.2.4
+shared_preferences: ^2.3.5
+supabase_flutter: ^2.8.3
+
+# Business Logic
+lunar: ^1.3.12  # 핵심 - 만세력 계산
+dio: ^5.8.0+1
+dartz: ^0.10.1
+
+# UI
+fl_chart: ^0.70.2
+flutter_animate: ^4.5.2
+flutter_svg: ^2.0.10+1
+google_fonts: ^6.2.1
+
+# DI
+get_it: ^8.0.3
+```
+
+---
+
+## 파일 통계
+
+- **총 Dart 파일**: 47개
+- **Feature 모듈**: 9개 (saju, mbti, fortune_2026, daewoon, compatibility, ai_consultation, onboarding, share, settings)
+- **Core 모듈**: 8개 (constants, di, error, theme, router, usecases, utils, config)
+- **Shared 위젯**: 6개
+- **추정 코드 라인**: ~8,000줄

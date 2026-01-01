@@ -90,10 +90,9 @@ class _ConsultationPageState extends State<ConsultationPage> {
     String response;
 
     if (destinyState is DestinySuccess) {
-      final result = destinyState.result;
-      final dayMaster = result.sajuChart.dayPillar.heavenlyStem;
-      final mbti = result.inputMbti;
-      final yearScore = result.fortune2026.score.toInt();
+      final dayMaster = destinyState.sajuChart.dayPillar.heavenlyStem;
+      final mbti = destinyState.mbtiType.type;
+      final yearScore = destinyState.fortune2026.overallScore.toInt();
 
       response = _buildPersonalizedResponse(type, dayMaster, mbti, yearScore);
     } else {
@@ -229,7 +228,7 @@ class _ConsultationPageState extends State<ConsultationPage> {
     String response;
 
     if (destinyState is DestinySuccess) {
-      response = _buildSmartResponse(userMessage, destinyState.result);
+      response = _buildSmartResponse(userMessage, destinyState);
     } else {
       response = _buildDefaultResponse(userMessage);
     }
@@ -248,13 +247,15 @@ class _ConsultationPageState extends State<ConsultationPage> {
     _scrollToBottom();
   }
 
-  String _buildSmartResponse(String question, dynamic result) {
+  String _buildSmartResponse(String question, DestinySuccess state) {
     final lowerQ = question.toLowerCase();
+    final score = state.fortune2026.overallScore;
+    final mbti = state.mbtiType.type;
 
     if (lowerQ.contains('이직') || lowerQ.contains('퇴사')) {
       return '🎯 이직에 대한 조언입니다.\n\n'
-          '당신의 2026년 운세 점수(${result.fortune2026.score.toInt()}점)를 고려할 때, '
-          '${result.fortune2026.score >= 70 ? '상반기에 좋은 기회가 올 수 있습니다' : '하반기까지 더 준비하는 것을 권장합니다'}.\n\n'
+          '당신의 2026년 운세 점수(${score.toInt()}점)를 고려할 때, '
+          '${score >= 70 ? '상반기에 좋은 기회가 올 수 있습니다' : '하반기까지 더 준비하는 것을 권장합니다'}.\n\n'
           '특히 11월은 중요한 결정을 피하세요.';
     }
 
@@ -267,8 +268,8 @@ class _ConsultationPageState extends State<ConsultationPage> {
 
     if (lowerQ.contains('투자') || lowerQ.contains('주식') || lowerQ.contains('돈')) {
       return '💰 재물운에 대한 조언입니다.\n\n'
-          '2026년 재물운: ${result.fortune2026.score.toInt()}점\n\n'
-          '${result.fortune2026.score >= 75 ? '적극적인 투자가 가능한 해입니다' : '보수적인 접근을 권장합니다'}.\n'
+          '2026년 재물운: ${score.toInt()}점\n\n'
+          '${score >= 75 ? '적극적인 투자가 가능한 해입니다' : '보수적인 접근을 권장합니다'}.\n'
           '단, 11월 자오충 시기에는 큰 결정을 피하세요.';
     }
 
@@ -283,8 +284,8 @@ class _ConsultationPageState extends State<ConsultationPage> {
 
     // 기본 응답
     return '좋은 질문이에요! 🌟\n\n'
-        '당신의 ${result.inputMbti} 성격과 사주를 종합해보면,\n'
-        '2026년은 ${result.fortune2026.score >= 70 ? '도약의 해' : '준비의 해'}가 될 것입니다.\n\n'
+        '당신의 $mbti 성격과 사주를 종합해보면,\n'
+        '2026년은 ${score >= 70 ? '도약의 해' : '준비의 해'}가 될 것입니다.\n\n'
         '더 구체적인 질문을 해주시면 자세히 답변드릴게요!';
   }
 

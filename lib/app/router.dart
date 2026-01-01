@@ -8,6 +8,7 @@ import '../features/saju/presentation/pages/result_page.dart';
 import '../features/fortune_2026/presentation/pages/fortune_2026_page.dart';
 import '../features/daewoon/presentation/pages/daewoon_page.dart';
 import '../features/compatibility/presentation/pages/compatibility_page.dart';
+import '../features/ai_consultation/presentation/pages/consultation_page.dart';
 
 /// 앱 라우터 설정
 final GoRouter appRouter = GoRouter(
@@ -63,8 +64,14 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const CompatibilityPage(),
     ),
 
+    // AI 상담
+    GoRoute(
+      path: '/consultation',
+      name: 'consultation',
+      builder: (context, state) => const ConsultationPage(),
+    ),
+
     // TODO: 추가 라우트
-    // - /consultation (AI 상담)
     // - /share (공유)
     // - /settings (설정)
   ],

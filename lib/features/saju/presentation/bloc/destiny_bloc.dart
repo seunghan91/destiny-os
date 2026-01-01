@@ -293,7 +293,17 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     } catch (e, stackTrace) {
       debugPrint('❌ [DestinyBloc] Error: $e');
       debugPrint('❌ [DestinyBloc] StackTrace: $stackTrace');
-      emit(DestinyFailure(errorMessage: '분석 중 오류가 발생했습니다: $e'));
+      String userMessage;
+      if (e is SajuCalculationException) {
+        // 인앱브라우저(카카오톡 등)에서 간헐적으로 문자열/로케일 관련 이슈로 Ganji 값이 깨지는 사례 방어
+        userMessage =
+            '분석 중 오류가 발생했습니다.\n'
+            '카카오톡 인앱브라우저에서는 일부 기기에서 사주 계산이 실패할 수 있어요.\n'
+            '사파리/크롬 등 외부 브라우저로 열어 다시 시도해 주세요.';
+      } else {
+        userMessage = '분석 중 오류가 발생했습니다: $e';
+      }
+      emit(DestinyFailure(errorMessage: userMessage));
     }
   }
 

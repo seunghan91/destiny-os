@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:lunar/lunar.dart';
+import 'package:destiny_os/core/utils/ganji_parser.dart';
 import '../../domain/entities/saju_chart.dart';
 import '../../domain/entities/ten_gods.dart';
 import '../../domain/entities/daewoon.dart';
@@ -58,9 +59,10 @@ class SajuCalculator {
 
   /// 천간의 오행을 안전하게 가져옴 (검증 포함)
   String _getStemElement(String stem, {String? context}) {
-    final element = _stemToElement[stem];
+    final normalizedStem = GanjiParser.toKoreanHeavenlyStemOrNull(stem) ?? stem;
+    final element = _stemToElement[normalizedStem];
     if (element == null) {
-      debugPrint('⚠️ [SajuCalculator] Invalid stem: "$stem" in $context');
+      debugPrint('⚠️ [SajuCalculator] Invalid stem: "$stem" -> "$normalizedStem" in $context');
       throw SajuCalculationException(
         '유효하지 않은 천간입니다',
         invalidValue: stem,
@@ -72,9 +74,10 @@ class SajuCalculator {
 
   /// 천간의 음양을 안전하게 가져옴 (검증 포함)
   bool _getStemPolarity(String stem, {String? context}) {
-    final polarity = _stemPolarity[stem];
+    final normalizedStem = GanjiParser.toKoreanHeavenlyStemOrNull(stem) ?? stem;
+    final polarity = _stemPolarity[normalizedStem];
     if (polarity == null) {
-      debugPrint('⚠️ [SajuCalculator] Invalid stem for polarity: "$stem" in $context');
+      debugPrint('⚠️ [SajuCalculator] Invalid stem for polarity: "$stem" -> "$normalizedStem" in $context');
       throw SajuCalculationException(
         '유효하지 않은 천간입니다 (음양)',
         invalidValue: stem,
@@ -85,13 +88,22 @@ class SajuCalculator {
   }
 
   /// 천간의 오행을 안전하게 가져옴 (null 반환 가능 - 옵셔널 버전)
-  String? _getStemElementOrNull(String stem) => _stemToElement[stem];
+  String? _getStemElementOrNull(String stem) {
+    final normalizedStem = GanjiParser.toKoreanHeavenlyStemOrNull(stem) ?? stem;
+    return _stemToElement[normalizedStem];
+  }
 
   /// 지지의 오행을 안전하게 가져옴 (null 반환 가능 - 옵셔널 버전)
-  String? _getBranchElementOrNull(String branch) => _branchToElement[branch];
+  String? _getBranchElementOrNull(String branch) {
+    final normalizedBranch = GanjiParser.toKoreanEarthlyBranchOrNull(branch) ?? branch;
+    return _branchToElement[normalizedBranch];
+  }
 
   /// 천간의 음양을 안전하게 가져옴 (null 반환 가능 - 옵셔널 버전)
-  bool? _getStemPolarityOrNull(String stem) => _stemPolarity[stem];
+  bool? _getStemPolarityOrNull(String stem) {
+    final normalizedStem = GanjiParser.toKoreanHeavenlyStemOrNull(stem) ?? stem;
+    return _stemPolarity[normalizedStem];
+  }
 
   // ========== 메인 계산 메서드 ==========
 
@@ -460,90 +472,48 @@ class SajuCalculator {
   /// 천간 → 한글 천간 변환 (한자, 간체 모두 지원)
   /// lunar 패키지가 때때로 천간+지지를 함께 반환할 수 있으므로 첫 글자만 추출
   String _convertToKoreanStem(String stem) {
-    // 빈 문자열 체크
+    final converted = GanjiParser.toKoreanHeavenlyStemOrNull(stem);
+    if (converted != null) return converted;
+
     if (stem.isEmpty) {
       debugPrint('⚠️ [SajuCalculator] Empty stem received');
-      return '갑'; // 기본값
+      throw SajuCalculationException(
+        '천간 값이 비어있습니다',
+        invalidValue: stem,
+        context: '_convertToKoreanStem',
+      );
     }
-    
-    // 두 글자 이상인 경우 첫 글자만 추출 (천간+지지가 함께 온 경우)
-    final actualStem = stem.length > 1 ? stem.substring(0, 1) : stem;
-    
-    // 이미 한글이면 그대로 반환
-    if (_stems.contains(actualStem)) {
-      return actualStem;
-    }
-    
-    // 한자(번체) 천간 변환
-    var index = _stemsHanja.indexOf(actualStem);
-    if (index >= 0) {
-      return _stems[index];
-    }
-    
-    // 간체 천간 변환 (동일한 경우가 많지만 확인용)
-    index = _stemsSimplified.indexOf(actualStem);
-    if (index >= 0) {
-      return _stems[index];
-    }
-    
-    debugPrint('⚠️ [SajuCalculator] Unknown stem format: "$stem" -> "$actualStem" (codeUnits: ${actualStem.codeUnits})');
-    
-    // 변환 실패 시 기본값 반환 (오류 방지)
-    return '갑';
+
+    // 변환 실패 시: 플랫폼/브라우저 이슈로 값이 깨졌을 가능성이 높으므로 명시적으로 실패 처리
+    debugPrint('⚠️ [SajuCalculator] Unknown stem format: "$stem" (codeUnits: ${stem.codeUnits})');
+    throw SajuCalculationException(
+      '유효하지 않은 천간입니다',
+      invalidValue: stem,
+      context: '_convertToKoreanStem',
+    );
   }
 
   /// 지지 → 한글 지지 변환 (한자, 간체 모두 지원)
   /// lunar 패키지가 때때로 천간+지지를 함께 반환할 수 있으므로 두번째 글자 또는 첫 글자 추출
   String _convertToKoreanBranch(String branch) {
-    // 빈 문자열 체크
+    final converted = GanjiParser.toKoreanEarthlyBranchOrNull(branch);
+    if (converted != null) return converted;
+
     if (branch.isEmpty) {
       debugPrint('⚠️ [SajuCalculator] Empty branch received');
-      return '자'; // 기본값
+      throw SajuCalculationException(
+        '지지 값이 비어있습니다',
+        invalidValue: branch,
+        context: '_convertToKoreanBranch',
+      );
     }
-    
-    // 원본 그대로 시도
-    String actualBranch = branch;
-    
-    // 이미 한글이면 그대로 반환
-    if (_branches.contains(actualBranch)) {
-      return actualBranch;
-    }
-    
-    // 한자(번체) 지지 변환
-    var index = _branchesHanja.indexOf(actualBranch);
-    if (index >= 0) {
-      return _branches[index];
-    }
-    
-    // 간체 지지 변환
-    index = _branchesSimplified.indexOf(actualBranch);
-    if (index >= 0) {
-      return _branches[index];
-    }
-    
-    // 두 글자 이상인 경우 두번째 글자 시도 (천간+지지가 함께 온 경우)
-    if (branch.length > 1) {
-      actualBranch = branch.substring(1, 2);
-      
-      if (_branches.contains(actualBranch)) {
-        return actualBranch;
-      }
-      
-      index = _branchesHanja.indexOf(actualBranch);
-      if (index >= 0) {
-        return _branches[index];
-      }
-      
-      index = _branchesSimplified.indexOf(actualBranch);
-      if (index >= 0) {
-        return _branches[index];
-      }
-    }
-    
-    debugPrint('⚠️ [SajuCalculator] Unknown branch format: "$branch" -> "$actualBranch" (codeUnits: ${actualBranch.codeUnits})');
-    
-    // 변환 실패 시 기본값 반환 (오류 방지)
-    return '자';
+
+    debugPrint('⚠️ [SajuCalculator] Unknown branch format: "$branch" (codeUnits: ${branch.codeUnits})');
+    throw SajuCalculationException(
+      '유효하지 않은 지지입니다',
+      invalidValue: branch,
+      context: '_convertToKoreanBranch',
+    );
   }
 
   /// 특정 연도와의 궁합 분석 (2026 병오년용)

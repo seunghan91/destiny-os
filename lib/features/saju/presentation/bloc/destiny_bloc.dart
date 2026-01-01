@@ -232,6 +232,9 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     AnalyzeFortune event,
     Emitter<DestinyState> emit,
   ) async {
+    print('🔮 [DestinyBloc] AnalyzeFortune event received');
+    print('🔮 [DestinyBloc] birthDateTime: ${event.birthDateTime}');
+    print('🔮 [DestinyBloc] mbtiType: ${event.mbtiType}');
     emit(const DestinyAnalyzing(message: '사주팔자를 계산하고 있습니다...'));
 
     try {
@@ -271,6 +274,7 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       final sajuBasedMbti = _calculator.inferMbtiFromSaju(sajuChart, tenGods);
       final gapAnalysis = _performGapAnalysis(sajuBasedMbti, mbtiType);
 
+      print('🔮 [DestinyBloc] Analysis complete, emitting DestinySuccess');
       emit(DestinySuccess(
         sajuChart: sajuChart,
         tenGods: tenGods,
@@ -279,7 +283,9 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
         fortune2026: fortune2026,
         gapAnalysis: gapAnalysis,
       ));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ [DestinyBloc] Error: $e');
+      print('❌ [DestinyBloc] StackTrace: $stackTrace');
       emit(DestinyFailure(errorMessage: '분석 중 오류가 발생했습니다: $e'));
     }
   }
@@ -340,7 +346,7 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
         baseScore -= 20;  // 자오충
       }
 
-      if (yearAnalysis.isFireFavorable) {
+      if (yearAnalysis.isFireBeneficial) {
         baseScore += 15;
       }
 
@@ -348,7 +354,7 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
         month: month,
         score: baseScore.clamp(0, 100),
         theme: _getMonthTheme(month),
-        advice: _getMonthAdvice(month, yearAnalysis.isFireFavorable),
+        advice: _getMonthAdvice(month, yearAnalysis.isFireBeneficial),
         fireEnergy: fireEnergy,
         hasClash: month == 11,
         hasCombination: month == 6,
@@ -358,18 +364,18 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     return Fortune2026(
       sajuChart: chart,
       overallScore: yearAnalysis.score.toDouble(),
-      yearTheme: yearAnalysis.isFireFavorable ? '불꽃 같은 성장의 해' : '내면 단련의 해',
+      yearTheme: yearAnalysis.isFireBeneficial ? '불꽃 같은 성장의 해' : '내면 단련의 해',
       yearAdvice: yearAnalysis.analysis,
       monthlyFortunes: monthlyFortunes,
       fireCompatibility: FireCompatibility(
         compatibilityScore: yearAnalysis.score.toDouble(),
-        description: yearAnalysis.isFireFavorable
+        description: yearAnalysis.isFireBeneficial
             ? '2026년은 당신의 무대입니다!'
             : '과열 주의보. 냉각 시스템이 필요합니다.',
-        advantages: yearAnalysis.isFireFavorable
+        advantages: yearAnalysis.isFireBeneficial
             ? ['활발한 사회 활동', '새로운 기회 포착', '인지도 상승']
             : ['내면 성장', '신중한 판단력', '재충전의 기회'],
-        cautions: yearAnalysis.isFireFavorable
+        cautions: yearAnalysis.isFireBeneficial
             ? ['과신 주의', '건강 관리 필요']
             : ['성급한 결정 금물', '갈등 상황 회피', '스트레스 관리'],
       ),
@@ -386,12 +392,12 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     return themes[month] ?? '평온';
   }
 
-  String _getMonthAdvice(int month, bool isFireFavorable) {
+  String _getMonthAdvice(int month, bool isFireBeneficial) {
     if (month == 11) {
       return '충(沖) 주의: 대인관계에서 언행을 삼가고 중요한 결정은 미루세요.';
     }
     if (month >= 5 && month <= 7) {
-      return isFireFavorable
+      return isFireBeneficial
           ? '최고의 시기입니다. 과감하게 도전하세요!'
           : '열기가 과합니다. 휴식을 충분히 취하세요.';
     }

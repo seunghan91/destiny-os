@@ -27,9 +27,10 @@ class SajuChart extends Equatable {
   /// 일간의 오행
   String get dayMasterElement => _getElement(dayPillar.heavenlyStem);
 
-  /// 용신 (Yongshin) - 사주에서 가장 필요한 오행
+  /// 보완 오행 - 사주에서 부족하여 보완이 필요한 오행
+  /// (전통 명리학의 '용신' 개념을 현대적으로 표현)
   /// 실제 계산은 복잡하므로 간략화된 버전
-  String get favorableElement {
+  String get complementaryElement {
     final elements = elementCount;
     String? weakest;
     int minCount = 999;

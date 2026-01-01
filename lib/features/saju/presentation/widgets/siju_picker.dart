@@ -62,7 +62,7 @@ class SijuPicker extends StatelessWidget {
         crossAxisCount: 4,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
-        childAspectRatio: 1.1,
+        childAspectRatio: 0.85, // 시간 범위 표시를 위해 카드 높이 증가
       ),
       itemCount: sijuList.length,
       itemBuilder: (context, index) {
@@ -115,22 +115,37 @@ class _SijuCard extends StatelessWidget {
                 ]
               : null,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              siju.emoji,
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              siju.name,
-              style: AppTypography.labelMedium.copyWith(
-                color: isSelected ? AppColors.white : AppColors.textPrimary,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                siju.emoji,
+                style: const TextStyle(fontSize: 20),
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                '${siju.name} (${siju.hanja})',
+                style: AppTypography.labelSmall.copyWith(
+                  color: isSelected ? AppColors.white : AppColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                siju.timeRange.replaceAll(' ', ''),
+                style: TextStyle(
+                  fontSize: 9,
+                  color: isSelected
+                      ? AppColors.white.withValues(alpha: 0.85)
+                      : AppColors.textSecondary,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

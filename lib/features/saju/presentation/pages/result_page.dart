@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,8 +7,11 @@ import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../domain/entities/saju_chart.dart';
 import '../bloc/destiny_bloc.dart';
+import '../widgets/result_hero_card.dart';
+import '../widgets/result_navigation_grid.dart';
+import '../widgets/result_ai_cta.dart';
 
-/// 사주 분석 결과 페이지
+/// 사주 분석 결과 페이지 - Toss 디자인 시스템
 class ResultPage extends StatelessWidget {
   const ResultPage({super.key});
 
@@ -16,78 +20,183 @@ class ResultPage extends StatelessWidget {
     return BlocBuilder<DestinyBloc, DestinyState>(
       builder: (context, state) {
         if (state is! DestinySuccess) {
-          // 데이터가 없으면 입력 페이지로 이동
-          return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('분석 데이터가 없습니다'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.go('/input'),
-                    child: const Text('정보 입력하기'),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return _buildEmptyState(context);
         }
 
-        final data = state;
-
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('분석 결과'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.share),
-                onPressed: () {
-                  // TODO: 공유 기능
-                },
+          backgroundColor: AppColors.background,
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // 앱바
+              _buildAppBar(context, state),
+
+              // 콘텐츠
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+
+                      // 히어로 카드 - 2026 운세
+                      ResultHeroCard(data: state),
+                      const SizedBox(height: 24),
+
+                      // 사주팔자 요약
+                      _buildSajuSummary(state.sajuChart),
+                      const SizedBox(height: 24),
+
+                      // 2x2 네비게이션 그리드
+                      ResultNavigationGrid(data: state),
+                      const SizedBox(height: 24),
+
+                      // AI 상담 CTA
+                      const ResultAiCta(),
+                      const SizedBox(height: 32),
+
+                      // 다시 분석하기
+                      _buildResetButton(context),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
               ),
             ],
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 사주팔자 카드
-                _buildSajuCard(data.sajuChart),
-                const SizedBox(height: 24),
-
-                // 십성 분포 카드
-                _buildTenGodsCard(data),
-                const SizedBox(height: 24),
-
-                // MBTI Gap 분석
-                _buildGapAnalysisCard(data),
-                const SizedBox(height: 24),
-
-                // 2026 운세 미리보기
-                _buildFortunePreview(context, data),
-                const SizedBox(height: 24),
-
-                // 대운 타임라인 미리보기
-                _buildDaewoonPreview(context, data),
-                const SizedBox(height: 24),
-
-                // 궁합 분석 버튼
-                _buildCompatibilityButton(context),
-                const SizedBox(height: 24),
-
-                // AI 상담 버튼
-                _buildAiConsultationButton(context),
-              ],
-            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildSajuCard(SajuChart chart) {
+  Widget _buildEmptyState(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text('🔮', style: TextStyle(fontSize: 48)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  '분석 결과가 없습니다',
+                  style: AppTypography.headlineSmall.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '생년월일과 MBTI를 입력하고\n운명을 분석해보세요',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      context.go('/input');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      '정보 입력하기',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  SliverAppBar _buildAppBar(BuildContext context, DestinySuccess state) {
+    return SliverAppBar(
+      expandedHeight: 140,
+      floating: false,
+      pinned: true,
+      backgroundColor: AppColors.background,
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          context.go('/input');
+        },
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.share_rounded),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            _showShareBottomSheet(context, state);
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.settings_rounded),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            context.push('/settings');
+          },
+        ),
+        const SizedBox(width: 8),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+        title: Text(
+          '분석 완료',
+          style: AppTypography.titleLarge.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.primary.withAlpha(20),
+                AppColors.background,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSajuSummary(SajuChart chart) {
     // 천간/지지를 한자로 변환
     final stemToHanja = {
       '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊',
@@ -116,84 +225,177 @@ class ResultPage extends StatelessWidget {
     }
 
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withAlpha(13),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('사주팔자', style: AppTypography.headlineSmall),
-          const SizedBox(height: 16),
+          // 헤더
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(25),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Text('命', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '사주팔자',
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '당신만의 운명 암호',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
 
           // 4주 표시
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildPillar(
-                '년주',
-                stemToHanja[chart.yearPillar.heavenlyStem] ?? chart.yearPillar.heavenlyStem,
-                branchToHanja[chart.yearPillar.earthlyBranch] ?? chart.yearPillar.earthlyBranch,
-                getElementColor(chart.yearPillar.heavenlyStem),
+              Expanded(
+                child: _buildPillarColumn(
+                  '년주',
+                  stemToHanja[chart.yearPillar.heavenlyStem] ?? '',
+                  branchToHanja[chart.yearPillar.earthlyBranch] ?? '',
+                  getElementColor(chart.yearPillar.heavenlyStem),
+                ),
               ),
-              _buildPillar(
-                '월주',
-                stemToHanja[chart.monthPillar.heavenlyStem] ?? chart.monthPillar.heavenlyStem,
-                branchToHanja[chart.monthPillar.earthlyBranch] ?? chart.monthPillar.earthlyBranch,
-                getElementColor(chart.monthPillar.heavenlyStem),
+              Expanded(
+                child: _buildPillarColumn(
+                  '월주',
+                  stemToHanja[chart.monthPillar.heavenlyStem] ?? '',
+                  branchToHanja[chart.monthPillar.earthlyBranch] ?? '',
+                  getElementColor(chart.monthPillar.heavenlyStem),
+                ),
               ),
-              _buildPillar(
-                '일주',
-                stemToHanja[chart.dayPillar.heavenlyStem] ?? chart.dayPillar.heavenlyStem,
-                branchToHanja[chart.dayPillar.earthlyBranch] ?? chart.dayPillar.earthlyBranch,
-                getElementColor(chart.dayPillar.heavenlyStem),
+              Expanded(
+                child: _buildPillarColumn(
+                  '일주',
+                  stemToHanja[chart.dayPillar.heavenlyStem] ?? '',
+                  branchToHanja[chart.dayPillar.earthlyBranch] ?? '',
+                  getElementColor(chart.dayPillar.heavenlyStem),
+                  isHighlighted: true,
+                ),
               ),
-              _buildPillar(
-                '시주',
-                stemToHanja[chart.hourPillar.heavenlyStem] ?? chart.hourPillar.heavenlyStem,
-                branchToHanja[chart.hourPillar.earthlyBranch] ?? chart.hourPillar.earthlyBranch,
-                getElementColor(chart.hourPillar.heavenlyStem),
+              Expanded(
+                child: _buildPillarColumn(
+                  '시주',
+                  stemToHanja[chart.hourPillar.heavenlyStem] ?? '',
+                  branchToHanja[chart.hourPillar.earthlyBranch] ?? '',
+                  getElementColor(chart.hourPillar.heavenlyStem),
+                ),
               ),
             ],
           ),
 
           const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 12),
 
           // 일간 설명
-          Text(
-            '일간: ${stemToHanja[chart.dayPillar.heavenlyStem]}${_getElementName(chart.dayPillar.heavenlyStem)}',
-            style: AppTypography.titleMedium,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _getDayMasterDescription(chart.dayPillar.heavenlyStem),
-            style: AppTypography.bodySmall,
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: getElementColor(chart.dayPillar.heavenlyStem).withAlpha(20),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 16,
+                  color: getElementColor(chart.dayPillar.heavenlyStem),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _getDayMasterDescription(chart.dayPillar.heavenlyStem),
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  String _getElementName(String stem) {
-    const mapping = {
-      '갑': '木 (양목)', '을': '木 (음목)',
-      '병': '火 (양화)', '정': '火 (음화)',
-      '무': '土 (양토)', '기': '土 (음토)',
-      '경': '金 (양금)', '신': '金 (음금)',
-      '임': '水 (양수)', '계': '水 (음수)',
-    };
-    return mapping[stem] ?? '';
+  Widget _buildPillarColumn(
+    String label,
+    String stem,
+    String branch,
+    Color color, {
+    bool isHighlighted = false,
+  }) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(
+            color: isHighlighted ? color : AppColors.textTertiary,
+            fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: isHighlighted ? color.withAlpha(25) : AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+            border: isHighlighted
+                ? Border.all(color: color.withAlpha(100), width: 1.5)
+                : null,
+          ),
+          child: Column(
+            children: [
+              Text(
+                stem,
+                style: AppTypography.hanja.copyWith(
+                  color: color,
+                  fontSize: 22,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                branch,
+                style: AppTypography.hanja.copyWith(
+                  color: color,
+                  fontSize: 22,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   String _getDayMasterDescription(String stem) {
@@ -212,430 +414,126 @@ class ResultPage extends StatelessWidget {
     return descriptions[stem] ?? '안정적이고 신뢰감 있는 성격입니다.';
   }
 
-  Widget _buildPillar(String label, String stem, String branch, Color color) {
-    return Column(
-      children: [
-        Text(label, style: AppTypography.caption),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            children: [
-              Text(stem, style: AppTypography.hanja.copyWith(color: color)),
-              const SizedBox(height: 4),
-              Text(branch, style: AppTypography.hanja.copyWith(color: color)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTenGodsCard(DestinySuccess data) {
-    final distribution = data.tenGods.distribution;
-    final sortedGods = distribution.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('십성 분포', style: AppTypography.headlineSmall),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: sortedGods.where((e) => e.value > 0).map((entry) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  '${entry.key} ${entry.value}',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '주요 십성: ${data.tenGods.dominantGod}',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+  Widget _buildResetButton(BuildContext context) {
+    return Center(
+      child: TextButton(
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          context.read<DestinyBloc>().add(ResetDestinyData());
+          context.go('/input');
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.refresh_rounded,
+              size: 18,
+              color: AppColors.textTertiary,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGapAnalysisCard(DestinySuccess data) {
-    final gap = data.gapAnalysis;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha: 0.1),
-            AppColors.wood.withValues(alpha: 0.1),
+            const SizedBox(width: 4),
+            Text(
+              '다시 분석하기',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.auto_awesome, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Text('Gap 분석', style: AppTypography.headlineSmall),
-            ],
-          ),
-          const SizedBox(height: 16),
+    );
+  }
 
-          // Gap 점수
-          Row(
-            children: [
-              Text(
-                '${gap.gapScore.toInt()}',
-                style: AppTypography.numberLarge,
+  void _showShareBottomSheet(BuildContext context, DestinySuccess state) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey300,
+                borderRadius: BorderRadius.circular(2),
               ),
-              Text(
-                '%',
-                style: AppTypography.headlineLarge.copyWith(
-                  color: AppColors.primary,
-                ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              '분석 결과 공유하기',
+              style: AppTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('사주 추론: ${gap.sajuBasedMbti}', style: AppTypography.labelMedium),
-                    Text('현재 MBTI: ${gap.actualMbti}', style: AppTypography.labelMedium),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          // 차원별 일치/불일치 표시
-          if (gap.dimensionGaps.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: gap.dimensionGaps.map((d) {
-                final isMatch = !d.hasGap;
-                return Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isMatch
-                            ? AppColors.wood.withValues(alpha: 0.2)
-                            : AppColors.fire.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        d.dimension,
-                        style: AppTypography.labelSmall.copyWith(
-                          color: isMatch ? AppColors.wood : AppColors.fire,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Icon(
-                      isMatch ? Icons.check_circle : Icons.swap_horiz,
-                      size: 16,
-                      color: isMatch ? AppColors.wood : AppColors.fire,
-                    ),
-                  ],
-                );
-              }).toList(),
+              children: [
+                _buildShareOption(
+                  icon: Icons.image_rounded,
+                  label: '이미지로 저장',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // TODO: 이미지 저장 기능
+                  },
+                ),
+                _buildShareOption(
+                  icon: Icons.copy_rounded,
+                  label: '텍스트 복사',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // TODO: 텍스트 복사 기능
+                  },
+                ),
+                _buildShareOption(
+                  icon: Icons.share_rounded,
+                  label: '공유하기',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // TODO: 공유 기능
+                  },
+                ),
+              ],
             ),
+            const SizedBox(height: 32),
           ],
-
-          const SizedBox(height: 16),
-          Text(
-            gap.interpretation,
-            style: AppTypography.bodyMedium,
-          ),
-          if (gap.hasSignificantGap) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.lightbulb_outline, size: 20, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      gap.hiddenPotential,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          // 맞춤형 조언
-          if (gap.recommendations.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ...gap.recommendations.take(2).map((rec) => Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('💡 ', style: TextStyle(fontSize: 12)),
-                  Expanded(
-                    child: Text(
-                      rec,
-                      style: AppTypography.bodySmall,
-                    ),
-                  ),
-                ],
-              ),
-            )),
-          ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildFortunePreview(BuildContext context, DestinySuccess data) {
-    final fortune = data.fortune2026;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.fireLight,
-        borderRadius: BorderRadius.circular(16),
-      ),
+  Widget _buildShareOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Text('🐴', style: TextStyle(fontSize: 24)),
-              const SizedBox(width: 8),
-              Text('2026 병오년 운세', style: AppTypography.headlineSmall),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.fire,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${fortune.overallScore.toInt()}점',
-                  style: AppTypography.labelMedium.copyWith(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            fortune.yearTheme,
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.fire,
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(16),
             ),
+            child: Icon(icon, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
-            fortune.yearAdvice,
-            style: AppTypography.bodyMedium,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () => context.go('/fortune'),
-            child: const Text('자세히 보기'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDaewoonPreview(BuildContext context, DestinySuccess data) {
-    final daewoon = data.daewoonChart;
-    final currentDaewoon = daewoon.currentDaewoon;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.timeline, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Text('대운 타임라인', style: AppTypography.headlineSmall),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (currentDaewoon != null) ...[
-            Text(
-              '현재 대운 (${currentDaewoon.startAge}~${currentDaewoon.endAge}세)',
-              style: AppTypography.labelLarge,
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    '${currentDaewoon.pillar.heavenlyStem}${currentDaewoon.pillar.earthlyBranch}',
-                    style: AppTypography.titleLarge.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentDaewoon.theme,
-                          style: AppTypography.titleSmall,
-                        ),
-                        Text(
-                          currentDaewoon.description,
-                          style: AppTypography.bodySmall,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () => context.go('/daewoon'),
-            child: const Text('전체 대운 보기'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompatibilityButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text('💕', style: TextStyle(fontSize: 24)),
-              const SizedBox(width: 8),
-              Text('궁합 분석', style: AppTypography.headlineSmall),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '연인, 친구, 비즈니스 파트너와의 궁합을 사주로 분석해보세요.',
-            style: AppTypography.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () => context.go('/compatibility'),
-            child: const Text('궁합 보기'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAiConsultationButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 32),
-          const SizedBox(height: 12),
-          Text(
-            'AI에게 질문하기',
-            style: AppTypography.titleLarge.copyWith(color: Colors.white),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '1회 무료 상담',
-            style: AppTypography.bodySmall.copyWith(
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                // TODO: AI 상담 페이지로 이동
-                context.go('/consultation');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: AppColors.primary,
-              ),
-              child: const Text('상담 시작'),
+            label,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
         ],

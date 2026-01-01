@@ -1,4 +1,6 @@
+import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,7 +10,7 @@ import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../bloc/destiny_bloc.dart';
 import '../widgets/siju_picker.dart';
-import '../widgets/mbti_grid_selector.dart';
+import '../widgets/mbti_dimension_selector.dart';
 
 /// 사주 정보 입력 페이지 - 토스 디자인 시스템 기반
 class InputPage extends StatefulWidget {
@@ -20,12 +22,17 @@ class InputPage extends StatefulWidget {
 
 class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   // 입력 데이터
+  final TextEditingController _nameController = TextEditingController();
   DateTime? _birthDate;
   int? _selectedSijuIndex;
   Siju? _selectedSiju;
   String _gender = 'male';
   bool _isLunar = false;
   String? _selectedMbti;
+
+  // 분석 옵션
+  bool _analyzeSaju = true;
+  bool _analyzeMbti = true;
 
   // 애니메이션
   late AnimationController _loadingController;
@@ -41,6 +48,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _loadingController.dispose();
     super.dispose();
   }
@@ -88,15 +96,19 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                             const SizedBox(height: 8),
                             _buildHeader(),
                             const SizedBox(height: 32),
-                            _buildBirthDateSection(),
+                            _buildNameSection(),
                             const SizedBox(height: 24),
-                            _buildBirthTimeSection(),
+                            _buildBirthDateSection(),
                             const SizedBox(height: 24),
                             _buildGenderSection(),
                             const SizedBox(height: 24),
-                            _buildLunarOption(),
+                            _buildBirthTimeSection(),
                             const SizedBox(height: 32),
-                            _buildMbtiSection(),
+                            _buildAnalysisOptions(),
+                            if (_analyzeMbti) ...[
+                              const SizedBox(height: 24),
+                              _buildMbtiSection(),
+                            ],
                             const SizedBox(height: 40),
                             _buildAnalyzeButton(),
                             const SizedBox(height: 32),
@@ -158,6 +170,195 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildNameSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('이름', subtitle: '선택 입력'),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _nameController.text.isNotEmpty
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : AppColors.border,
+              width: _nameController.text.isNotEmpty ? 1.5 : 1,
+            ),
+          ),
+          child: TextField(
+            controller: _nameController,
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              hintText: '이름을 입력하세요',
+              hintStyle: AppTypography.titleMedium.copyWith(
+                color: AppColors.textTertiary,
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(12),
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _nameController.text.isNotEmpty
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  color: _nameController.text.isNotEmpty
+                      ? AppColors.primary
+                      : AppColors.textTertiary,
+                  size: 24,
+                ),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 20,
+              ),
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '결과에 "OOO님의 운세"로 표시됩니다',
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textTertiary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnalysisOptions() {
+    final bool showGapBadge = _analyzeSaju && _analyzeMbti;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('분석 옵션'),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _buildFilterChip(
+              label: '사주 분석',
+              emoji: '🔮',
+              isSelected: _analyzeSaju,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _analyzeSaju = !_analyzeSaju);
+              },
+            ),
+            const SizedBox(width: 10),
+            _buildFilterChip(
+              label: 'MBTI',
+              emoji: '🧠',
+              isSelected: _analyzeMbti,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _analyzeMbti = !_analyzeMbti);
+              },
+            ),
+            if (showGapBadge) ...[
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.15),
+                      AppColors.fire.withValues(alpha: 0.15),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('✨', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Gap',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required String emoji,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTypography.labelMedium.copyWith(
+                color: isSelected ? AppColors.white : AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              isSelected ? Icons.check_circle : Icons.circle_outlined,
+              size: 16,
+              color: isSelected
+                  ? AppColors.white.withValues(alpha: 0.9)
+                  : AppColors.textTertiary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -238,7 +439,64 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             ),
           ),
         ),
+        if (_birthDate != null) ...[
+          const SizedBox(height: 12),
+          _buildLunarToggle(),
+        ],
       ],
+    );
+  }
+
+  Widget _buildLunarToggle() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _isLunar = !_isLunar);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _isLunar
+              ? AppColors.earth.withValues(alpha: 0.1)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _isLunar
+                ? AppColors.earth.withValues(alpha: 0.3)
+                : AppColors.border,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Text('🌙', style: TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(
+              '음력으로 입력',
+              style: AppTypography.bodyMedium.copyWith(
+                color: _isLunar ? AppColors.earth : AppColors.textSecondary,
+                fontWeight: _isLunar ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+            const Spacer(),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isLunar ? AppColors.earth : Colors.transparent,
+                border: Border.all(
+                  color: _isLunar ? AppColors.earth : AppColors.grey400,
+                  width: 2,
+                ),
+              ),
+              child: _isLunar
+                  ? const Icon(Icons.check, size: 14, color: AppColors.white)
+                  : null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -293,7 +551,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     children: [
                       Text(
                         _selectedSiju != null
-                            ? '${_selectedSiju!.name} (${_selectedSiju!.hanja}時)'
+                            ? '${_selectedSiju!.name} (\${_selectedSiju!.hanja}時)'
                             : '출생 시간을 선택하세요',
                         style: AppTypography.titleMedium.copyWith(
                           color: _selectedSiju != null
@@ -414,140 +672,25 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLunarOption() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.earth.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Center(
-              child: Text('🌙', style: TextStyle(fontSize: 20)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '음력으로 입력',
-                  style: AppTypography.titleSmall.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  '생년월일이 음력이면 켜세요',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch.adaptive(
-            value: _isLunar,
-            onChanged: (v) {
-              HapticFeedback.selectionClick();
-              setState(() => _isLunar = v);
-            },
-            activeTrackColor: AppColors.primary,
-            activeThumbColor: AppColors.white,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildMbtiSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionLabel('MBTI', subtitle: 'Gap 분석에 사용됩니다'),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: _showMbtiPicker,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _selectedMbti != null
-                    ? _getMbtiColor().withValues(alpha: 0.3)
-                    : AppColors.border,
-                width: _selectedMbti != null ? 1.5 : 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: _selectedMbti != null
-                        ? _getMbtiColor().withValues(alpha: 0.15)
-                        : AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: _selectedMbti != null
-                        ? Text(
-                            _getMbtiEmoji(),
-                            style: const TextStyle(fontSize: 24),
-                          )
-                        : Icon(
-                            Icons.psychology_outlined,
-                            color: AppColors.textTertiary,
-                            size: 24,
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _selectedMbti ?? 'MBTI를 선택하세요',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: _selectedMbti != null
-                              ? AppColors.textPrimary
-                              : AppColors.textTertiary,
-                          fontWeight: _selectedMbti != null
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                        ),
-                      ),
-                      if (_selectedMbti != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _getMbtiNickname(),
-                          style: AppTypography.bodySmall.copyWith(
-                            color: _getMbtiColor(),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary,
-                ),
-              ],
-            ),
+        const SizedBox(height: 8),
+        Text(
+          '각 차원에서 자신에게 맞는 유형을 선택하세요',
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textTertiary,
           ),
+        ),
+        const SizedBox(height: 16),
+        // 인라인 차원 선택기 (4x2 타일 형식)
+        MbtiDimensionSelector(
+          initialType: _selectedMbti,
+          onTypeSelected: (type) {
+            setState(() => _selectedMbti = type);
+          },
         ),
       ],
     );
@@ -591,7 +734,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildAnalyzeButton() {
-    final canProceed = _birthDate != null;
+    final canProceed = _birthDate != null && (_analyzeSaju || _analyzeMbti);
 
     return Column(
       children: [
@@ -657,7 +800,6 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 애니메이션 로고
                 AnimatedBuilder(
                   animation: _loadingController,
                   builder: (context, child) {
@@ -701,10 +843,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     );
                   },
                 ),
-
                 const SizedBox(height: 40),
-
-                // 분석 메시지
                 Text(
                   state.message,
                   style: AppTypography.headlineMedium.copyWith(
@@ -712,9 +851,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                   ),
                   textAlign: TextAlign.center,
                 ),
-
                 const SizedBox(height: 16),
-
                 Text(
                   '천간과 지지의 조화를 분석하고 있어요',
                   style: AppTypography.bodyLarge.copyWith(
@@ -722,10 +859,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                   ),
                   textAlign: TextAlign.center,
                 ),
-
                 const SizedBox(height: 40),
-
-                // 프로그레스
                 SizedBox(
                   width: 200,
                   child: LinearProgressIndicator(
@@ -742,53 +876,79 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
     );
   }
 
-  // 헬퍼 메서드들
   String _getZodiacInfo() {
     if (_birthDate == null) return '';
     final year = _birthDate!.year;
-    final animals = ['🐭쥐', '🐮소', '🐯호랑이', '🐰토끼', '🐲용', '🐍뱀',
+    const animals = ['🐭쥐', '🐮소', '🐯호랑이', '🐰토끼', '🐲용', '🐍뱀',
                      '🐴말', '🐑양', '🐵원숭이', '🐔닭', '🐶개', '🐷돼지'];
-    final index = (year - 4) % 12;
-    return '${animals[index]}띠';
+    return '${animals[(year - 4) % 12]}띠';
   }
 
-  Color _getMbtiColor() {
-    if (_selectedMbti == null) return AppColors.grey400;
-    if (['INTJ', 'INTP', 'ENTJ', 'ENTP'].contains(_selectedMbti)) {
-      return const Color(0xFF7C3AED);
-    }
-    if (['INFJ', 'INFP', 'ENFJ', 'ENFP'].contains(_selectedMbti)) {
-      return const Color(0xFF059669);
-    }
-    if (['ISTJ', 'ISFJ', 'ESTJ', 'ESFJ'].contains(_selectedMbti)) {
-      return const Color(0xFF0284C7);
-    }
-    return const Color(0xFFDC2626);
-  }
-
-  String _getMbtiEmoji() {
-    final emojis = {
-      'INTJ': '🧠', 'INTP': '🔬', 'ENTJ': '👑', 'ENTP': '💡',
-      'INFJ': '🌟', 'INFP': '🦋', 'ENFJ': '🌈', 'ENFP': '✨',
-      'ISTJ': '📊', 'ISFJ': '🛡️', 'ESTJ': '📋', 'ESFJ': '🤝',
-      'ISTP': '🛠️', 'ISFP': '🎨', 'ESTP': '🚀', 'ESFP': '🎭',
-    };
-    return emojis[_selectedMbti] ?? '🔮';
-  }
-
-  String _getMbtiNickname() {
-    final nicknames = {
-      'INTJ': '전략가', 'INTP': '논리술사', 'ENTJ': '통솔자', 'ENTP': '변론가',
-      'INFJ': '옹호자', 'INFP': '중재자', 'ENFJ': '선도자', 'ENFP': '활동가',
-      'ISTJ': '현실주의자', 'ISFJ': '수호자', 'ESTJ': '경영자', 'ESFJ': '집정관',
-      'ISTP': '장인', 'ISFP': '모험가', 'ESTP': '사업가', 'ESFP': '연예인',
-    };
-    return nicknames[_selectedMbti] ?? '';
-  }
-
-  // 다이얼로그/피커
   void _showDatePicker() {
     HapticFeedback.selectionClick();
+
+    // 웹이나 데스크톱에서는 Material DatePicker 사용
+    if (kIsWeb || _isDesktopPlatform()) {
+      _showMaterialDatePicker();
+    } else {
+      // 모바일에서는 CupertinoDatePicker 사용
+      _showCupertinoDatePicker();
+    }
+  }
+
+  bool _isDesktopPlatform() {
+    try {
+      return Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> _showMaterialDatePicker() async {
+    final DateTime initialDate = _birthDate ?? DateTime(1990, 1, 1);
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1920, 1, 1),
+      lastDate: DateTime.now(),
+      helpText: '생년월일을 선택하세요',
+      cancelText: '취소',
+      confirmText: '확인',
+      fieldLabelText: '날짜 입력',
+      fieldHintText: 'YYYY/MM/DD',
+      errorFormatText: '올바른 형식으로 입력하세요',
+      errorInvalidText: '유효한 날짜를 입력하세요',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              surface: AppColors.surface,
+              onSurface: AppColors.textPrimary,
+            ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: AppColors.surface,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      HapticFeedback.mediumImpact();
+      setState(() => _birthDate = picked);
+    }
+  }
+
+  void _showCupertinoDatePicker() {
     DateTime tempDate = _birthDate ?? DateTime(1990, 1, 1);
 
     showModalBottomSheet(
@@ -881,17 +1041,6 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           _selectedSijuIndex = index;
           _selectedSiju = siju;
         });
-      },
-    );
-  }
-
-  void _showMbtiPicker() {
-    HapticFeedback.selectionClick();
-    MbtiSelectorBottomSheet.show(
-      context,
-      initialType: _selectedMbti,
-      onSelected: (type) {
-        setState(() => _selectedMbti = type);
       },
     );
   }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../saju/domain/entities/saju_chart.dart';
 import '../../../saju/domain/entities/daewoon.dart';
+import '../../../saju/presentation/bloc/destiny_bloc.dart';
 
 /// 대운 타임라인 페이지
 /// 10년 주기의 인생 흐름을 시각화
@@ -25,14 +28,15 @@ class _DaewoonPageState extends State<DaewoonPage> {
   late ScrollController _timelineController;
   int _selectedDaewoonIndex = 0;
 
-  // 데모 데이터
-  late DaewoonChart _daewoonChart;
+  // BLoC 또는 데모 데이터
+  DaewoonChart? _daewoonChart;
+  bool _isFromBloc = false;
 
   @override
   void initState() {
     super.initState();
     _timelineController = ScrollController();
-    _initializeDemoData();
+    _initializeData();
 
     // 현재 대운으로 스크롤
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -40,94 +44,120 @@ class _DaewoonPageState extends State<DaewoonPage> {
     });
   }
 
-  void _initializeDemoData() {
+  void _initializeData() {
+    // 1. 먼저 위젯 파라미터 확인
     if (widget.daewoonChart != null) {
       _daewoonChart = widget.daewoonChart!;
-      _selectedDaewoonIndex = _daewoonChart.daewoons.indexWhere(
-        (d) => d.isCurrentDaewoon(_daewoonChart.currentAge),
+      _updateSelectedIndex();
+      return;
+    }
+
+    // 2. BLoC에서 데이터 가져오기 시도
+    try {
+      final bloc = context.read<DestinyBloc>();
+      final state = bloc.state;
+      if (state is DestinySuccess) {
+        _daewoonChart = state.daewoonChart;
+        _isFromBloc = true;
+        _updateSelectedIndex();
+        return;
+      }
+    } catch (_) {
+      // BLoC이 없을 수 있음
+    }
+
+    // 3. 데모 데이터 사용
+    _daewoonChart = _createDemoData();
+    _updateSelectedIndex();
+  }
+
+  void _updateSelectedIndex() {
+    if (_daewoonChart != null) {
+      _selectedDaewoonIndex = _daewoonChart!.daewoons.indexWhere(
+        (d) => d.isCurrentDaewoon(_daewoonChart!.currentAge),
       );
       if (_selectedDaewoonIndex < 0) _selectedDaewoonIndex = 0;
-    } else {
-      // 데모 데이터 생성
-      _daewoonChart = DaewoonChart(
-        currentAge: 35,
-        daewoons: [
-          Daewoon(
-            startAge: 5,
-            endAge: 15,
-            pillar: const Pillar(heavenlyStem: '기', earthlyBranch: '묘'),
-            theme: '학습과 성장의 시기',
-            description: '인성운으로 학문적 성취와 정신적 성장이 이루어지는 시기입니다.',
-            fortuneScore: 68.0,
-          ),
-          Daewoon(
-            startAge: 15,
-            endAge: 25,
-            pillar: const Pillar(heavenlyStem: '경', earthlyBranch: '진'),
-            theme: '도전과 발전의 시기',
-            description: '관성운으로 사회적 지위와 명예를 얻을 수 있는 시기입니다.',
-            fortuneScore: 72.0,
-          ),
-          Daewoon(
-            startAge: 25,
-            endAge: 35,
-            pillar: const Pillar(heavenlyStem: '신', earthlyBranch: '사'),
-            theme: '재물 축적의 시기',
-            description: '재성운으로 경제적 기회가 많아지고 재물이 축적되는 시기입니다.',
-            fortuneScore: 80.0,
-          ),
-          Daewoon(
-            startAge: 35,
-            endAge: 45,
-            pillar: const Pillar(heavenlyStem: '임', earthlyBranch: '오'),
-            theme: '표현과 성취의 시기',
-            description: '식상운으로 창의력이 빛나고 재능을 발휘할 수 있는 시기입니다. 새로운 프로젝트를 시작하기 좋은 때입니다.',
-            fortuneScore: 85.0,
-          ),
-          Daewoon(
-            startAge: 45,
-            endAge: 55,
-            pillar: const Pillar(heavenlyStem: '계', earthlyBranch: '미'),
-            theme: '자아 확립의 시기',
-            description: '비겁운으로 자아 정체성이 강화되고 독립심이 높아지는 시기입니다.',
-            fortuneScore: 70.0,
-          ),
-          Daewoon(
-            startAge: 55,
-            endAge: 65,
-            pillar: const Pillar(heavenlyStem: '갑', earthlyBranch: '신'),
-            theme: '안정 유지의 시기',
-            description: '평온하게 흘러가며 지혜를 쌓는 시기입니다.',
-            fortuneScore: 65.0,
-          ),
-          Daewoon(
-            startAge: 65,
-            endAge: 75,
-            pillar: const Pillar(heavenlyStem: '을', earthlyBranch: '유'),
-            theme: '인간관계 확장기',
-            description: '주변 사람들과의 관계가 깊어지고 지혜를 전수하는 시기입니다.',
-            fortuneScore: 62.0,
-          ),
-          Daewoon(
-            startAge: 75,
-            endAge: 85,
-            pillar: const Pillar(heavenlyStem: '병', earthlyBranch: '술'),
-            theme: '명예 수확의 시기',
-            description: '삶의 결실을 맺고 명예를 얻는 시기입니다.',
-            fortuneScore: 68.0,
-          ),
-          Daewoon(
-            startAge: 85,
-            endAge: 95,
-            pillar: const Pillar(heavenlyStem: '정', earthlyBranch: '해'),
-            theme: '지혜의 완성기',
-            description: '인생의 지혜가 완성되고 평온함을 누리는 시기입니다.',
-            fortuneScore: 60.0,
-          ),
-        ],
-      );
-      _selectedDaewoonIndex = 3; // 현재 대운 (35~45세)
     }
+  }
+
+  DaewoonChart _createDemoData() {
+    return DaewoonChart(
+      currentAge: 35,
+      daewoons: [
+        Daewoon(
+          startAge: 5,
+          endAge: 15,
+          pillar: const Pillar(heavenlyStem: '기', earthlyBranch: '묘'),
+          theme: '학습과 성장의 시기',
+          description: '인성운으로 학문적 성취와 정신적 성장이 이루어지는 시기입니다.',
+          fortuneScore: 68.0,
+        ),
+        Daewoon(
+          startAge: 15,
+          endAge: 25,
+          pillar: const Pillar(heavenlyStem: '경', earthlyBranch: '진'),
+          theme: '도전과 발전의 시기',
+          description: '관성운으로 사회적 지위와 명예를 얻을 수 있는 시기입니다.',
+          fortuneScore: 72.0,
+        ),
+        Daewoon(
+          startAge: 25,
+          endAge: 35,
+          pillar: const Pillar(heavenlyStem: '신', earthlyBranch: '사'),
+          theme: '재물 축적의 시기',
+          description: '재성운으로 경제적 기회가 많아지고 재물이 축적되는 시기입니다.',
+          fortuneScore: 80.0,
+        ),
+        Daewoon(
+          startAge: 35,
+          endAge: 45,
+          pillar: const Pillar(heavenlyStem: '임', earthlyBranch: '오'),
+          theme: '표현과 성취의 시기',
+          description: '식상운으로 창의력이 빛나고 재능을 발휘할 수 있는 시기입니다. 새로운 프로젝트를 시작하기 좋은 때입니다.',
+          fortuneScore: 85.0,
+        ),
+        Daewoon(
+          startAge: 45,
+          endAge: 55,
+          pillar: const Pillar(heavenlyStem: '계', earthlyBranch: '미'),
+          theme: '자아 확립의 시기',
+          description: '비겁운으로 자아 정체성이 강화되고 독립심이 높아지는 시기입니다.',
+          fortuneScore: 70.0,
+        ),
+        Daewoon(
+          startAge: 55,
+          endAge: 65,
+          pillar: const Pillar(heavenlyStem: '갑', earthlyBranch: '신'),
+          theme: '안정 유지의 시기',
+          description: '평온하게 흘러가며 지혜를 쌓는 시기입니다.',
+          fortuneScore: 65.0,
+        ),
+        Daewoon(
+          startAge: 65,
+          endAge: 75,
+          pillar: const Pillar(heavenlyStem: '을', earthlyBranch: '유'),
+          theme: '인간관계 확장기',
+          description: '주변 사람들과의 관계가 깊어지고 지혜를 전수하는 시기입니다.',
+          fortuneScore: 62.0,
+        ),
+        Daewoon(
+          startAge: 75,
+          endAge: 85,
+          pillar: const Pillar(heavenlyStem: '병', earthlyBranch: '술'),
+          theme: '명예 수확의 시기',
+          description: '삶의 결실을 맺고 명예를 얻는 시기입니다.',
+          fortuneScore: 68.0,
+        ),
+        Daewoon(
+          startAge: 85,
+          endAge: 95,
+          pillar: const Pillar(heavenlyStem: '정', earthlyBranch: '해'),
+          theme: '지혜의 완성기',
+          description: '인생의 지혜가 완성되고 평온함을 누리는 시기입니다.',
+          fortuneScore: 60.0,
+        ),
+      ],
+    );
   }
 
   void _scrollToCurrentDaewoon() {
@@ -149,17 +179,35 @@ class _DaewoonPageState extends State<DaewoonPage> {
 
   @override
   Widget build(BuildContext context) {
+    // BLoC에서 데이터 갱신 감지
+    return BlocListener<DestinyBloc, DestinyState>(
+      listener: (context, state) {
+        if (state is DestinySuccess && _isFromBloc) {
+          setState(() {
+            _daewoonChart = state.daewoonChart;
+            _updateSelectedIndex();
+          });
+        }
+      },
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    // 데이터가 없으면 빈 상태 표시
+    if (_daewoonChart == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: _buildAppBar(),
+        body: const Center(
+          child: Text('대운 데이터를 불러올 수 없습니다.\n먼저 사주 분석을 진행해주세요.'),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('대운 타임라인'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () => _showDaewoonInfo(context),
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,10 +234,33 @@ class _DaewoonPageState extends State<DaewoonPage> {
     );
   }
 
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.surface,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+        onPressed: () => context.pop(),
+      ),
+      title: Text(
+        '대운 타임라인',
+        style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimary),
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.info_outline, color: AppColors.textPrimary),
+          onPressed: () => _showDaewoonInfo(context),
+        ),
+      ],
+    );
+  }
+
   Widget _buildCurrentDaewoonCard() {
-    final currentDaewoon = _daewoonChart.currentDaewoon ?? _daewoonChart.daewoons[_selectedDaewoonIndex];
-    final yearsRemaining = currentDaewoon.endAge - _daewoonChart.currentAge;
-    final progress = (_daewoonChart.currentAge - currentDaewoon.startAge) / 10;
+    final chart = _daewoonChart!;
+    final currentDaewoon = chart.currentDaewoon ?? chart.daewoons[_selectedDaewoonIndex];
+    final yearsRemaining = currentDaewoon.endAge - chart.currentAge;
+    final progress = (chart.currentAge - currentDaewoon.startAge) / 10;
 
     return Container(
       margin: const EdgeInsets.all(20),
@@ -338,7 +409,7 @@ class _DaewoonPageState extends State<DaewoonPage> {
             controller: _timelineController,
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _daewoonChart.daewoons.length,
+            itemCount: _daewoonChart!.daewoons.length,
             itemBuilder: (context, index) {
               return _buildTimelineItem(index);
             },
@@ -349,10 +420,10 @@ class _DaewoonPageState extends State<DaewoonPage> {
   }
 
   Widget _buildTimelineItem(int index) {
-    final daewoon = _daewoonChart.daewoons[index];
+    final daewoon = _daewoonChart!.daewoons[index];
     final isSelected = index == _selectedDaewoonIndex;
-    final isCurrent = daewoon.isCurrentDaewoon(_daewoonChart.currentAge);
-    final isPast = daewoon.endAge <= _daewoonChart.currentAge;
+    final isCurrent = daewoon.isCurrentDaewoon(_daewoonChart!.currentAge);
+    final isPast = daewoon.endAge <= _daewoonChart!.currentAge;
 
     return GestureDetector(
       onTap: () => setState(() => _selectedDaewoonIndex = index),
@@ -397,7 +468,7 @@ class _DaewoonPageState extends State<DaewoonPage> {
                 Expanded(
                   child: Container(
                     height: 2,
-                    color: index == _daewoonChart.daewoons.length - 1
+                    color: index == _daewoonChart!.daewoons.length - 1
                         ? Colors.transparent
                         : (isPast ? AppColors.primary : AppColors.grey300),
                   ),
@@ -466,7 +537,7 @@ class _DaewoonPageState extends State<DaewoonPage> {
   }
 
   Widget _buildSelectedDaewoonDetail() {
-    final daewoon = _daewoonChart.daewoons[_selectedDaewoonIndex];
+    final daewoon = _daewoonChart!.daewoons[_selectedDaewoonIndex];
     final element = _getPillarElement(daewoon.pillar.heavenlyStem);
 
     return Container(
@@ -555,10 +626,10 @@ class _DaewoonPageState extends State<DaewoonPage> {
   }
 
   Widget _buildNextDaewoonPreview() {
-    final nextDaewoon = _daewoonChart.nextDaewoon;
+    final nextDaewoon = _daewoonChart!.nextDaewoon;
     if (nextDaewoon == null) return const SizedBox.shrink();
 
-    final yearsUntil = _daewoonChart.yearsUntilNextDaewoon ?? 0;
+    final yearsUntil = _daewoonChart!.yearsUntilNextDaewoon ?? 0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -627,11 +698,11 @@ class _DaewoonPageState extends State<DaewoonPage> {
             height: 150,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: _daewoonChart.daewoons.asMap().entries.map((entry) {
+              children: _daewoonChart!.daewoons.asMap().entries.map((entry) {
                 final index = entry.key;
                 final daewoon = entry.value;
                 final isSelected = index == _selectedDaewoonIndex;
-                final isCurrent = daewoon.isCurrentDaewoon(_daewoonChart.currentAge);
+                final isCurrent = daewoon.isCurrentDaewoon(_daewoonChart!.currentAge);
                 final barHeight = (daewoon.fortuneScore / 100) * 120;
 
                 return Expanded(

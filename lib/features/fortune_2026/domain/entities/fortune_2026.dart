@@ -114,12 +114,12 @@ class FireCompatibility extends Equatable {
     required this.cautions,
   });
 
-  /// 화(火) 용신자인지
-  bool get isFireFavorable => compatibilityScore >= 60;
+  /// 화(火) 기운이 보완 오행인지 (사주에 화 기운이 필요한 사람인지)
+  bool get isFireBeneficial => compatibilityScore >= 60;
 
   /// 요약 메시지
   String get summaryMessage {
-    if (isFireFavorable) {
+    if (isFireBeneficial) {
       return '2026년은 당신의 무대입니다. 물 들어올 때 노 저으세요!';
     } else {
       return '과열 주의보 발령. 성급한 결정은 금물입니다.';

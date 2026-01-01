@@ -1,7 +1,25 @@
+import 'package:flutter/foundation.dart';
 import 'package:lunar/lunar.dart';
 import '../../domain/entities/saju_chart.dart';
 import '../../domain/entities/ten_gods.dart';
 import '../../domain/entities/daewoon.dart';
+
+/// 사주 계산 관련 예외
+class SajuCalculationException implements Exception {
+  final String message;
+  final String? invalidValue;
+  final String? context;
+
+  SajuCalculationException(this.message, {this.invalidValue, this.context});
+
+  @override
+  String toString() {
+    final buffer = StringBuffer('SajuCalculationException: $message');
+    if (invalidValue != null) buffer.write(' (value: $invalidValue)');
+    if (context != null) buffer.write(' [context: $context]');
+    return buffer.toString();
+  }
+}
 
 /// 사주명리학 계산 서비스
 /// lunar 패키지를 활용한 정확한 사주팔자 계산
@@ -35,6 +53,47 @@ class SajuCalculator {
     '갑': true, '을': false, '병': true, '정': false, '무': true,
     '기': false, '경': true, '신': false, '임': true, '계': false,
   };
+
+  // ========== 입력값 검증 메서드 ==========
+
+  /// 천간의 오행을 안전하게 가져옴 (검증 포함)
+  String _getStemElement(String stem, {String? context}) {
+    final element = _stemToElement[stem];
+    if (element == null) {
+      debugPrint('⚠️ [SajuCalculator] Invalid stem: "$stem" in $context');
+      throw SajuCalculationException(
+        '유효하지 않은 천간입니다',
+        invalidValue: stem,
+        context: context,
+      );
+    }
+    return element;
+  }
+
+  /// 천간의 음양을 안전하게 가져옴 (검증 포함)
+  bool _getStemPolarity(String stem, {String? context}) {
+    final polarity = _stemPolarity[stem];
+    if (polarity == null) {
+      debugPrint('⚠️ [SajuCalculator] Invalid stem for polarity: "$stem" in $context');
+      throw SajuCalculationException(
+        '유효하지 않은 천간입니다 (음양)',
+        invalidValue: stem,
+        context: context,
+      );
+    }
+    return polarity;
+  }
+
+  /// 천간의 오행을 안전하게 가져옴 (null 반환 가능 - 옵셔널 버전)
+  String? _getStemElementOrNull(String stem) => _stemToElement[stem];
+
+  /// 지지의 오행을 안전하게 가져옴 (null 반환 가능 - 옵셔널 버전)
+  String? _getBranchElementOrNull(String branch) => _branchToElement[branch];
+
+  /// 천간의 음양을 안전하게 가져옴 (null 반환 가능 - 옵셔널 버전)
+  bool? _getStemPolarityOrNull(String stem) => _stemPolarity[stem];
+
+  // ========== 메인 계산 메서드 ==========
 
   /// 사주팔자 계산 (메인 함수)
   /// [useSolarTimeCorrection]: 태양시 보정 사용 여부 (한국 표준시 → 태양시, 약 -30분)
@@ -73,6 +132,12 @@ class SajuCalculator {
     // 시간 정보를 포함한 EightChar(八字) 계산
     final eightChar = lunar.getEightChar();
 
+    // 디버그: lunar 패키지 반환값 확인
+    debugPrint('🔍 [SajuCalculator] Raw EightChar values:');
+    debugPrint('  Year: "${eightChar.getYear()}" / "${eightChar.getYearZhi()}"');
+    debugPrint('  Month: "${eightChar.getMonth()}" / "${eightChar.getMonthZhi()}"');
+    debugPrint('  Day: "${eightChar.getDay()}" / "${eightChar.getDayZhi()}"');
+
     // 년주 (年柱)
     final yearPillar = Pillar(
       heavenlyStem: _convertToKoreanStem(eightChar.getYear()),
@@ -90,6 +155,11 @@ class SajuCalculator {
       heavenlyStem: _convertToKoreanStem(eightChar.getDay()),
       earthlyBranch: _convertToKoreanBranch(eightChar.getDayZhi()),
     );
+
+    debugPrint('🔍 [SajuCalculator] Converted pillars:');
+    debugPrint('  Year: ${yearPillar.heavenlyStem}/${yearPillar.earthlyBranch}');
+    debugPrint('  Month: ${monthPillar.heavenlyStem}/${monthPillar.earthlyBranch}');
+    debugPrint('  Day: ${dayPillar.heavenlyStem}/${dayPillar.earthlyBranch}');
 
     // 시주 (時柱) - 시간 정보 필요
     // 태양시 보정: 한국 표준시(KST, 동경135도)에서 한국 태양시(동경127.5도)로 변환 시 약 30분 차이
@@ -148,8 +218,8 @@ class SajuCalculator {
     // 한자로 들어온 경우 한글로 변환
     final koreanDayMaster = _convertToKoreanStem(dayMaster);
 
-    final dayMasterElement = _stemToElement[koreanDayMaster] ?? '토';
-    final dayMasterPolarity = _stemPolarity[koreanDayMaster] ?? true;
+    final dayMasterElement = _getStemElement(koreanDayMaster, context: 'calculateTenGods.dayMaster');
+    final dayMasterPolarity = _getStemPolarity(koreanDayMaster, context: 'calculateTenGods.dayMaster');
 
     final distribution = <String, int>{
       '비견': 0, '겁재': 0, '식신': 0, '상관': 0, '편재': 0,
@@ -192,11 +262,12 @@ class SajuCalculator {
     bool dayMasterPolarity,
     String targetStem,
   ) {
-    final targetElement = _stemToElement[targetStem];
-    final targetPolarity = _stemPolarity[targetStem];
+    final targetElement = _getStemElementOrNull(targetStem);
+    final targetPolarity = _getStemPolarityOrNull(targetStem);
 
-    // null 안전성 검사
+    // null 안전성 검사 (옵셔널 - 유효하지 않은 값은 무시)
     if (targetElement == null || targetPolarity == null) {
+      debugPrint('⚠️ [SajuCalculator] _calculateGodFromStem: Unknown stem "$targetStem"');
       return null;
     }
 
@@ -210,10 +281,11 @@ class SajuCalculator {
     bool dayMasterPolarity,
     String targetBranch,
   ) {
-    final targetElement = _branchToElement[targetBranch];
+    final targetElement = _getBranchElementOrNull(targetBranch);
 
-    // null 안전성 검사
+    // null 안전성 검사 (옵셔널 - 유효하지 않은 값은 무시)
     if (targetElement == null) {
+      debugPrint('⚠️ [SajuCalculator] _calculateGodFromBranch: Unknown branch "$targetBranch"');
       return null;
     }
 
@@ -277,7 +349,7 @@ class SajuCalculator {
     final monthBranch = chart.monthPillar.earthlyBranch;
 
     // 대운 방향 결정 (양남음녀=순행, 음남양녀=역행)
-    final yearPolarity = _stemPolarity[yearStem]!;
+    final yearPolarity = _getStemPolarity(yearStem, context: 'calculateDaewoon.yearStem');
     final isMale = gender == '남';
     final isForward = (yearPolarity && isMale) || (!yearPolarity && !isMale);
 
@@ -334,8 +406,8 @@ class SajuCalculator {
     Pillar daewoonPillar,
     String dayMaster,
   ) {
-    final daewoonElement = _stemToElement[daewoonPillar.heavenlyStem]!;
-    final dayMasterElement = _stemToElement[dayMaster]!;
+    final daewoonElement = _getStemElement(daewoonPillar.heavenlyStem, context: '_getDaewoonTheme.daewoon');
+    final dayMasterElement = _getStemElement(dayMaster, context: '_getDaewoonTheme.dayMaster');
 
     final relationship = _getElementRelationship(dayMasterElement, daewoonElement);
 
@@ -379,16 +451,60 @@ class SajuCalculator {
     }
   }
 
-  /// 한자 천간 → 한글 천간 변환
-  String _convertToKoreanStem(String hanjaStem) {
-    final index = _stemsHanja.indexOf(hanjaStem);
-    return index >= 0 ? _stems[index] : hanjaStem;
+  // 중국어 간체 천간 (lunar 패키지가 반환할 수 있는 형식)
+  static const List<String> _stemsSimplified = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+  
+  // 중국어 간체 지지 (lunar 패키지가 반환할 수 있는 형식)
+  static const List<String> _branchesSimplified = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+  /// 천간 → 한글 천간 변환 (한자, 간체 모두 지원)
+  String _convertToKoreanStem(String stem) {
+    // 이미 한글이면 그대로 반환
+    if (_stems.contains(stem)) {
+      return stem;
+    }
+    
+    // 한자(번체) 천간 변환
+    var index = _stemsHanja.indexOf(stem);
+    if (index >= 0) {
+      return _stems[index];
+    }
+    
+    // 간체 천간 변환 (동일한 경우가 많지만 확인용)
+    index = _stemsSimplified.indexOf(stem);
+    if (index >= 0) {
+      return _stems[index];
+    }
+    
+    debugPrint('⚠️ [SajuCalculator] Unknown stem format: "$stem" (codeUnits: ${stem.codeUnits})');
+    
+    // 변환 실패 시 원본 반환 (이후 검증에서 에러 발생)
+    return stem;
   }
 
-  /// 한자 지지 → 한글 지지 변환
-  String _convertToKoreanBranch(String hanjaBranch) {
-    final index = _branchesHanja.indexOf(hanjaBranch);
-    return index >= 0 ? _branches[index] : hanjaBranch;
+  /// 지지 → 한글 지지 변환 (한자, 간체 모두 지원)
+  String _convertToKoreanBranch(String branch) {
+    // 이미 한글이면 그대로 반환
+    if (_branches.contains(branch)) {
+      return branch;
+    }
+    
+    // 한자(번체) 지지 변환
+    var index = _branchesHanja.indexOf(branch);
+    if (index >= 0) {
+      return _branches[index];
+    }
+    
+    // 간체 지지 변환
+    index = _branchesSimplified.indexOf(branch);
+    if (index >= 0) {
+      return _branches[index];
+    }
+    
+    debugPrint('⚠️ [SajuCalculator] Unknown branch format: "$branch" (codeUnits: ${branch.codeUnits})');
+    
+    // 변환 실패 시 원본 반환 (이후 검증에서 에러 발생)
+    return branch;
   }
 
   /// 특정 연도와의 궁합 분석 (2026 병오년용)
@@ -398,7 +514,7 @@ class SajuCalculator {
     {int year = 2026}
   ) {
     final dayMaster = chart.dayPillar.heavenlyStem;
-    final dayMasterElement = _stemToElement[dayMaster]!;
+    final dayMasterElement = _getStemElement(dayMaster, context: 'analyzeYearCompatibility.dayMaster');
 
     // 2026년 병오년: 병(화) + 오(화) = 강한 화기
     const yearElement = '화';
@@ -626,8 +742,8 @@ class SajuCalculator {
 
   /// 일간(천간) 궁합 분석
   DayMasterCompatibility _analyzeDayMasterCompatibility(String stem1, String stem2) {
-    final element1 = _stemToElement[stem1]!;
-    final element2 = _stemToElement[stem2]!;
+    final element1 = _getStemElement(stem1, context: '_analyzeDayMasterCompatibility.stem1');
+    final element2 = _getStemElement(stem2, context: '_analyzeDayMasterCompatibility.stem2');
 
     // 천간합 체크 (갑기합, 을경합, 병신합, 정임합, 무계합)
     final stemCombinations = {
@@ -649,8 +765,8 @@ class SajuCalculator {
       relationship = '천간합';
       description = '천생연분! 서로를 완벽하게 보완하는 최상의 궁합입니다.';
     } else if (element1 == element2) {
-      final polarity1 = _stemPolarity[stem1]!;
-      final polarity2 = _stemPolarity[stem2]!;
+      final polarity1 = _getStemPolarity(stem1, context: '_analyzeDayMasterCompatibility.polarity1');
+      final polarity2 = _getStemPolarity(stem2, context: '_analyzeDayMasterCompatibility.polarity2');
       score = polarity1 == polarity2 ? 65 : 70;
       relationship = '비겁';
       description = '같은 오행이라 이해가 빠르지만, 경쟁 심리가 생길 수 있습니다.';
@@ -808,9 +924,13 @@ class SajuCalculator {
     for (final elem in ['목', '화', '토', '금', '수']) {
       final c1 = elements1[elem] ?? 0;
       final c2 = elements2[elem] ?? 0;
-      if (c1 <= 1 && c2 >= 2) complementary.add('$elem(상대가 보완)');
-      else if (c2 <= 1 && c1 >= 2) complementary.add('$elem(내가 보완)');
-      else if (c1 + c2 <= 1) lacking.add(elem);
+      if (c1 <= 1 && c2 >= 2) {
+        complementary.add('$elem(상대가 보완)');
+      } else if (c2 <= 1 && c1 >= 2) {
+        complementary.add('$elem(내가 보완)');
+      } else if (c1 + c2 <= 1) {
+        lacking.add(elem);
+      }
     }
 
     return ElementBalanceResult(

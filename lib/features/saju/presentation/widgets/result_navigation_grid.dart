@@ -255,7 +255,7 @@ class _NavigationCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.surfaceOf(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -290,7 +290,7 @@ class _NavigationCard extends StatelessWidget {
             Text(
               subtitle,
               style: AppTypography.caption.copyWith(
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiaryOf(context),
               ),
             ),
           ],

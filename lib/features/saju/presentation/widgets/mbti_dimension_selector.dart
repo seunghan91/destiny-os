@@ -120,7 +120,9 @@ class _MbtiDimensionSelectorState extends State<MbtiDimensionSelector> {
   void didUpdateWidget(MbtiDimensionSelector oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.initialType != oldWidget.initialType) {
-      _initializeFromType(widget.initialType);
+      setState(() {
+        _initializeFromType(widget.initialType);
+      });
     }
   }
 

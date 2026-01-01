@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/config/env_config.dart';
 
 /// AI 상담 유형
@@ -34,7 +35,7 @@ class AIConsultationService {
           taskType: taskType,
         );
       } catch (e) {
-        print('BizRouter API failed, falling back: $e');
+        debugPrint('BizRouter API failed, falling back: $e');
       }
     }
 
@@ -49,7 +50,7 @@ class AIConsultationService {
           fortuneScore: fortuneScore,
         );
       } catch (e) {
-        print('Edge Function failed, falling back to direct API: $e');
+        debugPrint('Edge Function failed, falling back to direct API: $e');
       }
     }
 
@@ -64,7 +65,7 @@ class AIConsultationService {
           fortuneScore: fortuneScore,
         );
       } catch (e) {
-        print('OpenAI API failed: $e');
+        debugPrint('OpenAI API failed: $e');
       }
     }
 
@@ -208,7 +209,7 @@ class AIConsultationService {
     int? fortuneScore,
   }) {
     String userContext = '';
-    if (sajuInfo != null) userContext += '사주 정보 (일간): $sajuInfo\n';
+    if (sajuInfo != null) userContext += '사주 정보: $sajuInfo\n';
     if (mbtiType != null) userContext += 'MBTI: $mbtiType\n';
     if (fortuneScore != null) userContext += '2026년 운세 점수: $fortuneScore점\n';
 

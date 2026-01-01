@@ -12,6 +12,7 @@
 - ⏱️ **대운 타임라인**: 10년 단위 인생 흐름 예측 (순행/역행)
 - 💕 **궁합 분석**: 천간합, 육합, 삼합, 충, 형, 파, 해 기반 관계 분석
 - 🤖 **AI 상담**: GPT-4o 또는 Gemini 기반 맞춤 상담
+- 🔔 **푸시 알림**: Firebase Cloud Messaging 기반 일일 운세 알림
 - 📤 **공유 기능**: 결과를 이미지로 저장 및 SNS 공유
 
 ## 🚀 시작하기
@@ -45,7 +46,23 @@ cp .env.example .env
 
 > **참고**: API 키 없이도 앱은 정상 작동하며, AI 상담 기능만 로컬 응답으로 대체됩니다.
 
-### 4. 앱 실행
+### 4. Firebase 설정 (선택)
+
+푸시 알림 기능을 사용하려면 Firebase 프로젝트 설정이 필요합니다.
+
+```bash
+# FlutterFire CLI 설치
+dart pub global activate flutterfire_cli
+
+# Firebase 프로젝트 구성
+flutterfire configure
+```
+
+**자세한 설정 방법**: [Firebase 설정 가이드](docs/FIREBASE_SETUP.md)
+
+> **참고**: Firebase 설정 없이도 앱은 정상 작동하며, 푸시 알림 기능만 비활성화됩니다.
+
+### 5. 앱 실행
 
 ```bash
 # iOS
@@ -64,6 +81,7 @@ flutter run -d chrome
 - [PRD (Product Requirements Document)](docs/todo/PRD.md) - 제품 요구사항
 - [기술 명세서](docs/todo/TECH_SPEC.md) - 기술 스택 및 아키텍처
 - [환경 변수 설정](docs/ENV_SETUP.md) - API 키 설정 가이드
+- [Firebase 설정](docs/FIREBASE_SETUP.md) - 푸시 알림 설정 가이드
 - [기능 명세](docs/todo/01-features.md) - 상세 기능 설명
 - [데이터 모델](docs/todo/03-data-model.md) - 데이터베이스 스키마
 
@@ -84,6 +102,8 @@ flutter run -d chrome
 
 ### Backend & Storage
 - **supabase_flutter** 2.8.3 - 백엔드 서비스 (선택)
+- **firebase_core** 3.8.1 - Firebase 기본 SDK
+- **firebase_messaging** 15.1.5 - 푸시 알림 (FCM)
 - **shared_preferences** 2.3.5 - 로컬 저장소
 - **flutter_secure_storage** 9.2.4 - 보안 저장소
 

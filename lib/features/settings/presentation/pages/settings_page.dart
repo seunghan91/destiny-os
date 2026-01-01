@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/theme/theme_notifier.dart';
+import '../../../../core/services/notifications/firebase_notification_service.dart';
+import '../../../../core/di/injection.dart';
 
 /// 설정 페이지
 class SettingsPage extends StatefulWidget {
@@ -57,6 +59,91 @@ class _SettingsPageState extends State<SettingsPage> {
     ThemeNotifier.of(context)?.setThemeMode(mode);
   }
 
+  /// 알림 토글 처리
+  Future<void> _handleNotificationToggle(bool value) async {
+    try {
+      final notificationService = getIt<FirebaseNotificationService>();
+
+      if (value) {
+        // 알림 활성화
+        final isEnabled = await notificationService.isNotificationEnabled();
+
+        if (!isEnabled) {
+          // 권한이 없으면 권한 요청
+          await notificationService.initialize();
+
+          // 권한 재확인
+          final recheckEnabled =
+              await notificationService.isNotificationEnabled();
+
+          if (!recheckEnabled) {
+            // 권한 거부됨
+            if (mounted) {
+              _showNotificationPermissionDialog();
+            }
+            return;
+          }
+        }
+
+        // 일일 운세 알림 토픽 구독
+        await notificationService.subscribeToTopic('daily_fortune');
+
+        setState(() => _notificationsEnabled = true);
+        await _saveSettings();
+
+        if (mounted) {
+          _showSnackBar('알림이 활성화되었습니다 ✅');
+        }
+      } else {
+        // 알림 비활성화
+        await notificationService.unsubscribeFromTopic('daily_fortune');
+
+        setState(() => _notificationsEnabled = false);
+        await _saveSettings();
+
+        if (mounted) {
+          _showSnackBar('알림이 비활성화되었습니다');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Notification toggle failed: $e');
+      if (mounted) {
+        _showSnackBar('알림 설정에 실패했습니다. Firebase 설정을 확인해주세요.');
+      }
+    }
+  }
+
+  /// 알림 권한 안내 다이얼로그
+  void _showNotificationPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('알림 권한 필요'),
+        content: const Text(
+          '오늘의 운세 알림을 받으려면 알림 권한이 필요합니다.\n\n'
+          '설정 > Destiny.OS > 알림에서 권한을 허용해주세요.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 스낵바 표시
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _loadAppVersion() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
@@ -73,18 +160,18 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.surfaceOf(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimaryOf(context)),
           onPressed: () => context.pop(),
         ),
         title: Text(
           '설정',
           style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryOf(context),
           ),
         ),
         centerTitle: true,
@@ -108,7 +195,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     _saveSettings();
                   },
                 ),
-                const Divider(height: 1, color: AppColors.borderLight),
+                Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildSwitchTile(
                   title: '진태양시(真太陽時) 적용',
                   subtitle: '출생지 경도에 따른 시간 보정을 적용합니다',
@@ -137,10 +224,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: '오늘의 운세 알림',
                   subtitle: '매일 아침 오늘의 운세를 알려드립니다',
                   value: _notificationsEnabled,
-                  onChanged: (value) {
-                    setState(() => _notificationsEnabled = value);
-                    _saveSettings();
-                  },
+                  onChanged: _handleNotificationToggle,
                 ),
               ]),
 
@@ -174,19 +258,19 @@ class _SettingsPageState extends State<SettingsPage> {
                   icon: Icons.privacy_tip_outlined,
                   onTap: () => _openUrl('https://destinyos.app/privacy'),
                 ),
-                const Divider(height: 1, color: AppColors.borderLight),
+                Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildActionTile(
                   title: '이용약관',
                   icon: Icons.description_outlined,
                   onTap: () => _openUrl('https://destinyos.app/terms'),
                 ),
-                const Divider(height: 1, color: AppColors.borderLight),
+                Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildActionTile(
                   title: '오픈소스 라이선스',
                   icon: Icons.code_outlined,
                   onTap: () => _showLicensePage(context),
                 ),
-                const Divider(height: 1, color: AppColors.borderLight),
+                Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildInfoTile(
                   title: '앱 버전',
                   value: _appVersion,
@@ -223,7 +307,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -254,7 +338,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 Text(
                   title,
                   style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryOf(context),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -263,7 +347,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   Text(
                     subtitle,
                     style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryOf(context),
                     ),
                   ),
                 ],
@@ -299,7 +383,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Icon(
                 icon,
                 size: 22,
-                color: iconColor ?? AppColors.textSecondary,
+                color: iconColor ?? AppColors.textSecondaryOf(context),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -309,7 +393,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Text(
                       title,
                       style: AppTypography.bodyLarge.copyWith(
-                        color: iconColor ?? AppColors.textPrimary,
+                        color: iconColor ?? AppColors.textPrimaryOf(context),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -318,7 +402,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Text(
                         subtitle,
                         style: AppTypography.caption.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.textSecondaryOf(context),
                         ),
                       ),
                     ],
@@ -327,7 +411,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               Icon(
                 Icons.chevron_right,
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiaryOf(context),
               ),
             ],
           ),
@@ -345,7 +429,7 @@ class _SettingsPageState extends State<SettingsPage> {
           Text(
             '테마',
             style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textPrimary,
+              color: AppColors.textPrimaryOf(context),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -353,7 +437,7 @@ class _SettingsPageState extends State<SettingsPage> {
           Text(
             '앱의 외관을 선택합니다',
             style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
           ),
           const SizedBox(height: 12),
@@ -401,7 +485,7 @@ class _SettingsPageState extends State<SettingsPage> {
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.primary.withValues(alpha: 0.1)
-                : AppColors.surfaceVariant,
+                : AppColors.surfaceVariantOf(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? AppColors.primary : Colors.transparent,
@@ -413,13 +497,13 @@ class _SettingsPageState extends State<SettingsPage> {
               Icon(
                 icon,
                 size: 24,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected ? AppColors.primary : AppColors.textSecondaryOf(context),
               ),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: AppTypography.labelSmall.copyWith(
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color: isSelected ? AppColors.primary : AppColors.textSecondaryOf(context),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
@@ -441,14 +525,14 @@ class _SettingsPageState extends State<SettingsPage> {
           Icon(
             Icons.info_outline,
             size: 22,
-            color: AppColors.textSecondary,
+            color: AppColors.textSecondaryOf(context),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               title,
               style: AppTypography.bodyLarge.copyWith(
-                color: AppColors.textPrimary,
+                color: AppColors.textPrimaryOf(context),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -456,7 +540,7 @@ class _SettingsPageState extends State<SettingsPage> {
           Text(
             value,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
           ),
         ],
@@ -469,7 +553,7 @@ class _SettingsPageState extends State<SettingsPage> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.grey100,
+        color: AppColors.surfaceVariantOf(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -480,13 +564,13 @@ class _SettingsPageState extends State<SettingsPage> {
               Icon(
                 Icons.warning_amber_rounded,
                 size: 18,
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryOf(context),
               ),
               const SizedBox(width: 8),
               Text(
                 '안내사항',
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryOf(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -498,7 +582,7 @@ class _SettingsPageState extends State<SettingsPage> {
             '• 23시~00시 출생자는 학파에 따라 결과가 다를 수 있습니다.\n'
             '• 사주팔자는 동양 철학의 일부로, 재미로 즐겨주세요.',
             style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
               height: 1.5,
             ),
           ),

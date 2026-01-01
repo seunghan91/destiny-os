@@ -443,7 +443,15 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
     int? fortuneScore;
 
     if (destinyState is DestinySuccess) {
-      sajuInfo = destinyState.sajuChart.dayPillar.heavenlyStem;
+      final chart = destinyState.sajuChart;
+      final tenGods = destinyState.tenGods;
+      
+      sajuInfo = '일주: ${chart.dayPillar.fullPillar}(${chart.dayPillar.hanjaRepresentation}), '
+          '일간: ${chart.dayMaster}, '
+          '월지: ${chart.monthPillar.earthlyBranch}, '
+          '강한 십성: ${tenGods.dominantGod}, '
+          '부족한 오행: ${chart.complementaryElement}';
+          
       mbtiType = destinyState.mbtiType.type;
       fortuneScore = destinyState.fortune2026.overallScore.toInt();
     }
@@ -497,7 +505,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
         title: const Text('AI 운세 상담'),
         actions: [
@@ -1037,9 +1045,9 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
@@ -1049,7 +1057,7 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textTertiary.withAlpha(100),
+              color: AppColors.textTertiaryOf(context).withAlpha(120),
               borderRadius: BorderRadius.circular(2),
             ),
           ),

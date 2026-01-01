@@ -1,6 +1,6 @@
-import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -734,7 +734,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildAnalyzeButton() {
-    final canProceed = _birthDate != null && (_analyzeSaju || _analyzeMbti);
+    final canProceed = _birthDate != null &&
+        (_analyzeSaju || (_analyzeMbti && _selectedMbti != null));
 
     return Column(
       children: [
@@ -897,55 +898,266 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   bool _isDesktopPlatform() {
-    try {
-      return Platform.isWindows || Platform.isMacOS || Platform.isLinux;
-    } catch (e) {
-      return false;
-    }
+    final platform = defaultTargetPlatform;
+    return platform == TargetPlatform.windows ||
+        platform == TargetPlatform.macOS ||
+        platform == TargetPlatform.linux;
   }
 
   Future<void> _showMaterialDatePicker() async {
-    final DateTime initialDate = _birthDate ?? DateTime(1990, 1, 1);
+    // 웹에서는 커스텀 DatePicker를 사용하여 더 쉬운 월 선택 제공
+    _showCustomWebDatePicker();
+  }
 
-    final DateTime? picked = await showDatePicker(
+  void _showCustomWebDatePicker() {
+    final DateTime initialDate = _birthDate ?? DateTime(1990, 1, 1);
+    int selectedYear = initialDate.year;
+    int selectedMonth = initialDate.month;
+    int selectedDay = initialDate.day;
+
+    // 100세 시대 대응: 1900년부터 현재까지 (126세 커버)
+    const int minYear = 1900;
+    final DateTime now = DateTime.now(); // 성능: DateTime.now() 한 번만 호출
+    final int currentYear = now.year;
+    final int currentMonth = now.month;
+    final int currentDay = now.day;
+    
+    final List<int> years = List.generate(currentYear - minYear + 1, (i) => minYear + i);
+    final List<int> months = List.generate(12, (i) => i + 1);
+
+    int getDaysInMonth(int year, int month) {
+      return DateTime(year, month + 1, 0).day;
+    }
+
+    showDialog(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(1920, 1, 1),
-      lastDate: DateTime.now(),
-      helpText: '생년월일을 선택하세요',
-      cancelText: '취소',
-      confirmText: '확인',
-      fieldLabelText: '날짜 입력',
-      fieldHintText: 'YYYY/MM/DD',
-      errorFormatText: '올바른 형식으로 입력하세요',
-      errorInvalidText: '유효한 날짜를 입력하세요',
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: AppColors.surface,
-              onSurface: AppColors.textPrimary,
-            ),
-            dialogTheme: DialogThemeData(
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final List<int> days = List.generate(
+              getDaysInMonth(selectedYear, selectedMonth),
+              (i) => i + 1,
+            );
+            // 선택된 날짜가 해당 월의 일수를 초과하면 조정
+            if (selectedDay > days.length) {
+              selectedDay = days.length;
+            }
+
+            return AlertDialog(
               backgroundColor: AppColors.surface,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-            ),
-          ),
-          child: child!,
+              title: Text(
+                '생년월일 선택',
+                style: AppTypography.titleLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              content: SizedBox(
+                width: 320,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 8),
+                    // 연도/월/일 선택 Row
+                    Row(
+                      children: [
+                        // 연도 선택
+                        Expanded(
+                          flex: 3,
+                          child: _buildDropdownField(
+                            label: '연도',
+                            value: selectedYear,
+                            items: years.reversed.toList(),
+                            itemLabel: (year) => '$year년',
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedYear = value!;
+                                // 미래 날짜 방지
+                                if (selectedYear == currentYear && selectedMonth > currentMonth) {
+                                  selectedMonth = currentMonth;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 월 선택
+                        Expanded(
+                          flex: 2,
+                          child: _buildDropdownField(
+                            label: '월',
+                            value: selectedMonth,
+                            items: months.where((m) {
+                              // 현재 연도면 현재 월까지만
+                              if (selectedYear == currentYear) {
+                                return m <= currentMonth;
+                              }
+                              return true;
+                            }).toList(),
+                            itemLabel: (month) => '$month월',
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedMonth = value!;
+                                // 미래 날짜 방지
+                                if (selectedYear == currentYear &&
+                                    selectedMonth == currentMonth &&
+                                    selectedDay > currentDay) {
+                                  selectedDay = currentDay;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 일 선택
+                        Expanded(
+                          flex: 2,
+                          child: _buildDropdownField(
+                            label: '일',
+                            value: selectedDay,
+                            items: days.where((d) {
+                              // 현재 연도, 현재 월이면 현재 일까지만
+                              if (selectedYear == currentYear && selectedMonth == currentMonth) {
+                                return d <= currentDay;
+                              }
+                              return true;
+                            }).toList(),
+                            itemLabel: (day) => '$day일',
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedDay = value!;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // 선택된 날짜 표시
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Color.alphaBlend(
+                          AppColors.primary.withValues(alpha: 0.1),
+                          Colors.white,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$selectedYear년 $selectedMonth월 $selectedDay일',
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    '취소',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final selectedDate = DateTime(selectedYear, selectedMonth, selectedDay);
+                    HapticFeedback.mediumImpact();
+                    setState(() => _birthDate = selectedDate);
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: Text(
+                    '확인',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
+  }
 
-    if (picked != null) {
-      HapticFeedback.mediumImpact();
-      setState(() => _birthDate = picked);
-    }
+  Widget _buildDropdownField<T>({
+    required String label,
+    required T value,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.grey300),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: items.contains(value) ? value : items.first,
+              isExpanded: true,
+              icon: Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+              borderRadius: BorderRadius.circular(10),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              dropdownColor: AppColors.surface,
+              menuMaxHeight: 300,
+              items: items.map((item) {
+                return DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(
+                    itemLabel(item),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void _showCupertinoDatePicker() {
@@ -1014,10 +1226,10 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.date,
                 initialDateTime: tempDate,
-                minimumYear: 1920,
+                minimumYear: 1900, // 100세 시대 대응 (126세 커버)
                 maximumYear: DateTime.now().year,
                 maximumDate: DateTime.now(),
-                minimumDate: DateTime(1920, 1, 1),
+                minimumDate: DateTime(1900, 1, 1),
                 onDateTimeChanged: (DateTime newDate) {
                   HapticFeedback.selectionClick();
                   tempDate = newDate;
@@ -1106,6 +1318,21 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   void _startAnalysis() {
     HapticFeedback.mediumImpact();
 
+    if (_birthDate == null) return;
+    if (_analyzeMbti && _selectedMbti == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('MBTI를 선택해 주세요'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
     DateTime birthDateTime = _birthDate!;
     if (_selectedSiju != null) {
       final hour = (_selectedSiju!.startHour + 1) % 24;
@@ -1122,7 +1349,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
       AnalyzeFortune(
         birthDateTime: birthDateTime,
         isLunar: _isLunar,
-        mbtiType: _selectedMbti ?? 'INFP',
+        mbtiType: _selectedMbti!,
         gender: _gender,
         useNightSubhour: true,
       ),

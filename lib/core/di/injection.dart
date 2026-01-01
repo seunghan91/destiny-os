@@ -2,8 +2,10 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/ai_consultation/data/services/supabase_consultation_service.dart';
 import '../../features/saju/data/services/saju_calculator.dart';
 import '../../features/saju/presentation/bloc/destiny_bloc.dart';
+import '../services/notifications/firebase_notification_service.dart';
 
 /// 전역 서비스 로케이터
 final GetIt getIt = GetIt.instance;
@@ -33,6 +35,18 @@ Future<void> configureDependencies() async {
 
   // 사주 계산 서비스 (싱글톤 인스턴스 참조)
   getIt.registerLazySingleton<SajuCalculator>(() => SajuCalculator.instance);
+
+  // Firebase 알림 서비스 (싱글톤 인스턴스 참조)
+  getIt.registerLazySingleton<FirebaseNotificationService>(
+    () => FirebaseNotificationService(),
+  );
+
+  // Supabase 상담 서비스 (Supabase가 초기화된 경우에만 등록)
+  if (getIt.isRegistered<SupabaseClient>()) {
+    getIt.registerLazySingleton<SupabaseConsultationService>(
+      () => SupabaseConsultationService(client: getIt<SupabaseClient>()),
+    );
+  }
 
   // CreditService는 static 메서드만 사용하므로 별도 등록 불필요
 

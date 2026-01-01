@@ -34,7 +34,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
 
   // 내 사주 정보 (BLoC에서 가져옴)
   SajuChart? _mySajuChart;
-  String _myName = '나';
+  final String _myName = '나';
 
   // 상대방 입력 데이터
   final TextEditingController _partnerNameController = TextEditingController();
@@ -114,7 +114,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
         title: const Text('궁합 분석'),
         actions: [
@@ -159,7 +159,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     Tab(text: '조언'),
                   ],
                   labelColor: AppColors.primary,
-                  unselectedLabelColor: AppColors.textSecondary,
+                  unselectedLabelColor: AppColors.textSecondaryOf(context),
                   indicatorColor: AppColors.primary,
                 ),
               ),
@@ -180,7 +180,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
 
   Widget _buildLoadingView() {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(title: const Text('궁합 분석')),
       body: const Center(
         child: CircularProgressIndicator(),
@@ -940,10 +940,10 @@ class _CompatibilityPageState extends State<CompatibilityPage>
   // ============================================
   Widget _buildPartnerInputPage() {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
         title: const Text('상대방 정보 입력'),
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundOf(context),
         elevation: 0,
       ),
       body: SafeArea(
@@ -972,7 +972,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                         color: AppColors.primary.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: const Text('love_emoji', style: TextStyle(fontSize: 24)),
+                      child: const Text('💗', style: TextStyle(fontSize: 24)),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -1281,7 +1281,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.date,
                   initialDateTime: _partnerBirthDate ?? DateTime(1990, 1, 1),
-                  minimumDate: DateTime(1920, 1, 1),
+                  minimumDate: DateTime(1900, 1, 1), // 100세 시대 대응 (126세 커버)
                   maximumDate: DateTime.now(),
                   onDateTimeChanged: (date) {
                     setState(() => _partnerBirthDate = date);
@@ -1497,6 +1497,7 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
-    return false;
+    // 테마 변경 등으로 TabBar의 색/스타일이 바뀔 수 있으므로 비교 후 재빌드
+    return tabBar != oldDelegate.tabBar;
   }
 }

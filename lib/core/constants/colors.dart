@@ -183,6 +183,51 @@ class AppColors {
   // 헬퍼 메서드
   // ============================================
 
+  /// 현재 테마가 다크모드인지 여부
+  static bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  /// 다크모드 대응 배경색
+  static Color backgroundOf(BuildContext context) {
+    return isDarkMode(context) ? backgroundDark : background;
+  }
+
+  /// 다크모드 대응 surface 색
+  static Color surfaceOf(BuildContext context) {
+    return isDarkMode(context) ? surfaceDark : surface;
+  }
+
+  /// 다크모드 대응 surfaceVariant 색
+  static Color surfaceVariantOf(BuildContext context) {
+    return isDarkMode(context) ? surfaceVariantDark : surfaceVariant;
+  }
+
+  /// 다크모드 대응 텍스트 primary 색
+  static Color textPrimaryOf(BuildContext context) {
+    return isDarkMode(context) ? textPrimaryDark : textPrimary;
+  }
+
+  /// 다크모드 대응 텍스트 secondary 색
+  static Color textSecondaryOf(BuildContext context) {
+    return isDarkMode(context) ? textSecondaryDark : textSecondary;
+  }
+
+  /// 다크모드 대응 텍스트 tertiary 색
+  static Color textTertiaryOf(BuildContext context) {
+    return isDarkMode(context) ? textTertiaryDark : textTertiary;
+  }
+
+  /// 다크모드 대응 보더 색
+  static Color borderOf(BuildContext context) {
+    return isDarkMode(context) ? borderDark : border;
+  }
+
+  /// 다크모드 대응 라이트 보더(구분선) 색
+  static Color borderLightOf(BuildContext context) {
+    return isDarkMode(context) ? borderLightDark : borderLight;
+  }
+
   static Color getElementColor(String element) {
     switch (element.toLowerCase()) {
       case '목':

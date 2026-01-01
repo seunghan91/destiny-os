@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -6,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/app.dart';
 import 'core/config/env_config.dart';
 import 'core/di/injection.dart';
+import 'core/services/notifications/firebase_notification_service.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +20,24 @@ void main() async {
     debugPrint('✅ .env file loaded successfully');
   } catch (e) {
     debugPrint('⚠️  .env file not found - using --dart-define or defaults');
+  }
+
+  // Firebase 초기화
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('✅ Firebase initialized successfully');
+
+    // 백그라운드 메시지 핸들러 등록 (앱 종료 상태)
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    // Firebase Cloud Messaging 초기화
+    await FirebaseNotificationService().initialize();
+  } catch (e) {
+    debugPrint('❌ Firebase initialization failed: $e');
+    debugPrint('   Run: flutterfire configure');
+    // Firebase 없이도 앱 실행 가능 (알림 기능만 비활성화)
   }
 
   // 상태바 스타일 설정

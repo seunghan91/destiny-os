@@ -6,12 +6,6 @@ class CompatibilityCalculator {
   CompatibilityCalculator._();
   static final CompatibilityCalculator instance = CompatibilityCalculator._();
 
-  // 천간 목록
-  static const List<String> _stems = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
-
-  // 지지 목록
-  static const List<String> _branches = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
-
   // 천간 오행
   static const Map<String, String> _stemToElement = {
     '갑': '목', '을': '목', '병': '화', '정': '화', '무': '토',
@@ -309,6 +303,34 @@ class CompatibilityCalculator {
       }
     }
 
+    // 자형(自刑) 분석 - 같은 지지가 반복될 때(두 사람 합산 기준)
+    final branchCounts = <String, int>{};
+    for (final b in [...branches1, ...branches2]) {
+      branchCounts[b] = (branchCounts[b] ?? 0) + 1;
+    }
+    for (final b in _selfPunishments) {
+      if ((branchCounts[b] ?? 0) >= 2) {
+        // 한글이 뒤에 붙는 경우 보간 파서/린트 혼선을 피하기 위해 문자열 결합 사용
+        final key = '$b' '자형';
+        if (!punishments.contains(key)) {
+          punishments.add(key);
+        }
+      }
+    }
+
+    // 삼합 분석 (두 사람의 지지를 합쳐 3개가 모두 충족되면 시너지로 판단)
+    final allBranches = <String>{...branches1, ...branches2};
+    for (final entry in _branchTripleCombinations.entries) {
+      final triple = entry.value;
+      if (triple.every(allBranches.contains)) {
+        // 예: 인오술삼합
+        final key = '${triple.join()}삼합';
+        if (!combinations.contains(key)) {
+          combinations.add(key);
+        }
+      }
+    }
+
     return BranchRelations(
       combinations: combinations,
       clashes: clashes,
@@ -571,7 +593,7 @@ class CompatibilityCalculator {
       '계무': '무계합화',
       '무계': '무계합화',
     };
-    return names['${sorted[0]}${sorted[1]}'] ?? '${s1}${s2}합';
+    return names['${sorted[0]}${sorted[1]}'] ?? '$s1$s2합';
   }
 
   /// 인사이트 생성

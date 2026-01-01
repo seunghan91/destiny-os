@@ -103,7 +103,7 @@ class ResultAiCta extends StatelessWidget {
                   Text(
                     '사주와 MBTI를 기반으로 맞춤형 상담을 받아보세요',
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryOf(context),
                     ),
                   ),
                 ],

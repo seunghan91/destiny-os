@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/saju_chart.dart';
 import '../../domain/entities/ten_gods.dart';
 import '../../domain/entities/daewoon.dart';
@@ -232,9 +233,9 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     AnalyzeFortune event,
     Emitter<DestinyState> emit,
   ) async {
-    print('🔮 [DestinyBloc] AnalyzeFortune event received');
-    print('🔮 [DestinyBloc] birthDateTime: ${event.birthDateTime}');
-    print('🔮 [DestinyBloc] mbtiType: ${event.mbtiType}');
+    debugPrint('🔮 [DestinyBloc] AnalyzeFortune event received');
+    debugPrint('🔮 [DestinyBloc] birthDateTime: ${event.birthDateTime}');
+    debugPrint('🔮 [DestinyBloc] mbtiType: ${event.mbtiType}');
     emit(const DestinyAnalyzing(message: '사주팔자를 계산하고 있습니다...'));
 
     try {
@@ -274,7 +275,7 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       final sajuBasedMbti = _calculator.inferMbtiFromSaju(sajuChart, tenGods);
       final gapAnalysis = _performGapAnalysis(sajuBasedMbti, mbtiType);
 
-      print('🔮 [DestinyBloc] Analysis complete, emitting DestinySuccess');
+      debugPrint('🔮 [DestinyBloc] Analysis complete, emitting DestinySuccess');
       emit(DestinySuccess(
         sajuChart: sajuChart,
         tenGods: tenGods,
@@ -284,8 +285,8 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
         gapAnalysis: gapAnalysis,
       ));
     } catch (e, stackTrace) {
-      print('❌ [DestinyBloc] Error: $e');
-      print('❌ [DestinyBloc] StackTrace: $stackTrace');
+      debugPrint('❌ [DestinyBloc] Error: $e');
+      debugPrint('❌ [DestinyBloc] StackTrace: $stackTrace');
       emit(DestinyFailure(errorMessage: '분석 중 오류가 발생했습니다: $e'));
     }
   }

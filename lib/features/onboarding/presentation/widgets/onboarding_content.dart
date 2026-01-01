@@ -33,6 +33,9 @@ class OnboardingContent extends StatelessWidget {
   final OnboardingContentData data;
   final Animation<double> animation;
 
+  /// 콘텐츠의 최소 필요 높이 (아이콘 + 텍스트들 + 패딩)
+  static const double _minContentHeight = 450;
+
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
@@ -45,27 +48,48 @@ class OnboardingContent extends StatelessWidget {
           parent: animation as AnimationController,
           curve: Curves.easeOut,
         )),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(flex: 2),
-              _buildIcon(),
-              const SizedBox(height: 48),
-              _buildTitle(),
-              const SizedBox(height: 12),
-              _buildSubtitle(),
-              const SizedBox(height: 24),
-              _buildDescription(),
-              if (data.features.isNotEmpty) ...[
-                const SizedBox(height: 32),
-                _buildFeatures(),
-              ],
-              const Spacer(flex: 3),
-            ],
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final content = _buildContent();
+            
+            // 화면이 충분히 크면 중앙 정렬, 작으면 스크롤 가능
+            if (constraints.maxHeight >= _minContentHeight) {
+              return Center(
+                child: SingleChildScrollView(
+                  child: content,
+                ),
+              );
+            }
+            
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: content,
+            );
+          },
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildIcon(),
+          const SizedBox(height: 24),
+          _buildTitle(),
+          const SizedBox(height: 8),
+          _buildSubtitle(),
+          const SizedBox(height: 16),
+          _buildDescription(),
+          if (data.features.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _buildFeatures(),
+          ],
+        ],
       ),
     );
   }
@@ -175,26 +199,50 @@ class OnboardingContentSimple extends StatelessWidget {
 
   final OnboardingContentData data;
 
+  /// 콘텐츠의 최소 필요 높이 (아이콘 + 텍스트들 + 패딩)
+  static const double _minContentHeight = 450;
+
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final content = _buildContent();
+        
+        // 화면이 충분히 크면 중앙 정렬, 작으면 스크롤 가능
+        if (constraints.maxHeight >= _minContentHeight) {
+          return Center(
+            child: SingleChildScrollView(
+              child: content,
+            ),
+          );
+        }
+        
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: content,
+        );
+      },
+    );
+  }
+
+  Widget _buildContent() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Spacer(flex: 2),
           _buildIcon(),
-          const SizedBox(height: 48),
-          _buildTitle(),
-          const SizedBox(height: 12),
-          _buildSubtitle(),
           const SizedBox(height: 24),
+          _buildTitle(),
+          const SizedBox(height: 8),
+          _buildSubtitle(),
+          const SizedBox(height: 16),
           _buildDescription(),
           if (data.features.isNotEmpty) ...[
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
             _buildFeatures(),
           ],
-          const Spacer(flex: 3),
         ],
       ),
     );

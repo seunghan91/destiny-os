@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
 import '../../domain/entities/chat_message.dart';
+import '../../data/services/credit_service.dart';
+import '../../data/services/ai_consultation_service.dart';
+import '../../data/services/consultation_storage_service.dart';
 
 /// AI 상담 페이지
 class ConsultationPage extends StatefulWidget {
@@ -14,17 +18,59 @@ class ConsultationPage extends StatefulWidget {
   State<ConsultationPage> createState() => _ConsultationPageState();
 }
 
-class _ConsultationPageState extends State<ConsultationPage> {
+class _ConsultationPageState extends State<ConsultationPage> with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
+  final AIConsultationService _aiService = AIConsultationService();
   ConsultationType? _selectedType;
   bool _isTyping = false;
+  int _remainingCredits = 0;
 
   @override
   void initState() {
     super.initState();
-    _addWelcomeMessage();
+    WidgetsBinding.instance.addObserver(this);
+    _loadCredits();
+    _loadPreviousSession();
+  }
+
+  /// 이전 세션 불러오기
+  Future<void> _loadPreviousSession() async {
+    final session = await ConsultationStorageService.loadCurrentSession();
+    if (session != null && session.messages.isNotEmpty) {
+      setState(() {
+        _messages.addAll(session.messages);
+        _selectedType = session.type;
+      });
+      _scrollToBottom();
+    } else {
+      _addWelcomeMessage();
+    }
+  }
+
+  /// 현재 세션 자동 저장
+  Future<void> _autoSaveSession() async {
+    if (_selectedType != null && _messages.length > 1) {
+      await ConsultationStorageService.saveCurrentSession(
+        messages: _messages,
+        type: _selectedType!,
+      );
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _autoSaveSession();
+    }
+  }
+
+  Future<void> _loadCredits() async {
+    final credits = await CreditService.getCredits();
+    setState(() {
+      _remainingCredits = credits;
+    });
   }
 
   void _addWelcomeMessage() {
@@ -42,9 +88,104 @@ class _ConsultationPageState extends State<ConsultationPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// 대화 히스토리에 저장
+  Future<void> _saveToHistory() async {
+    if (_selectedType == null || _messages.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('저장할 대화가 없습니다.')),
+      );
+      return;
+    }
+
+    await ConsultationStorageService.saveConversation(
+      messages: _messages,
+      type: _selectedType!,
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('대화가 저장되었습니다.'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  /// 히스토리 페이지로 이동
+  void _showHistory() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ConversationHistorySheet(
+        onSelectConversation: _loadConversation,
+      ),
+    );
+  }
+
+  /// 특정 대화 불러오기
+  Future<void> _loadConversation(String id, ConsultationType type) async {
+    final messages = await ConsultationStorageService.getConversation(id);
+    if (messages != null && mounted) {
+      setState(() {
+        _messages.clear();
+        _messages.addAll(messages);
+        _selectedType = type;
+      });
+      _scrollToBottom();
+      Navigator.pop(context);
+    }
+  }
+
+  /// 새 대화 시작 확인
+  void _confirmNewConversation() {
+    if (_messages.length <= 1) {
+      _startNewConversation();
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('새 대화 시작'),
+        content: const Text('현재 대화를 저장하고 새 대화를 시작할까요?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _startNewConversation();
+            },
+            child: const Text('저장 안 함'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _saveToHistory();
+              _startNewConversation();
+            },
+            child: const Text('저장 후 시작'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 새 대화 시작
+  void _startNewConversation() {
+    ConsultationStorageService.clearCurrentSession();
+    setState(() {
+      _messages.clear();
+      _selectedType = null;
+      _addWelcomeMessage();
+    });
   }
 
   void _scrollToBottom() {
@@ -200,8 +341,16 @@ class _ConsultationPageState extends State<ConsultationPage> {
     }
   }
 
-  void _sendMessage(String text) {
+  Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
+
+    // 크레딧 확인
+    if (_remainingCredits <= 0) {
+      _showNoCreditDialog();
+      return;
+    }
+
+    HapticFeedback.lightImpact();
 
     setState(() {
       _messages.add(
@@ -217,84 +366,132 @@ class _ConsultationPageState extends State<ConsultationPage> {
     _messageController.clear();
     _scrollToBottom();
 
-    // AI 응답 시뮬레이션
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      _generateAIResponse(text);
-    });
+    // 크레딧 차감
+    final newCredits = await CreditService.useCredit();
+    if (newCredits >= 0) {
+      setState(() {
+        _remainingCredits = newCredits;
+      });
+    }
+
+    // AI 응답 생성
+    await _generateAIResponse(text);
   }
 
-  void _generateAIResponse(String userMessage) {
+  void _showNoCreditDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.stars, color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text('크레딧 부족'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('AI 상담 크레딧이 부족합니다.'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight.withAlpha(30),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '💡 크레딧 획득 방법',
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• 매일 1회 무료 크레딧 지급\n'
+                    '• 친구 초대 시 3회 추가\n'
+                    '• 앱 리뷰 작성 시 2회 추가',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generateAIResponse(String userMessage) async {
     final destinyState = context.read<DestinyBloc>().state;
-    String response;
+
+    String? sajuInfo;
+    String? mbtiType;
+    int? fortuneScore;
 
     if (destinyState is DestinySuccess) {
-      response = _buildSmartResponse(userMessage, destinyState);
-    } else {
-      response = _buildDefaultResponse(userMessage);
+      sajuInfo = destinyState.sajuChart.dayPillar.heavenlyStem;
+      mbtiType = destinyState.mbtiType.type;
+      fortuneScore = destinyState.fortune2026.overallScore.toInt();
     }
 
-    setState(() {
-      _isTyping = false;
-      _messages.add(
-        ChatMessage(
-          id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-          content: response,
-          isUser: false,
-          timestamp: DateTime.now(),
-        ),
+    try {
+      final response = await _aiService.generateResponse(
+        userMessage: userMessage,
+        consultationType: _selectedType?.korean ?? '종합 상담',
+        sajuInfo: sajuInfo,
+        mbtiType: mbtiType,
+        fortuneScore: fortuneScore,
       );
-    });
-    _scrollToBottom();
-  }
 
-  String _buildSmartResponse(String question, DestinySuccess state) {
-    final lowerQ = question.toLowerCase();
-    final score = state.fortune2026.overallScore;
-    final mbti = state.mbtiType.type;
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add(
+            ChatMessage(
+              id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+              content: response,
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add(
+            ChatMessage(
+              id: 'error_${DateTime.now().millisecondsSinceEpoch}',
+              content: '죄송합니다. 일시적인 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.',
+              isUser: false,
+              timestamp: DateTime.now(),
+              status: MessageStatus.error,
+            ),
+          );
+        });
+        _scrollToBottom();
 
-    if (lowerQ.contains('이직') || lowerQ.contains('퇴사')) {
-      return '🎯 이직에 대한 조언입니다.\n\n'
-          '당신의 2026년 운세 점수(${score.toInt()}점)를 고려할 때, '
-          '${score >= 70 ? '상반기에 좋은 기회가 올 수 있습니다' : '하반기까지 더 준비하는 것을 권장합니다'}.\n\n'
-          '특히 11월은 중요한 결정을 피하세요.';
+        // 오류 시 크레딧 환불
+        await CreditService.addCredits(1);
+        await _loadCredits();
+      }
     }
-
-    if (lowerQ.contains('연애') || lowerQ.contains('인연') || lowerQ.contains('만남')) {
-      return '💕 연애운에 대한 조언입니다.\n\n'
-          '2026년 병오년은 화(火) 에너지가 넘쳐 열정적인 만남이 기대됩니다.\n'
-          '5~6월이 가장 인연운이 좋은 시기예요.\n\n'
-          '다만 너무 급하게 진행하지 말고, 상대를 충분히 알아가세요.';
-    }
-
-    if (lowerQ.contains('투자') || lowerQ.contains('주식') || lowerQ.contains('돈')) {
-      return '💰 재물운에 대한 조언입니다.\n\n'
-          '2026년 재물운: ${score.toInt()}점\n\n'
-          '${score >= 75 ? '적극적인 투자가 가능한 해입니다' : '보수적인 접근을 권장합니다'}.\n'
-          '단, 11월 자오충 시기에는 큰 결정을 피하세요.';
-    }
-
-    if (lowerQ.contains('건강') || lowerQ.contains('운동')) {
-      return '🏃 건강에 대한 조언입니다.\n\n'
-          '2026년은 화 에너지가 강해 다음을 주의하세요:\n'
-          '• 과로와 번아웃\n'
-          '• 심장과 혈압 관리\n'
-          '• 충분한 수분 섭취\n\n'
-          '수(水) 기운의 활동(수영, 명상)이 도움됩니다.';
-    }
-
-    // 기본 응답
-    return '좋은 질문이에요! 🌟\n\n'
-        '당신의 $mbti 성격과 사주를 종합해보면,\n'
-        '2026년은 ${score >= 70 ? '도약의 해' : '준비의 해'}가 될 것입니다.\n\n'
-        '더 구체적인 질문을 해주시면 자세히 답변드릴게요!';
-  }
-
-  String _buildDefaultResponse(String question) {
-    return '좋은 질문이에요! 🌟\n\n'
-        '더 정확한 답변을 드리려면 먼저 사주 분석이 필요합니다.\n'
-        '홈에서 생년월일을 입력하고 분석을 완료해주세요.\n\n'
-        '일반적인 2026년 운세: 화(火) 에너지가 강한 해로, '
-        '변화와 도전의 기회가 많습니다.';
   }
 
   @override
@@ -304,15 +501,80 @@ class _ConsultationPageState extends State<ConsultationPage> {
       appBar: AppBar(
         title: const Text('AI 운세 상담'),
         actions: [
+          // 크레딧 표시
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: _remainingCredits > 0
+                  ? AppColors.primary.withAlpha(25)
+                  : AppColors.error.withAlpha(25),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.stars,
+                  size: 16,
+                  color: _remainingCredits > 0
+                      ? AppColors.primary
+                      : AppColors.error,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '$_remainingCredits',
+                  style: AppTypography.labelMedium.copyWith(
+                    color: _remainingCredits > 0
+                        ? AppColors.primary
+                        : AppColors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 히스토리 버튼
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _messages.clear();
-                _selectedType = null;
-                _addWelcomeMessage();
-              });
+            icon: const Icon(Icons.history),
+            tooltip: '대화 기록',
+            onPressed: _showHistory,
+          ),
+          // 메뉴 버튼
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              switch (value) {
+                case 'save':
+                  _saveToHistory();
+                  break;
+                case 'new':
+                  _confirmNewConversation();
+                  break;
+              }
             },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'save',
+                child: Row(
+                  children: [
+                    Icon(Icons.save_alt, size: 20),
+                    SizedBox(width: 12),
+                    Text('대화 저장'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'new',
+                child: Row(
+                  children: [
+                    Icon(Icons.add_comment, size: 20),
+                    SizedBox(width: 12),
+                    Text('새 대화'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -711,4 +973,221 @@ class _ElementInfo {
   final String emoji;
 
   const _ElementInfo(this.name, this.emoji);
+}
+
+/// 대화 기록 히스토리 시트
+class _ConversationHistorySheet extends StatefulWidget {
+  final Future<void> Function(String id, ConsultationType type) onSelectConversation;
+
+  const _ConversationHistorySheet({
+    required this.onSelectConversation,
+  });
+
+  @override
+  State<_ConversationHistorySheet> createState() => _ConversationHistorySheetState();
+}
+
+class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
+  List<ConversationSummary> _conversations = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConversations();
+  }
+
+  Future<void> _loadConversations() async {
+    final conversations = await ConsultationStorageService.getAllConversations();
+    if (mounted) {
+      setState(() {
+        _conversations = conversations;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _deleteConversation(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('대화 삭제'),
+        content: const Text('이 대화를 삭제할까요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await ConsultationStorageService.deleteConversation(id);
+      _loadConversations();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // 핸들
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.textTertiary.withAlpha(100),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // 헤더
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '대화 기록',
+                  style: AppTypography.headlineSmall.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          // 대화 목록
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _conversations.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: _conversations.length,
+                        separatorBuilder: (_, i) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final conversation = _conversations[index];
+                          return _buildConversationTile(conversation);
+                        },
+                      ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 64,
+            color: AppColors.textTertiary.withAlpha(100),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '저장된 대화가 없습니다',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '대화를 저장하면 여기에 표시됩니다',
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConversationTile(ConversationSummary conversation) {
+    return Dismissible(
+      key: Key(conversation.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: AppColors.error,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      confirmDismiss: (_) async {
+        await _deleteConversation(conversation.id);
+        return false;
+      },
+      child: ListTile(
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withAlpha(25),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              conversation.type.emoji,
+              style: const TextStyle(fontSize: 20),
+            ),
+          ),
+        ),
+        title: Text(
+          conversation.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.bodyMedium.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Row(
+          children: [
+            Text(
+              conversation.type.korean,
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${conversation.messageCount}개 메시지',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
+        trailing: Text(
+          conversation.formattedDate,
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.textTertiary,
+          ),
+        ),
+        onTap: () => widget.onSelectConversation(
+          conversation.id,
+          conversation.type,
+        ),
+      ),
+    );
+  }
 }

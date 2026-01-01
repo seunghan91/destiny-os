@@ -73,6 +73,10 @@ class ResultPage extends StatelessWidget {
                 _buildDaewoonPreview(context, data),
                 const SizedBox(height: 24),
 
+                // 궁합 분석 버튼
+                _buildCompatibilityButton(context),
+                const SizedBox(height: 24),
+
                 // AI 상담 버튼
                 _buildAiConsultationButton(context),
               ],
@@ -340,6 +344,43 @@ class ResultPage extends StatelessWidget {
             ],
           ),
 
+          // 차원별 일치/불일치 표시
+          if (gap.dimensionGaps.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: gap.dimensionGaps.map((d) {
+                final isMatch = !d.hasGap;
+                return Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isMatch
+                            ? AppColors.wood.withValues(alpha: 0.2)
+                            : AppColors.fire.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        d.dimension,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: isMatch ? AppColors.wood : AppColors.fire,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Icon(
+                      isMatch ? Icons.check_circle : Icons.swap_horiz,
+                      size: 16,
+                      color: isMatch ? AppColors.wood : AppColors.fire,
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ],
+
           const SizedBox(height: 16),
           Text(
             gap.interpretation,
@@ -368,6 +409,26 @@ class ResultPage extends StatelessWidget {
                 ],
               ),
             ),
+          ],
+
+          // 맞춤형 조언
+          if (gap.recommendations.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...gap.recommendations.take(2).map((rec) => Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('💡 ', style: TextStyle(fontSize: 12)),
+                  Expanded(
+                    child: Text(
+                      rec,
+                      style: AppTypography.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            )),
           ],
         ],
       ),
@@ -499,6 +560,40 @@ class ResultPage extends StatelessWidget {
           OutlinedButton(
             onPressed: () => context.go('/daewoon'),
             child: const Text('전체 대운 보기'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompatibilityButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('💕', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 8),
+              Text('궁합 분석', style: AppTypography.headlineSmall),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '연인, 친구, 비즈니스 파트너와의 궁합을 사주로 분석해보세요.',
+            style: AppTypography.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () => context.go('/compatibility'),
+            child: const Text('궁합 보기'),
           ),
         ],
       ),

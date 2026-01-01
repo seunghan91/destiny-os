@@ -1,15 +1,22 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 /// 환경 설정
-/// 실제 API 키는 .env 파일이나 환경 변수에서 관리하세요
+/// .env 파일과 --dart-define 모두 지원
+/// 우선순위: --dart-define > .env > 기본값
 class EnvConfig {
   EnvConfig._();
 
   // ============================================
   // BizRouter API 설정 (권장)
   // ============================================
-  static const String bizRouterApiKey = String.fromEnvironment(
-    'BIZROUTER_API_KEY',
-    defaultValue: '',
-  );
+  static String get bizRouterApiKey {
+    // 1순위: --dart-define
+    const compileTimeKey = String.fromEnvironment('BIZROUTER_API_KEY', defaultValue: '');
+    if (compileTimeKey.isNotEmpty) return compileTimeKey;
+
+    // 2순위: .env 파일
+    return dotenv.get('BIZROUTER_API_KEY', fallback: '');
+  }
 
   static const String bizRouterBaseUrl = 'https://bizrouter.ai/api/v1';
 
@@ -22,24 +29,40 @@ class EnvConfig {
   // ============================================
   // OpenAI API 설정 (레거시/폴백용)
   // ============================================
-  static const String openAiApiKey = String.fromEnvironment(
-    'OPENAI_API_KEY',
-    defaultValue: '',
-  );
+  static String get openAiApiKey {
+    const compileTimeKey = String.fromEnvironment('OPENAI_API_KEY', defaultValue: '');
+    if (compileTimeKey.isNotEmpty) return compileTimeKey;
+
+    return dotenv.get('OPENAI_API_KEY', fallback: '');
+  }
 
   static const String openAiBaseUrl = 'https://api.openai.com/v1';
   static const String openAiModel = 'gpt-4o-mini';
 
-  // Supabase 설정 (추후 활성화 시 사용)
-  static const String supabaseUrl = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: 'https://darrlxppnvdntdxtystb.supabase.co',
-  );
+  // ============================================
+  // Supabase 설정 (선택)
+  // ============================================
+  static String get supabaseUrl {
+    const compileTimeUrl = String.fromEnvironment(
+      'SUPABASE_URL',
+      defaultValue: 'https://darrlxppnvdntdxtystb.supabase.co',
+    );
+    if (compileTimeUrl != 'https://darrlxppnvdntdxtystb.supabase.co') {
+      return compileTimeUrl;
+    }
 
-  static const String supabaseAnonKey = String.fromEnvironment(
-    'SUPABASE_ANON_KEY',
-    defaultValue: '',
-  );
+    return dotenv.get(
+      'SUPABASE_URL',
+      fallback: 'https://darrlxppnvdntdxtystb.supabase.co',
+    );
+  }
+
+  static String get supabaseAnonKey {
+    const compileTimeKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
+    if (compileTimeKey.isNotEmpty) return compileTimeKey;
+
+    return dotenv.get('SUPABASE_ANON_KEY', fallback: '');
+  }
 
   // Edge Function URL
   static String get aiConsultationUrl =>
@@ -49,4 +72,14 @@ class EnvConfig {
   static bool get hasBizRouterKey => bizRouterApiKey.isNotEmpty;
   static bool get hasOpenAiKey => openAiApiKey.isNotEmpty;
   static bool get hasSupabaseKey => supabaseAnonKey.isNotEmpty;
+
+  // ============================================
+  // 개발 모드 설정
+  // ============================================
+  static bool get useLocalFallback {
+    const compileTime = String.fromEnvironment('USE_LOCAL_FALLBACK', defaultValue: 'true');
+    if (compileTime != 'true') return compileTime == 'true';
+
+    return dotenv.get('USE_LOCAL_FALLBACK', fallback: 'true') == 'true';
+  }
 }

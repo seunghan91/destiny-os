@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/app.dart';
@@ -8,6 +9,14 @@ import 'core/di/injection.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // .env 파일 로드 (존재하지 않을 경우 무시)
+  try {
+    await dotenv.load(fileName: '.env');
+    debugPrint('✅ .env file loaded successfully');
+  } catch (e) {
+    debugPrint('⚠️  .env file not found - using --dart-define or defaults');
+  }
 
   // 상태바 스타일 설정
   SystemChrome.setSystemUIOverlayStyle(

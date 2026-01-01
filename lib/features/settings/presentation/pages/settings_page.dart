@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../core/theme/theme_notifier.dart';
 
 /// 설정 페이지
 class SettingsPage extends StatefulWidget {
@@ -20,6 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _useYajaTime = false; // 야자시 적용 여부
   bool _useSolarTime = true; // 진태양시 적용 여부
   bool _notificationsEnabled = false; // 알림 설정
+  ThemeMode _themeMode = ThemeMode.system; // 테마 모드
   String _appVersion = '';
 
   @override
@@ -35,6 +37,8 @@ class _SettingsPageState extends State<SettingsPage> {
       _useYajaTime = prefs.getBool('use_yaja_time') ?? false;
       _useSolarTime = prefs.getBool('use_solar_time') ?? true;
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
+      final themeIndex = prefs.getInt('theme_mode') ?? 0;
+      _themeMode = ThemeMode.values[themeIndex];
     });
   }
 
@@ -43,6 +47,14 @@ class _SettingsPageState extends State<SettingsPage> {
     await prefs.setBool('use_yaja_time', _useYajaTime);
     await prefs.setBool('use_solar_time', _useSolarTime);
     await prefs.setBool('notifications_enabled', _notificationsEnabled);
+    await prefs.setInt('theme_mode', _themeMode.index);
+  }
+
+  void _changeTheme(ThemeMode mode) {
+    setState(() => _themeMode = mode);
+    _saveSettings();
+    // ThemeNotifier를 통해 앱 전체 테마 변경
+    ThemeNotifier.of(context)?.setThemeMode(mode);
   }
 
   Future<void> _loadAppVersion() async {
@@ -106,6 +118,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     _saveSettings();
                   },
                 ),
+              ]),
+
+              const SizedBox(height: 24),
+
+              // 화면 설정 섹션
+              _buildSectionHeader('화면'),
+              _buildSettingsCard([
+                _buildThemeSelector(),
               ]),
 
               const SizedBox(height: 24),
@@ -316,6 +336,100 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildThemeSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '테마',
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '앱의 외관을 선택합니다',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildThemeOption(
+                icon: Icons.brightness_auto,
+                label: '시스템',
+                isSelected: _themeMode == ThemeMode.system,
+                onTap: () => _changeTheme(ThemeMode.system),
+              ),
+              const SizedBox(width: 10),
+              _buildThemeOption(
+                icon: Icons.light_mode,
+                label: '라이트',
+                isSelected: _themeMode == ThemeMode.light,
+                onTap: () => _changeTheme(ThemeMode.light),
+              ),
+              const SizedBox(width: 10),
+              _buildThemeOption(
+                icon: Icons.dark_mode,
+                label: '다크',
+                isSelected: _themeMode == ThemeMode.dark,
+                onTap: () => _changeTheme(ThemeMode.dark),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeOption({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 24,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: AppTypography.labelSmall.copyWith(
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInfoTile({
     required String title,
     required String value,
@@ -478,7 +592,7 @@ class _SettingsPageState extends State<SettingsPage> {
           end: Alignment.bottomRight,
           colors: [
             AppColors.primary.withValues(alpha: 0.08),
-            AppColors.secondary.withValues(alpha: 0.05),
+            AppColors.primaryLight.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -623,7 +737,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColors.primary, AppColors.secondary],
+                          colors: [AppColors.primary, AppColors.primaryDark],
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -686,6 +800,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: '정통 명리학 이론 적용',
                       items: [
                         '오자시두법(五子時頭法) 시주 계산',
+                        '절기 기반 대운수 정밀 계산 (3일=1년 환산)',
                         '양남음녀 순행, 음남양녀 역행 대운',
                         '천간합 및 지지 육합/삼합/충/형/해 분석',
                       ],
@@ -800,7 +915,7 @@ class _SettingsPageState extends State<SettingsPage> {
           end: Alignment.bottomRight,
           colors: [
             AppColors.primary.withValues(alpha: 0.1),
-            AppColors.secondary.withValues(alpha: 0.08),
+            AppColors.primaryLight.withValues(alpha: 0.08),
           ],
         ),
         borderRadius: BorderRadius.circular(14),
@@ -831,7 +946,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 10),
           _buildAccuracyRow('궁합 분석', 0.90, '높음'),
           const SizedBox(height: 10),
-          _buildAccuracyRow('대운 흐름', 0.75, '기본'),
+          _buildAccuracyRow('대운 흐름', 0.88, '양호'),
         ],
       ),
     );

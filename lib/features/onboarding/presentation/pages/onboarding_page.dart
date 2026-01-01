@@ -182,17 +182,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   /// 마지막 페이지 - 무료 혜택 강조
   Widget _buildFinalPage(OnboardingContentData data) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Spacer(flex: 2),
+          const SizedBox(height: 16),
 
           // 아이콘
           Container(
-            width: 140,
-            height: 140,
+            width: 120,
+            height: 120,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -206,8 +206,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
             child: Center(
               child: Container(
-                width: 100,
-                height: 100,
+                width: 84,
+                height: 84,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -222,13 +222,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: Center(
                   child: Text(
                     data.icon,
-                    style: const TextStyle(fontSize: 56),
+                    style: const TextStyle(fontSize: 48),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 28),
 
           // 타이틀
           Text(
@@ -238,7 +238,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // 서브타이틀 - 강조 뱃지
           Container(
@@ -255,7 +255,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // 설명
           Text(
@@ -266,14 +266,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
           // 혜택 리스트 - 카드 스타일
           ...data.features.map((feature) {
             return Container(
               width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
@@ -282,19 +282,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
               child: Row(
                 children: [
                   Container(
-                    width: 28,
-                    height: 28,
+                    width: 26,
+                    height: 26,
                     decoration: BoxDecoration(
                       color: AppColors.primary.withAlpha(25),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.check,
-                      size: 16,
+                      size: 14,
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Text(
                     feature,
                     style: AppTypography.bodyMedium.copyWith(
@@ -315,7 +315,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             );
           }),
 
-          const Spacer(flex: 2),
+          const SizedBox(height: 16),
         ],
       ),
     );

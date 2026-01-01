@@ -34,6 +34,11 @@ class AppColors {
   static const Color primaryLight = Color(0xFF4A93F7);
   static const Color primaryDark = Color(0xFF1B64DA);
 
+  /// 세컨더리 퍼플
+  static const Color secondary = Color(0xFF764ba2);
+  static const Color secondaryLight = Color(0xFF9670B8);
+  static const Color secondaryDark = Color(0xFF5A3A7D);
+
   /// 배경색
   static const Color background = Color(0xFFF9FAFB);
   static const Color surface = Color(0xFFFFFFFF);
@@ -126,6 +131,52 @@ class AppColors {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [primary, primaryDark],
+  );
+
+  // ============================================
+  // 다크모드 컬러
+  // ============================================
+
+  /// 다크모드 배경
+  static const Color backgroundDark = Color(0xFF0D1117);
+  static const Color surfaceDark = Color(0xFF161B22);
+  static const Color surfaceVariantDark = Color(0xFF21262D);
+
+  /// 다크모드 텍스트
+  static const Color textPrimaryDark = Color(0xFFF0F6FC);
+  static const Color textSecondaryDark = Color(0xFF8B949E);
+  static const Color textTertiaryDark = Color(0xFF6E7681);
+  static const Color textDisabledDark = Color(0xFF484F58);
+
+  /// 다크모드 보더
+  static const Color borderDark = Color(0xFF30363D);
+  static const Color borderLightDark = Color(0xFF21262D);
+
+  /// 다크모드 프라이머리 (살짝 밝게)
+  static const Color primaryDarkMode = Color(0xFF58A6FF);
+  static const Color primaryLightDarkMode = Color(0xFF79B8FF);
+
+  /// 다크모드 오방색 (채도/밝기 조정)
+  static const Color woodDarkMode = Color(0xFF56D4CC);
+  static const Color fireDarkMode = Color(0xFFFF7B7B);
+  static const Color earthDarkMode = Color(0xFFFFEB7D);
+  static const Color metalDarkMode = Color(0xFFE6C84B);
+  static const Color waterDarkMode = Color(0xFF6B7F99);
+
+  /// 다크모드 시맨틱 컬러
+  static const Color successDark = Color(0xFF3FB950);
+  static const Color warningDark = Color(0xFFD29922);
+  static const Color errorDark = Color(0xFFF85149);
+  static const Color infoDark = Color(0xFF58A6FF);
+
+  /// 다크모드 그라디언트
+  static const LinearGradient destinyGradientDark = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF7F8EF5),
+      Color(0xFF9665C8),
+    ],
   );
 
   // ============================================

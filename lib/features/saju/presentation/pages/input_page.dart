@@ -551,7 +551,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     children: [
                       Text(
                         _selectedSiju != null
-                            ? '${_selectedSiju!.name} (\${_selectedSiju!.hanja}時)'
+                            ? '${_selectedSiju!.name} (${_selectedSiju!.hanja}時)'
                             : '출생 시간을 선택하세요',
                         style: AppTypography.titleMedium.copyWith(
                           color: _selectedSiju != null

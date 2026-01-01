@@ -192,8 +192,13 @@ class SajuCalculator {
     bool dayMasterPolarity,
     String targetStem,
   ) {
-    final targetElement = _stemToElement[targetStem]!;
-    final targetPolarity = _stemPolarity[targetStem]!;
+    final targetElement = _stemToElement[targetStem];
+    final targetPolarity = _stemPolarity[targetStem];
+
+    // null 안전성 검사
+    if (targetElement == null || targetPolarity == null) {
+      return null;
+    }
 
     return _getTenGod(dayMasterElement, dayMasterPolarity, targetElement, targetPolarity);
   }
@@ -205,7 +210,13 @@ class SajuCalculator {
     bool dayMasterPolarity,
     String targetBranch,
   ) {
-    final targetElement = _branchToElement[targetBranch]!;
+    final targetElement = _branchToElement[targetBranch];
+
+    // null 안전성 검사
+    if (targetElement == null) {
+      return null;
+    }
+
     // 지지는 음양 결정: 자/인/진/오/신/술=양, 축/묘/사/미/유/해=음
     final yangBranches = {'자', '인', '진', '오', '신', '술'};
     final targetPolarity = yangBranches.contains(targetBranch);

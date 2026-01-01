@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
@@ -118,6 +119,10 @@ class ResultAiCta extends StatelessWidget {
           ],
         ),
       ),
-    );
+    )
+        .animate()
+        .fadeIn(duration: 500.ms, delay: 600.ms)
+        .slideY(begin: 0.15, end: 0, duration: 500.ms, curve: Curves.easeOutCubic)
+        .shimmer(duration: 1500.ms, delay: 1100.ms, color: AppColors.primary.withAlpha(30));
   }
 }

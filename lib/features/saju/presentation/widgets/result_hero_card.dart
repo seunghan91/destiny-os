@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
@@ -168,7 +169,11 @@ class ResultHeroCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    )
+        .animate()
+        .fadeIn(duration: 400.ms)
+        .slideY(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOutCubic)
+        .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), duration: 400.ms);
   }
 
   Color _getScoreColor(int score) {

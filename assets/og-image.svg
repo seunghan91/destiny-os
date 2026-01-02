@@ -1,0 +1,99 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16213e;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+
+  <!-- Stars decoration -->
+  <circle cx="150" cy="80" r="2" fill="#FFD700" opacity="0.8"/>
+  <circle cx="1050" cy="100" r="3" fill="#FFD700" opacity="0.6"/>
+  <circle cx="200" cy="150" r="2" fill="#FFD700" opacity="0.7"/>
+  <circle cx="980" cy="500" r="2" fill="#FFD700" opacity="0.8"/>
+  <circle cx="1100" cy="450" r="2" fill="#FFD700" opacity="0.6"/>
+
+  <!-- Left side decorative stars -->
+  <path d="M 80 100 L 85 115 L 100 118 L 87 128 L 91 143 L 80 135 L 69 143 L 73 128 L 60 118 L 75 115 Z"
+        fill="#FFD700" filter="url(#glow)" opacity="0.8"/>
+  <path d="M 100 500 L 105 515 L 120 518 L 107 528 L 111 543 L 100 535 L 89 543 L 93 528 L 80 518 L 95 515 Z"
+        fill="#FFD700" filter="url(#glow)" opacity="0.8"/>
+
+  <!-- Right side larger star -->
+  <path d="M 1120 280 L 1130 305 L 1155 310 L 1135 327 L 1142 352 L 1120 338 L 1098 352 L 1105 327 L 1085 310 L 1110 305 Z"
+        fill="#FFD700" filter="url(#glow)"/>
+
+  <!-- Free badge (top left) -->
+  <rect x="50" y="50" width="100" height="50" rx="25" fill="#FFD700"/>
+  <text x="100" y="81"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="20"
+        font-weight="900"
+        fill="#1a1a2e"
+        text-anchor="middle">무료</text>
+
+  <!-- Main title -->
+  <text x="600" y="200"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="80"
+        font-weight="900"
+        fill="url(#goldGradient)"
+        text-anchor="middle"
+        filter="url(#glow)">2026 신년운세</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="260"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="32"
+        font-weight="400"
+        fill="#FFFFFF"
+        text-anchor="middle">사주 × MBTI 하이브리드 운세</text>
+
+  <!-- Main question -->
+  <text x="600" y="380"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="60"
+        font-weight="700"
+        fill="#FFFFFF"
+        text-anchor="middle">나의 2026년 운세는?</text>
+
+  <!-- CTA button shape -->
+  <rect x="400" y="450" width="400" height="70" rx="35"
+        fill="none"
+        stroke="url(#goldGradient)"
+        stroke-width="3"
+        filter="url(#glow)"/>
+
+  <!-- CTA text -->
+  <text x="600" y="495"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="28"
+        font-weight="700"
+        fill="url(#goldGradient)"
+        text-anchor="middle">지금 바로 확인하기 →</text>
+
+  <!-- Bottom info -->
+  <text x="600" y="570"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="20"
+        font-weight="400"
+        fill="#CCCCCC"
+        text-anchor="middle">회원가입 없이 • 완전 무료 • 1분만에 확인</text>
+</svg>

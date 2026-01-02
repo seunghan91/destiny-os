@@ -9,6 +9,7 @@ import '../../domain/entities/chat_message.dart';
 import '../../data/services/credit_service.dart';
 import '../../data/services/ai_consultation_service.dart';
 import '../../data/services/consultation_storage_service.dart';
+import '../../data/services/consultation_payment_service.dart';
 
 /// AI 상담 페이지
 class ConsultationPage extends StatefulWidget {
@@ -33,6 +34,21 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
     WidgetsBinding.instance.addObserver(this);
     _loadCredits();
     _loadPreviousSession();
+    _checkPaymentRequired();
+  }
+
+  /// 결제 필요 여부 확인 및 다이얼로그 표시
+  Future<void> _checkPaymentRequired() async {
+    // 페이지 로드 완료 후 확인
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (!mounted) return;
+
+    final needsPayment = await ConsultationPaymentService.needsPayment();
+
+    if (needsPayment && mounted) {
+      _showPaymentDialog();
+    }
   }
 
   /// 이전 세션 불러오기
@@ -379,45 +395,68 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
   }
 
   void _showNoCreditDialog() {
+    _showPaymentDialog();
+  }
+
+  /// 결제 다이얼로그 표시
+  void _showPaymentDialog() {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.stars, color: AppColors.primary),
+            Icon(Icons.payment_rounded, color: AppColors.primary),
             const SizedBox(width: 8),
-            const Text('크레딧 부족'),
+            const Text('AI 운세 상담'),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('AI 상담 크레딧이 부족합니다.'),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight.withAlpha(30),
-                borderRadius: BorderRadius.circular(8),
+            Text(
+              ConsultationPaymentService.getPurchaseMessage(),
+              style: AppTypography.bodyMedium.copyWith(
+                height: 1.6,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.fortuneGood.withAlpha(15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.fortuneGood.withAlpha(30),
+                ),
+              ),
+              child: Row(
                 children: [
-                  Text(
-                    '💡 크레딧 획득 방법',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Icon(
+                    Icons.credit_card_rounded,
+                    color: AppColors.fortuneGood,
+                    size: 24,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• 매일 1회 무료 크레딧 지급\n'
-                    '• 친구 초대 시 3회 추가\n'
-                    '• 앱 리뷰 작성 시 2회 추가',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondaryOf(context),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '크레딧 5회',
+                          style: AppTypography.titleSmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.fortuneGood,
+                          ),
+                        ),
+                        Text(
+                          '1,000원',
+                          style: AppTypography.headlineSmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -428,11 +467,85 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
+            child: Text(
+              '취소',
+              style: TextStyle(color: AppColors.textSecondaryOf(context)),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _handlePayment();
+            },
+            icon: const Icon(Icons.payment_rounded, size: 20),
+            label: const Text('결제하기'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  /// 결제 처리
+  Future<void> _handlePayment() async {
+    // 로딩 다이얼로그 표시
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final success = await ConsultationPaymentService.purchaseConsultationCredits();
+
+      if (mounted) {
+        Navigator.pop(context); // 로딩 다이얼로그 닫기
+
+        if (success) {
+          // 크레딧 새로고침
+          await _loadCredits();
+
+          // 성공 메시지
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('결제가 완료되었습니다! 크레딧 5회가 충전되었어요.'),
+              backgroundColor: AppColors.fortuneGood,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          // 실패 메시지
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('결제에 실패했습니다. 다시 시도해주세요.'),
+              backgroundColor: AppColors.fire,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // 로딩 다이얼로그 닫기
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('오류가 발생했습니다: $e'),
+            backgroundColor: AppColors.fire,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _generateAIResponse(String userMessage) async {

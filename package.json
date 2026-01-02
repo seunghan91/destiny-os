@@ -1,0 +1,11 @@
+{
+  "name": "destiny-os-ait",
+  "private": true,
+  "scripts": {
+    "dev": "granite dev",
+    "build": "granite build"
+  },
+  "dependencies": {
+    "@apps-in-toss/web-framework": "latest"
+  }
+}

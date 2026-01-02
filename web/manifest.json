@@ -1,6 +1,6 @@
 {
-    "name": "Destiny.OS - 사주 × MBTI 운세",
-    "short_name": "Destiny.OS",
+    "name": "2026 신년운세 (MBTI 운세) - 사주 × MBTI 운세",
+    "short_name": "2026 신년운세",
     "start_url": "/?source=pwa",
     "scope": "/",
     "display": "standalone",
@@ -13,7 +13,7 @@
     "categories": ["lifestyle", "entertainment", "personalization"],
     "lang": "ko-KR",
     "dir": "ltr",
-    "id": "destiny-os-pwa",
+    "id": "mbti-unse-2026-pwa",
     "launch_handler": {
         "client_mode": "focus-existing"
     },
@@ -47,7 +47,7 @@
             "src": "og-image.png",
             "sizes": "1200x630",
             "type": "image/png",
-            "label": "Destiny.OS 사주 × MBTI 운세 서비스"
+            "label": "2026 신년운세 (MBTI 운세) 서비스"
         }
     ],
     "shortcuts": [

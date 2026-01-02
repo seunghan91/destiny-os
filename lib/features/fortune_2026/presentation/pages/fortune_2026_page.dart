@@ -18,9 +18,7 @@ class Fortune2026Page extends StatelessWidget {
         if (state is! DestinySuccess) {
           return Scaffold(
             appBar: AppBar(title: const Text('2026 병오년')),
-            body: const Center(
-              child: Text('분석 데이터가 없습니다.\n먼저 사주 분석을 진행해주세요.'),
-            ),
+            body: const Center(child: Text('분석 데이터가 없습니다.\n먼저 사주 분석을 진행해주세요.')),
           );
         }
 
@@ -83,6 +81,10 @@ class Fortune2026Page extends StatelessWidget {
                       _buildScoreCard(context, fortune, score),
                       const SizedBox(height: 24),
 
+                      // 서술형 운세 (총운/가장 좋은 것/주의/조언)
+                      _buildNarrativeSections(context, fortune),
+                      const SizedBox(height: 24),
+
                       // 화기 적합도
                       _buildFireCompatibilityCard(context, fortune, fireScore),
                       const SizedBox(height: 24),
@@ -118,7 +120,11 @@ class Fortune2026Page extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
+            color: AppColors.shadowOf(
+              context,
+              lightOpacity: 0.05,
+              darkOpacity: 0.12,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -156,9 +162,7 @@ class Fortune2026Page extends StatelessWidget {
             ),
             child: Text(
               '🔥 ${fortune.yearTheme}',
-              style: AppTypography.labelLarge.copyWith(
-                color: AppColors.fire,
-              ),
+              style: AppTypography.labelLarge.copyWith(color: AppColors.fire),
             ),
           ),
           const SizedBox(height: 16),
@@ -174,9 +178,45 @@ class Fortune2026Page extends StatelessWidget {
     );
   }
 
-  Widget _buildFireCompatibilityCard(BuildContext context, Fortune2026 fortune, int fireScore) {
+  Widget _buildNarrativeSections(BuildContext context, Fortune2026 fortune) {
+    final narrative = fortune.narrative;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _NarrativeSectionCard(
+          title: '총운',
+          content: narrative.overall,
+          accentColor: AppColors.fire,
+        ),
+        const SizedBox(height: 12),
+        _NarrativeSectionCard(
+          title: '가장 좋은 것',
+          content: narrative.best,
+          accentColor: AppColors.success,
+        ),
+        const SizedBox(height: 12),
+        _NarrativeSectionCard(
+          title: '주의가 필요한 것',
+          content: narrative.caution,
+          accentColor: AppColors.warning,
+        ),
+        const SizedBox(height: 12),
+        _NarrativeSectionCard(
+          title: '올해의 조언',
+          content: narrative.advice,
+          accentColor: AppColors.primary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFireCompatibilityCard(
+    BuildContext context,
+    Fortune2026 fortune,
+    int fireScore,
+  ) {
     final fireCompatibility = fortune.fireCompatibility;
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -217,7 +257,10 @@ class Fortune2026Page extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('낮음', style: AppTypography.caption),
-              Text('$fireScore%', style: AppTypography.labelLarge.copyWith(color: AppColors.fire)),
+              Text(
+                '$fireScore%',
+                style: AppTypography.labelLarge.copyWith(color: AppColors.fire),
+              ),
               Text('높음', style: AppTypography.caption),
             ],
           ),
@@ -237,7 +280,11 @@ class Fortune2026Page extends StatelessWidget {
     );
   }
 
-  Widget _buildCompatibilityItem(BuildContext context, String icon, String text) {
+  Widget _buildCompatibilityItem(
+    BuildContext context,
+    String icon,
+    String text,
+  ) {
     final isWarning = icon == '⚠';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -249,7 +296,9 @@ class Fortune2026Page extends StatelessWidget {
             child: Text(
               text,
               style: AppTypography.bodyMedium.copyWith(
-                color: isWarning ? AppColors.warning : AppColors.textPrimaryOf(context),
+                color: isWarning
+                    ? AppColors.warning
+                    : AppColors.textPrimaryOf(context),
               ),
             ),
           ),
@@ -370,10 +419,7 @@ class Fortune2026Page extends StatelessWidget {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(label, style: AppTypography.caption),
@@ -403,8 +449,8 @@ class Fortune2026Page extends StatelessWidget {
       decoration: BoxDecoration(
         color: isWarning
             ? (AppColors.isDarkMode(context)
-                ? AppColors.error.withValues(alpha: 0.15)
-                : AppColors.errorLight)
+                  ? AppColors.error.withValues(alpha: 0.15)
+                  : AppColors.errorLight)
             : AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -476,7 +522,7 @@ class Fortune2026Page extends StatelessWidget {
 
   Widget _buildCautionCard(Fortune2026 fortune) {
     final cautions = fortune.fireCompatibility.cautions;
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -503,7 +549,9 @@ class Fortune2026Page extends StatelessWidget {
           const SizedBox(height: 16),
           if (fortune.hasNovemberClash)
             _buildCautionItem('11월 자오충(子午沖)', '대인관계 갈등 주의, 중요 결정 미루기'),
-          ...cautions.map((c) => _buildCautionItem(c, _getCautionDescription(c))),
+          ...cautions.map(
+            (c) => _buildCautionItem(c, _getCautionDescription(c)),
+          ),
         ],
       ),
     );
@@ -545,6 +593,88 @@ class Fortune2026Page extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NarrativeSectionCard extends StatefulWidget {
+  final String title;
+  final String content;
+  final Color accentColor;
+
+  const _NarrativeSectionCard({
+    required this.title,
+    required this.content,
+    required this.accentColor,
+  });
+
+  @override
+  State<_NarrativeSectionCard> createState() => _NarrativeSectionCardState();
+}
+
+class _NarrativeSectionCardState extends State<_NarrativeSectionCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasContent = widget.content.trim().isNotEmpty;
+    final textColor = AppColors.textPrimaryOf(context);
+    final secondary = AppColors.textSecondaryOf(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderOf(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: widget.accentColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(widget.title, style: AppTypography.titleMedium),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (!hasContent)
+            Text(
+              '내용을 불러오지 못했어요. 다시 분석해 주세요.',
+              style: AppTypography.bodyMedium.copyWith(color: secondary),
+            )
+          else
+            Text(
+              widget.content,
+              style: AppTypography.bodyMedium.copyWith(color: textColor),
+              maxLines: _expanded ? null : 6,
+              overflow: _expanded
+                  ? TextOverflow.visible
+                  : TextOverflow.ellipsis,
+            ),
+          if (hasContent) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => setState(() => _expanded = !_expanded),
+                child: Text(_expanded ? '접기' : '더보기'),
+              ),
+            ),
+          ],
         ],
       ),
     );

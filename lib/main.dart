@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/app.dart';
 import 'core/config/env_config.dart';
 import 'core/di/injection.dart';
+import 'core/services/apps_in_toss/apps_in_toss_service.dart';
 import 'core/services/notifications/firebase_notification_service.dart';
 import 'core/services/pwa/pwa_service.dart';
 import 'core/services/pwa/web_notification_service.dart';
@@ -82,18 +83,30 @@ void main() async {
   // 의존성 주입 초기화
   await configureDependencies();
 
-  // PWA 서비스 초기화 (웹 플랫폼에서만)
+  // 웹 플랫폼 서비스 초기화
   if (kIsWeb) {
     try {
+      // PWA 서비스
       final pwaService = PwaService();
       await pwaService.initialize();
-      
+
       final webNotificationService = WebNotificationService();
       await webNotificationService.initialize();
-      
+
       debugPrint('✅ PWA services initialized');
     } catch (e) {
       debugPrint('⚠️  PWA services initialization failed: $e');
+    }
+
+    // Apps in Toss SDK 초기화
+    try {
+      final appsInTossBridge = AppsInTossBridge();
+      await appsInTossBridge.initialize();
+
+      debugPrint('✅ Apps in Toss SDK initialized');
+      debugPrint('🏪 환경: ${appsInTossBridge.isAppsInToss ? "Apps in Toss" : "Mock"}');
+    } catch (e) {
+      debugPrint('⚠️  Apps in Toss SDK initialization failed: $e');
     }
   }
 

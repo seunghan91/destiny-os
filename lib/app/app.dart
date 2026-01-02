@@ -6,9 +6,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_notifier.dart';
 import '../features/saju/presentation/bloc/destiny_bloc.dart';
-import 'router.dart';
+import 'router_deferred.dart';
 
-/// Destiny.OS 앱 루트 위젯
+/// 2026 신년운세 (MBTI 운세) 앱 루트 위젯
 class DestinyApp extends StatefulWidget {
   const DestinyApp({super.key});
 
@@ -40,20 +40,15 @@ class _DestinyAppState extends State<DestinyApp> {
         builder: (context, _) {
           return MultiBlocProvider(
             providers: [
-              BlocProvider<DestinyBloc>(
-                create: (context) => DestinyBloc(),
-              ),
+              BlocProvider<DestinyBloc>(create: (context) => DestinyBloc()),
             ],
             child: MaterialApp.router(
-              title: 'Destiny.OS',
+              title: '2026 신년운세 (MBTI 운세)',
               debugShowCheckedModeBanner: false,
 
               // 한국어 로케일 설정
               locale: const Locale('ko', 'KR'),
-              supportedLocales: const [
-                Locale('ko', 'KR'),
-                Locale('en', 'US'),
-              ],
+              supportedLocales: const [Locale('ko', 'KR'), Locale('en', 'US')],
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
@@ -65,8 +60,8 @@ class _DestinyAppState extends State<DestinyApp> {
               darkTheme: AppTheme.dark,
               themeMode: _themeController.themeMode,
 
-              // 라우터
-              routerConfig: appRouter,
+              // 라우터 (Deferred Loading 최적화)
+              routerConfig: appRouterDeferred,
 
               // 빌더 (전역 설정)
               builder: (context, child) {
@@ -75,20 +70,28 @@ class _DestinyAppState extends State<DestinyApp> {
                 SystemChrome.setSystemUIOverlayStyle(
                   SystemUiOverlayStyle(
                     statusBarColor: Colors.transparent,
-                    statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-                    statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-                    systemNavigationBarColor: isDark 
-                        ? const Color(0xFF0D1117)  // AppColors.backgroundDark
+                    statusBarIconBrightness: isDark
+                        ? Brightness.light
+                        : Brightness.dark,
+                    statusBarBrightness: isDark
+                        ? Brightness.dark
+                        : Brightness.light,
+                    systemNavigationBarColor: isDark
+                        ? const Color(0xFF0D1117) // AppColors.backgroundDark
                         : const Color(0xFFF9FAFB), // AppColors.background
-                    systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                    systemNavigationBarIconBrightness: isDark
+                        ? Brightness.light
+                        : Brightness.dark,
                   ),
                 );
-                
+
                 return MediaQuery(
                   // 시스템 폰트 스케일 제한 (접근성)
                   data: MediaQuery.of(context).copyWith(
                     textScaler: TextScaler.linear(
-                      MediaQuery.of(context).textScaler.scale(1.0).clamp(0.8, 1.2),
+                      MediaQuery.of(
+                        context,
+                      ).textScaler.scale(1.0).clamp(0.8, 1.2),
                     ),
                   ),
                   child: child!,

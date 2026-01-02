@@ -27,7 +27,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       icon: '🔮',
       iconBackground: AppColors.primary,
       title: '운명을 읽는\n새로운 방법',
-      subtitle: 'Destiny.OS',
+      subtitle: '2026 신년운세',
       description: '사주 × MBTI\nAI가 분석하는 나만의 운명',
     ),
     // 페이지 2: AI 코치 강조
@@ -37,11 +37,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: '24시간\nAI 운명 코치',
       subtitle: '언제든 물어보세요',
       description: '궁금한 건 바로바로\nAI가 사주와 MBTI를 기반으로\n맞춤 답변을 드려요',
-      features: [
-        '실시간 AI 상담',
-        '사주 기반 맞춤 조언',
-        '무제한 질문 가능',
-      ],
+      features: ['실시간 AI 상담', '사주 기반 맞춤 조언', '무제한 질문 가능'],
     ),
     // 페이지 3: 2026년 운세
     OnboardingContentData(
@@ -50,11 +46,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: '2026년 병오년\n나의 운세는?',
       subtitle: '丙午年 火馬의 해',
       description: '불꽃처럼 열정적인 에너지의 해\n당신에게는 어떤 기회가 올까요?',
-      features: [
-        '2026년 총운 분석',
-        '월별 에너지 흐름',
-        '대운/세운 상세 분석',
-      ],
+      features: ['2026년 총운 분석', '월별 에너지 흐름', '대운/세운 상세 분석'],
     ),
     // 페이지 4: 무료 혜택 & CTA
     OnboardingContentData(
@@ -63,11 +55,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: '지금 시작하면\n특별 혜택!',
       subtitle: '무료로 시작하기',
       description: '가입만 해도 AI 상담 3회 무료\n매일 오늘의 운세도 무료!',
-      features: [
-        'AI 상담 3회 무료',
-        '매일 오늘의 운세',
-        '2026년 운세 리포트',
-      ],
+      features: ['AI 상담 3회 무료', '매일 오늘의 운세', '2026년 운세 리포트'],
     ),
   ];
 
@@ -220,10 +208,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: Text(
-                    data.icon,
-                    style: const TextStyle(fontSize: 48),
-                  ),
+                  child: Text(data.icon, style: const TextStyle(fontSize: 48)),
                 ),
               ),
             ),
@@ -341,13 +326,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
             child: ElevatedButton(
               onPressed: _nextPage,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isLastPage ? AppColors.primary : AppColors.primary,
+                backgroundColor: isLastPage
+                    ? AppColors.primary
+                    : AppColors.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: isLastPage ? 4 : 0,
-                shadowColor: isLastPage ? AppColors.primary.withAlpha(100) : null,
+                shadowColor: isLastPage
+                    ? AppColors.primary.withAlpha(100)
+                    : null,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -361,17 +350,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   ),
                   if (!isLastPage) ...[
                     const SizedBox(width: 8),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 20,
-                    ),
+                    const Icon(Icons.arrow_forward_rounded, size: 20),
                   ],
                   if (isLastPage) ...[
                     const SizedBox(width: 8),
-                    const Icon(
-                      Icons.celebration_rounded,
-                      size: 20,
-                    ),
+                    const Icon(Icons.celebration_rounded, size: 20),
                   ],
                 ],
               ),

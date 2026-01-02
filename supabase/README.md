@@ -1,4 +1,47 @@
-# Supabase Database Setup
+# Supabase Setup for Destiny.OS
+
+토스페이먼츠 결제 연동 Edge Functions 및 데이터베이스 스키마
+
+## 📂 프로젝트 구조
+
+```
+supabase/
+├── functions/                 # Edge Functions
+│   ├── confirm-payment/       # 결제 승인
+│   ├── create-subscription/   # 구독 생성
+│   ├── process-billing/       # 정기 결제
+│   └── webhook/               # 웹훅 수신
+├── migrations/                # DB 마이그레이션
+└── DEPLOYMENT_GUIDE.md        # 배포 가이드
+```
+
+---
+
+## 🚀 Edge Functions (결제 시스템)
+
+### Functions 목록
+
+| Function | 목적 | 엔드포인트 |
+|----------|------|-----------|
+| `confirm-payment` | 결제 승인 | `POST /functions/v1/confirm-payment` |
+| `create-subscription` | 구독 생성 | `POST /functions/v1/create-subscription` |
+| `process-billing` | 정기 결제 | Cron Job (자동) |
+| `webhook` | 웹훅 수신 | `POST /functions/v1/webhook` |
+
+### 빠른 배포
+
+```bash
+# 모든 함수 배포
+supabase functions deploy
+
+# 로컬 테스트
+supabase functions serve
+```
+
+**상세 가이드**: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+**설계 문서**: [TOSS_PAYMENTS_INTEGRATION.md](../docs/TOSS_PAYMENTS_INTEGRATION.md)
+
+---
 
 ## 🎯 Migration 실행 방법
 

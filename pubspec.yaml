@@ -1,5 +1,5 @@
 name: destiny_os
-description: "Destiny.OS - 사주+MBTI 하이브리드 운세 앱 (Toss Mini App)"
+description: "2026 신년운세 (MBTI 운세) - MBTI New Year Fortune 2026"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -47,6 +47,7 @@ dependencies:
   # Utilities
   intl: ^0.20.2
   uuid: ^4.5.1
+  crypto: ^3.0.3
   dartz: ^0.10.1  # Functional programming (Either type)
   flutter_dotenv: ^5.2.1  # Environment variables
 

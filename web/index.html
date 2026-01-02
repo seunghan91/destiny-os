@@ -23,38 +23,40 @@
   <!-- SEO & Description - AdSense 승인을 위한 고품질 메타 정보 -->
   <meta name="description" content="사주와 MBTI를 결합한 새로운 운세 서비스. 나의 2026년 운세를 무료로 확인하세요! 회원가입 없이 1분만에 결과 확인. 사주팔자, 토정비결, 신년운세를 AI가 분석해드립니다.">
   <meta name="keywords" content="운세, 사주, MBTI, 2026운세, 신년운세, 무료운세, 사주팔자, 토정비결, AI운세, 사주분석, 병오년운세">
-  <meta name="author" content="Destiny.OS">
+  <meta name="author" content="2026 신년운세 (MBTI 운세)">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://destiny-os-2026.web.app">
 
   <!-- Open Graph (Facebook, KakaoTalk) -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Destiny.OS - 나의 2026년 운세는? 무료로 확인하기">
+  <meta property="og:title" content="2026 신년운세 (MBTI 운세) - 나의 2026년 운세는? 무료로 확인하기">
   <meta property="og:description" content="사주 × MBTI 하이브리드 운세 🔮 회원가입 없이 완전 무료! 1분만에 나만의 운세를 확인하세요.">
-  <meta property="og:image" content="https://destiny-os-2026.web.app/og-image.png">
+  <meta property="og:image" content="https://destiny-os-2026.web.app/og-image.png?v=20260102">
+  <meta property="og:image:secure_url" content="https://destiny-os-2026.web.app/og-image.png?v=20260102">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="https://destiny-os-2026.web.app">
-  <meta property="og:site_name" content="Destiny.OS">
+  <meta property="og:site_name" content="2026 신년운세 (MBTI 운세)">
   <meta property="og:locale" content="ko_KR">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Destiny.OS - 나의 2026년 운세는? 무료로 확인하기">
+  <meta name="twitter:title" content="2026 신년운세 (MBTI 운세) - 나의 2026년 운세는? 무료로 확인하기">
   <meta name="twitter:description" content="사주 × MBTI 하이브리드 운세 🔮 회원가입 없이 완전 무료!">
-  <meta name="twitter:image" content="https://destiny-os-2026.web.app/og-image.png">
+  <meta name="twitter:image" content="https://destiny-os-2026.web.app/og-image.png?v=20260102">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Destiny.OS">
+  <meta name="apple-mobile-web-app-title" content="2026 신년운세">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>Destiny.OS - 사주 × MBTI 운세 | 무료로 나의 2026년 운세 확인</title>
+  <title>2026 신년운세 (MBTI 운세) - 사주 × MBTI 운세 | 무료로 나의 2026년 운세 확인</title>
   <link rel="manifest" href="manifest.json">
 
   <!-- Google AdSense 자동 광고 코드 -->
@@ -355,6 +357,187 @@
       isPwaInstalled = true;
       console.log('✅ Running in standalone mode (PWA installed)');
     }
+  </script>
+
+  <!-- ============================================================================ -->
+  <!-- Apps in Toss SDK Mock (개발/테스트용)                                          -->
+  <!-- ============================================================================ -->
+  <!--
+    실제 배포 시에는 Toss에서 자동으로 주입하는 SDK를 사용합니다.
+    로컬 개발 및 테스트를 위한 Mock 구현입니다.
+
+    실제 Apps in Toss SDK API:
+    - AppsInToss.init(): SDK 초기화
+    - AppsInToss.requestPayment(): 결제 요청
+    - AppsInToss.getUser(): 사용자 정보 조회
+    - AppsInToss.showToast(): 토스트 메시지 표시
+  -->
+  <script>
+    (function() {
+      'use strict';
+
+      // Apps in Toss 환경 감지
+      const isAppsInToss = window.location.hostname.includes('apps-in-toss') ||
+                          window.location.search.includes('toss-env=apps');
+
+      console.log('🏪 Apps in Toss 환경:', isAppsInToss ? 'YES' : 'NO (Mock 사용)');
+
+      // Mock SDK 구현
+      window.AppsInToss = {
+        // SDK 초기화
+        init: function() {
+          return new Promise((resolve) => {
+            console.log('🔧 Apps in Toss SDK initialized (Mock)');
+            resolve({
+              success: true,
+              version: '1.0.0-mock',
+              environment: isAppsInToss ? 'production' : 'development'
+            });
+          });
+        },
+
+        // 결제 요청
+        requestPayment: function(options) {
+          return new Promise((resolve, reject) => {
+            console.log('💳 결제 요청 (Mock):', options);
+
+            // 필수 파라미터 검증
+            if (!options.orderId || !options.orderName || !options.amount) {
+              reject({
+                code: 'INVALID_PARAMETER',
+                message: '필수 파라미터가 누락되었습니다.'
+              });
+              return;
+            }
+
+            // Mock 결제 승인 시뮬레이션 (2초 후)
+            setTimeout(() => {
+              // 90% 확률로 성공, 10% 확률로 실패 (테스트용)
+              const isSuccess = Math.random() > 0.1;
+
+              if (isSuccess) {
+                resolve({
+                  success: true,
+                  orderId: options.orderId,
+                  orderName: options.orderName,
+                  amount: options.amount,
+                  paymentKey: 'mock_payment_key_' + Date.now(),
+                  approvedAt: new Date().toISOString(),
+                  method: 'TOSS_MONEY',
+                  customerName: '테스트 사용자',
+                  customerPhone: '010-1234-5678'
+                });
+              } else {
+                reject({
+                  code: 'PAYMENT_FAILED',
+                  message: '결제가 취소되었습니다. (Mock 테스트)'
+                });
+              }
+            }, 2000);
+          });
+        },
+
+        // 사용자 정보 조회
+        getUser: function() {
+          return new Promise((resolve) => {
+            console.log('👤 사용자 정보 조회 (Mock)');
+
+            if (isAppsInToss) {
+              // 실제 환경에서는 Toss가 주입한 사용자 정보 반환
+              resolve({
+                userId: 'toss_user_' + Math.floor(Math.random() * 100000),
+                name: '토스 사용자',
+                phone: '010-****-****',
+                verified: true
+              });
+            } else {
+              // Mock 환경에서는 테스트 사용자
+              resolve({
+                userId: 'mock_user_123',
+                name: '테스트 사용자',
+                phone: '010-1234-5678',
+                verified: true
+              });
+            }
+          });
+        },
+
+        // 토스트 메시지 표시
+        showToast: function(message) {
+          console.log('🔔 Toast:', message);
+
+          // 브라우저 환경에서는 간단한 alert 대신 custom toast
+          const toast = document.createElement('div');
+          toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            animation: fadeInOut 3s ease-in-out;
+          `;
+          toast.textContent = message;
+
+          // 애니메이션 추가
+          const style = document.createElement('style');
+          style.textContent = `
+            @keyframes fadeInOut {
+              0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+              10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+              90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+              100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            }
+          `;
+          document.head.appendChild(style);
+          document.body.appendChild(toast);
+
+          // 3초 후 제거
+          setTimeout(() => {
+            toast.remove();
+            style.remove();
+          }, 3000);
+        },
+
+        // 앱 닫기
+        close: function() {
+          console.log('🚪 앱 닫기 (Mock)');
+
+          if (isAppsInToss) {
+            // 실제 환경에서는 Toss 앱으로 복귀
+            window.history.back();
+          } else {
+            // Mock 환경에서는 홈으로 이동
+            window.location.href = '/';
+          }
+        },
+
+        // 환경 정보
+        getEnvironment: function() {
+          return {
+            isAppsInToss: isAppsInToss,
+            platform: 'web',
+            userAgent: navigator.userAgent,
+            isMock: !isAppsInToss
+          };
+        }
+      };
+
+      // 자동 초기화
+      window.AppsInToss.init().then((result) => {
+        console.log('✅ Apps in Toss SDK ready:', result);
+
+        // Flutter에 SDK 준비 완료 이벤트 발송
+        window.dispatchEvent(new CustomEvent('appsInTossReady', {
+          detail: result
+        }));
+      });
+
+    })();
   </script>
 </head>
 <body>

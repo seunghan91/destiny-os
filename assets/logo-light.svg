@@ -1,0 +1,56 @@
+<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="600" height="600" fill="#FFFFFF" rx="80"/>
+
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Crystal ball / Fortune symbol -->
+  <circle cx="300" cy="200" r="80" fill="url(#purpleGradient)" opacity="0.2"/>
+  <circle cx="300" cy="200" r="60" fill="url(#purpleGradient)" opacity="0.4"/>
+  <circle cx="300" cy="200" r="40" fill="url(#purpleGradient)"/>
+
+  <!-- Star decorations -->
+  <path d="M 280 150 L 285 165 L 300 168 L 287 178 L 291 193 L 280 185 L 269 193 L 273 178 L 260 168 L 275 165 Z"
+        fill="#FFD700" filter="url(#glow)"/>
+  <path d="M 320 150 L 325 165 L 340 168 L 327 178 L 331 193 L 320 185 L 309 193 L 313 178 L 300 168 L 315 165 Z"
+        fill="#FFD700" filter="url(#glow)"/>
+
+  <!-- Main text: 2026 -->
+  <text x="300" y="340"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="100"
+        font-weight="900"
+        fill="url(#purpleGradient)"
+        text-anchor="middle"
+        filter="url(#glow)">2026</text>
+
+  <!-- Subtitle: 신년운세 -->
+  <text x="300" y="410"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="36"
+        font-weight="700"
+        fill="#333333"
+        text-anchor="middle">신년운세</text>
+
+  <!-- Sub-subtitle: MBTI -->
+  <text x="300" y="460"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="28"
+        font-weight="600"
+        fill="#999999"
+        text-anchor="middle">MBTI Fortune</text>
+</svg>

@@ -527,7 +527,7 @@ class _TappableGanZhiCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         width: 72,
-        height: 88,
+        height: 94,
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),

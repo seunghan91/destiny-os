@@ -4,17 +4,19 @@ import '../../../saju/domain/entities/saju_chart.dart';
 /// 2026년 병오년 운세
 class Fortune2026 extends Equatable {
   final SajuChart sajuChart;
-  final double overallScore;           // 전체 운세 점수 (0~100)
-  final String yearTheme;              // 올해의 테마
-  final String yearAdvice;             // 올해의 조언
-  final List<MonthlyFortune> monthlyFortunes;  // 월별 운세
-  final FireCompatibility fireCompatibility;   // 화(火) 기운과의 궁합
+  final double overallScore; // 전체 운세 점수 (0~100)
+  final String yearTheme; // 올해의 테마
+  final String yearAdvice; // 올해의 조언
+  final FortuneNarrative narrative;
+  final List<MonthlyFortune> monthlyFortunes; // 월별 운세
+  final FireCompatibility fireCompatibility; // 화(火) 기운과의 궁합
 
   const Fortune2026({
     required this.sajuChart,
     required this.overallScore,
     required this.yearTheme,
     required this.yearAdvice,
+    required this.narrative,
     required this.monthlyFortunes,
     required this.fireCompatibility,
   });
@@ -48,19 +50,41 @@ class Fortune2026 extends Equatable {
 
   @override
   List<Object?> get props => [
-    sajuChart, overallScore, yearTheme, yearAdvice,
-    monthlyFortunes, fireCompatibility,
+    sajuChart,
+    overallScore,
+    yearTheme,
+    yearAdvice,
+    narrative,
+    monthlyFortunes,
+    fireCompatibility,
   ];
+}
+
+class FortuneNarrative extends Equatable {
+  final String overall;
+  final String best;
+  final String caution;
+  final String advice;
+
+  const FortuneNarrative({
+    required this.overall,
+    required this.best,
+    required this.caution,
+    required this.advice,
+  });
+
+  @override
+  List<Object?> get props => [overall, best, caution, advice];
 }
 
 /// 월별 운세
 class MonthlyFortune extends Equatable {
-  final int month;           // 1~12
-  final double score;        // 운세 점수 (0~100)
-  final String theme;        // 이달의 테마
-  final String advice;       // 이달의 조언
-  final double fireEnergy;   // 화기(火氣) 레벨
-  final bool hasClash;       // 충(沖) 여부
+  final int month; // 1~12
+  final double score; // 운세 점수 (0~100)
+  final String theme; // 이달의 테마
+  final String advice; // 이달의 조언
+  final double fireEnergy; // 화기(火氣) 레벨
+  final bool hasClash; // 충(沖) 여부
   final bool hasCombination; // 합(合) 여부
 
   const MonthlyFortune({
@@ -79,10 +103,18 @@ class MonthlyFortune extends Equatable {
   /// 절기 기준 월명
   String get solarTermMonth {
     const months = {
-      1: '축월(丑月)', 2: '인월(寅月)', 3: '묘월(卯月)',
-      4: '진월(辰月)', 5: '사월(巳月)', 6: '오월(午月)',
-      7: '미월(未月)', 8: '신월(申月)', 9: '유월(酉月)',
-      10: '술월(戌月)', 11: '해월(亥月)/자월(子月)', 12: '축월(丑月)',
+      1: '축월(丑月)',
+      2: '인월(寅月)',
+      3: '묘월(卯月)',
+      4: '진월(辰月)',
+      5: '사월(巳月)',
+      6: '오월(午月)',
+      7: '미월(未月)',
+      8: '신월(申月)',
+      9: '유월(酉月)',
+      10: '술월(戌月)',
+      11: '해월(亥月)/자월(子月)',
+      12: '축월(丑月)',
     };
     return months[month] ?? '$month월';
   }
@@ -97,15 +129,23 @@ class MonthlyFortune extends Equatable {
   }
 
   @override
-  List<Object?> get props => [month, score, theme, advice, fireEnergy, hasClash, hasCombination];
+  List<Object?> get props => [
+    month,
+    score,
+    theme,
+    advice,
+    fireEnergy,
+    hasClash,
+    hasCombination,
+  ];
 }
 
 /// 화(火) 기운 궁합
 class FireCompatibility extends Equatable {
-  final double compatibilityScore;  // 2026년 화기와의 궁합 점수
+  final double compatibilityScore; // 2026년 화기와의 궁합 점수
   final String description;
-  final List<String> advantages;    // 유리한 점
-  final List<String> cautions;      // 주의할 점
+  final List<String> advantages; // 유리한 점
+  final List<String> cautions; // 주의할 점
 
   const FireCompatibility({
     required this.compatibilityScore,
@@ -127,16 +167,21 @@ class FireCompatibility extends Equatable {
   }
 
   @override
-  List<Object?> get props => [compatibilityScore, description, advantages, cautions];
+  List<Object?> get props => [
+    compatibilityScore,
+    description,
+    advantages,
+    cautions,
+  ];
 }
 
 /// 운세 등급
 enum FortuneLevel {
-  excellent,  // 대길
-  good,       // 길
-  neutral,    // 평
-  caution,    // 주의
-  challenge,  // 흉
+  excellent, // 대길
+  good, // 길
+  neutral, // 평
+  caution, // 주의
+  challenge, // 흉
 }
 
 extension FortuneLevelExtension on FortuneLevel {

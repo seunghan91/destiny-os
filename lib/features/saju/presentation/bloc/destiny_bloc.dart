@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/saju_chart.dart';
 import '../../domain/entities/ten_gods.dart';
@@ -25,7 +27,7 @@ class AnalyzeFortune extends DestinyEvent {
   final String mbtiType;
   final String gender;
   final String? name;
-  final bool useNightSubhour;  // 야자시 사용 여부
+  final bool useNightSubhour; // 야자시 사용 여부
 
   const AnalyzeFortune({
     required this.birthDateTime,
@@ -37,7 +39,14 @@ class AnalyzeFortune extends DestinyEvent {
   });
 
   @override
-  List<Object?> get props => [birthDateTime, isLunar, mbtiType, gender, name, useNightSubhour];
+  List<Object?> get props => [
+    birthDateTime,
+    isLunar,
+    mbtiType,
+    gender,
+    name,
+    useNightSubhour,
+  ];
 }
 
 /// 생년월일 업데이트
@@ -45,10 +54,7 @@ class UpdateBirthData extends DestinyEvent {
   final DateTime birthDateTime;
   final bool isLunar;
 
-  const UpdateBirthData({
-    required this.birthDateTime,
-    required this.isLunar,
-  });
+  const UpdateBirthData({required this.birthDateTime, required this.isLunar});
 
   @override
   List<Object?> get props => [birthDateTime, isLunar];
@@ -109,7 +115,12 @@ class DestinySuccess extends DestinyState {
 
   @override
   List<Object?> get props => [
-    sajuChart, tenGods, daewoonChart, mbtiType, fortune2026, gapAnalysis,
+    sajuChart,
+    tenGods,
+    daewoonChart,
+    mbtiType,
+    fortune2026,
+    gapAnalysis,
   ];
 }
 
@@ -165,12 +176,12 @@ class DestinyInputProgress extends DestinyState {
 
 /// MBTI 차원별 괴리 분석
 class DimensionGap extends Equatable {
-  final String dimension;     // E/I, N/S, T/F, J/P
-  final String sajuValue;     // 사주 기반 값
-  final String actualValue;   // 실제 값
-  final bool hasGap;          // 괴리 여부
-  final String description;   // 차원 설명
-  final String insight;       // 인사이트
+  final String dimension; // E/I, N/S, T/F, J/P
+  final String sajuValue; // 사주 기반 값
+  final String actualValue; // 실제 값
+  final bool hasGap; // 괴리 여부
+  final String description; // 차원 설명
+  final String insight; // 인사이트
 
   const DimensionGap({
     required this.dimension,
@@ -182,18 +193,25 @@ class DimensionGap extends Equatable {
   });
 
   @override
-  List<Object?> get props => [dimension, sajuValue, actualValue, hasGap, description, insight];
+  List<Object?> get props => [
+    dimension,
+    sajuValue,
+    actualValue,
+    hasGap,
+    description,
+    insight,
+  ];
 }
 
 /// 사주-MBTI 괴리 분석 결과
 class GapAnalysisResult extends Equatable {
-  final String sajuBasedMbti;         // 사주 기반 추정 MBTI
-  final String actualMbti;            // 실제 MBTI
-  final double gapScore;              // 괴리 점수 (0~100)
-  final String interpretation;        // 해석
-  final String hiddenPotential;       // 숨겨진 잠재력
-  final List<DimensionGap> dimensionGaps;  // 차원별 분석
-  final List<String> recommendations;      // 조언 목록
+  final String sajuBasedMbti; // 사주 기반 추정 MBTI
+  final String actualMbti; // 실제 MBTI
+  final double gapScore; // 괴리 점수 (0~100)
+  final String interpretation; // 해석
+  final String hiddenPotential; // 숨겨진 잠재력
+  final List<DimensionGap> dimensionGaps; // 차원별 분석
+  final List<String> recommendations; // 조언 목록
 
   const GapAnalysisResult({
     required this.sajuBasedMbti,
@@ -215,8 +233,13 @@ class GapAnalysisResult extends Equatable {
 
   @override
   List<Object?> get props => [
-    sajuBasedMbti, actualMbti, gapScore, interpretation, hiddenPotential,
-    dimensionGaps, recommendations,
+    sajuBasedMbti,
+    actualMbti,
+    gapScore,
+    interpretation,
+    hiddenPotential,
+    dimensionGaps,
+    recommendations,
   ];
 }
 
@@ -269,7 +292,7 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       await Future.delayed(const Duration(milliseconds: 300));
       emit(const DestinyAnalyzing(message: 'MBTI와 사주를 비교 분석하고 있습니다...'));
 
-      final fortune2026 = _calculateFortune2026(sajuChart);
+      final fortune2026 = await _calculateFortune2026(event, sajuChart);
 
       // 5. Gap Analysis (사주-MBTI 괴리 분석)
       await Future.delayed(const Duration(milliseconds: 300));
@@ -282,14 +305,16 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       _saveUserResult(event);
 
       debugPrint('🔮 [DestinyBloc] Analysis complete, emitting DestinySuccess');
-      emit(DestinySuccess(
-        sajuChart: sajuChart,
-        tenGods: tenGods,
-        daewoonChart: daewoonChart,
-        mbtiType: mbtiType,
-        fortune2026: fortune2026,
-        gapAnalysis: gapAnalysis,
-      ));
+      emit(
+        DestinySuccess(
+          sajuChart: sajuChart,
+          tenGods: tenGods,
+          daewoonChart: daewoonChart,
+          mbtiType: mbtiType,
+          fortune2026: fortune2026,
+          gapAnalysis: gapAnalysis,
+        ),
+      );
     } catch (e, stackTrace) {
       debugPrint('❌ [DestinyBloc] Error: $e');
       debugPrint('❌ [DestinyBloc] StackTrace: $stackTrace');
@@ -322,28 +347,26 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     }
   }
 
-  void _onUpdateBirthData(
-    UpdateBirthData event,
-    Emitter<DestinyState> emit,
-  ) {
+  void _onUpdateBirthData(UpdateBirthData event, Emitter<DestinyState> emit) {
     final currentState = state;
     if (currentState is DestinyInputProgress) {
-      emit(currentState.copyWith(
-        birthDateTime: event.birthDateTime,
-        isLunar: event.isLunar,
-      ));
+      emit(
+        currentState.copyWith(
+          birthDateTime: event.birthDateTime,
+          isLunar: event.isLunar,
+        ),
+      );
     } else {
-      emit(DestinyInputProgress(
-        birthDateTime: event.birthDateTime,
-        isLunar: event.isLunar,
-      ));
+      emit(
+        DestinyInputProgress(
+          birthDateTime: event.birthDateTime,
+          isLunar: event.isLunar,
+        ),
+      );
     }
   }
 
-  void _onUpdateMbti(
-    UpdateMbti event,
-    Emitter<DestinyState> emit,
-  ) {
+  void _onUpdateMbti(UpdateMbti event, Emitter<DestinyState> emit) {
     final currentState = state;
     if (currentState is DestinyInputProgress) {
       emit(currentState.copyWith(mbtiType: event.mbtiType));
@@ -352,21 +375,24 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     }
   }
 
-  void _onResetDestinyData(
-    ResetDestinyData event,
-    Emitter<DestinyState> emit,
-  ) {
+  void _onResetDestinyData(ResetDestinyData event, Emitter<DestinyState> emit) {
     emit(DestinyInitial());
   }
 
   // ========== 2026 운세 계산 ==========
 
-  Fortune2026 _calculateFortune2026(SajuChart chart) {
+  Future<Fortune2026> _calculateFortune2026(
+    AnalyzeFortune event,
+    SajuChart chart,
+  ) async {
     // 2026년 병오년 운세 계산
     // 화기 비율은 yearAnalysis에서 활용됨
 
     // 2026년 궁합 분석 (SajuCalculator 사용)
-    final yearAnalysis = _calculator.analyzeYearCompatibility(chart, year: 2026);
+    final yearAnalysis = _calculator.analyzeYearCompatibility(
+      chart,
+      year: 2026,
+    );
 
     final monthlyFortunes = List.generate(12, (index) {
       final month = index + 1;
@@ -375,7 +401,7 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       double fireEnergy = 50 + (month >= 5 && month <= 7 ? 40 : 0);
 
       if (month == 11) {
-        baseScore -= 20;  // 자오충
+        baseScore -= 20; // 자오충
       }
 
       if (yearAnalysis.isFireBeneficial) {
@@ -393,11 +419,21 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       );
     });
 
+    final narrative = await _loadOrCreateFortuneNarrative(
+      event: event,
+      year: 2026,
+      overallScore: yearAnalysis.score.toDouble(),
+      isFireBeneficial: yearAnalysis.isFireBeneficial,
+      yearAdvice: yearAnalysis.analysis,
+      hasNovemberClash: monthlyFortunes.any((m) => m.month == 11 && m.hasClash),
+    );
+
     return Fortune2026(
       sajuChart: chart,
       overallScore: yearAnalysis.score.toDouble(),
       yearTheme: yearAnalysis.isFireBeneficial ? '불꽃 같은 성장의 해' : '내면 단련의 해',
       yearAdvice: yearAnalysis.analysis,
+      narrative: narrative,
       monthlyFortunes: monthlyFortunes,
       fireCompatibility: FireCompatibility(
         compatibilityScore: yearAnalysis.score.toDouble(),
@@ -414,12 +450,178 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     );
   }
 
+  String _computeFortuneFingerprint(AnalyzeFortune event) {
+    final payload = {
+      'birthDateTime': event.birthDateTime.toUtc().toIso8601String(),
+      'isLunar': event.isLunar,
+      'gender': event.gender,
+      'mbti': event.mbtiType,
+      'name': event.name,
+      'useNightSubhour': event.useNightSubhour,
+    };
+    final bytes = utf8.encode(jsonEncode(payload));
+    return sha256.convert(bytes).toString();
+  }
+
+  Future<FortuneNarrative> _loadOrCreateFortuneNarrative({
+    required AnalyzeFortune event,
+    required int year,
+    required double overallScore,
+    required bool isFireBeneficial,
+    required String yearAdvice,
+    required bool hasNovemberClash,
+  }) async {
+    final fingerprint = _computeFortuneFingerprint(event);
+    try {
+      final cached = await Supabase.instance.client
+          .from('fortune_year_results')
+          .select('overall, best, caution, advice')
+          .eq('fingerprint', fingerprint)
+          .eq('year', year)
+          .maybeSingle();
+
+      if (cached != null) {
+        return FortuneNarrative(
+          overall: (cached['overall'] as String?) ?? '',
+          best: (cached['best'] as String?) ?? '',
+          caution: (cached['caution'] as String?) ?? '',
+          advice: (cached['advice'] as String?) ?? '',
+        );
+      }
+    } catch (e) {
+      debugPrint('Error loading fortune narrative cache: $e');
+    }
+
+    final narrative = _buildFortuneNarrativeTemplate(
+      name: event.name,
+      year: year,
+      overallScore: overallScore,
+      isFireBeneficial: isFireBeneficial,
+      yearAdvice: yearAdvice,
+      hasNovemberClash: hasNovemberClash,
+    );
+
+    try {
+      await Supabase.instance.client.from('fortune_year_results').insert({
+        'fingerprint': fingerprint,
+        'year': year,
+        'generator': 'template',
+        'generator_version': 'v1',
+        'input': {
+          'birthDateTime': event.birthDateTime.toUtc().toIso8601String(),
+          'isLunar': event.isLunar,
+          'gender': event.gender,
+          'mbti': event.mbtiType,
+          'name': event.name,
+          'useNightSubhour': event.useNightSubhour,
+          'overallScore': overallScore,
+          'isFireBeneficial': isFireBeneficial,
+          'hasNovemberClash': hasNovemberClash,
+        },
+        'overall': narrative.overall,
+        'best': narrative.best,
+        'caution': narrative.caution,
+        'advice': narrative.advice,
+      });
+    } catch (e) {
+      debugPrint('Error saving fortune narrative cache: $e');
+    }
+
+    return narrative;
+  }
+
+  FortuneNarrative _buildFortuneNarrativeTemplate({
+    required String? name,
+    required int year,
+    required double overallScore,
+    required bool isFireBeneficial,
+    required String yearAdvice,
+    required bool hasNovemberClash,
+  }) {
+    final displayName = (name != null && name.trim().isNotEmpty)
+        ? name.trim()
+        : '당신';
+    final scoreInt = overallScore.round();
+
+    final overall = StringBuffer();
+    overall.writeln('$displayName님의 $year년 흐름은 한 우물을 꾸준히 파는 운으로 읽힙니다.');
+    if (scoreInt >= 75) {
+      overall.writeln('집중력이 올라가고 결과가 따라오기 쉬운 시기라, 목표를 선명하게 잡을수록 운의 체감이 커집니다.');
+    } else if (scoreInt >= 55) {
+      overall.writeln('큰 기회가 한 번에 터지기보다는, 작은 성과의 누적이 결국 방향을 바꾸는 해입니다.');
+    } else {
+      overall.writeln('변수에 흔들리기 쉬운 해이니, 서두르기보다 기반을 정돈하는 쪽이 안전합니다.');
+    }
+    overall.writeln(
+      isFireBeneficial
+          ? '특히 $year년의 화(火) 기운은 당신에게 성장 동력으로 작용하기 쉽습니다. 사람·기회·성과가 붙을 때 과감하게 움직여 보세요.'
+          : '다만 $year년의 화(火) 기운은 과열로 작용할 수 있어, 페이스 조절과 감정 관리가 운의 핵심이 됩니다.',
+    );
+    if (hasNovemberClash) {
+      overall.writeln(
+        '또한 11월은 자오충(子午沖) 흐름이 걸리기 쉬워, 대인관계·계약·중요 결정을 더 신중히 가져가는 것이 좋습니다.',
+      );
+    }
+
+    final best = StringBuffer();
+    best.writeln('올해 당신에게 가장 좋은 것은 “관계에서 오는 도움”입니다.');
+    best.writeln('가까운 사람들과의 연결이 더 단단해지고, 필요한 순간에 좋은 정보나 기회로 이어질 수 있습니다.');
+    best.writeln(
+      '또한 배움·자격·프로젝트처럼 결과물이 남는 도전을 시작하기 좋은 시기라, 작은 시작이 큰 성과의 씨앗이 됩니다.',
+    );
+
+    final caution = StringBuffer();
+    caution.writeln('올해는 한곳에 집중하기 어려워지는 순간이 생길 수 있습니다.');
+    caution.writeln(
+      '새로운 것에 마음이 흔들릴 때일수록 충동적으로 방향을 바꾸기보다, 검증(시간·돈·체력)을 먼저 거치는 편이 좋습니다.',
+    );
+    if (isFireBeneficial) {
+      caution.writeln(
+        '흐름이 좋을수록 과신·무리수가 생기기 쉬우니, 일정과 체력을 숫자로 관리하면 운을 오래 가져갈 수 있습니다.',
+      );
+    } else {
+      caution.writeln(
+        '과열되기 쉬운 해이니, 감정이 올라오는 날의 결정(연애/돈/퇴사/투자)은 하루만 미루는 습관이 큰 손실을 막습니다.',
+      );
+    }
+    if (hasNovemberClash) {
+      caution.writeln(
+        '11월 전후로는 말 한마디가 오해로 번질 수 있어, 중요한 대화는 기록/확인(문자·메일)으로 남기는 것이 안전합니다.',
+      );
+    }
+
+    final advice = StringBuffer();
+    advice.writeln('올해의 조언은 “꾸준함을 시스템으로 만들기”입니다.');
+    advice.writeln(
+      '운은 방향보다 ‘지속’에서 커집니다. 루틴(수면/운동/공부/작업)을 하나만 고정해도 전체 흐름이 안정됩니다.',
+    );
+    advice.writeln(
+      '마지막으로, 감정이 허전할 때 소비로 채우려는 패턴이 생길 수 있으니 지출 상한선을 정해두면 마음이 훨씬 편해집니다.',
+    );
+    advice.writeln(yearAdvice);
+
+    return FortuneNarrative(
+      overall: overall.toString().trim(),
+      best: best.toString().trim(),
+      caution: caution.toString().trim(),
+      advice: advice.toString().trim(),
+    );
+  }
+
   String _getMonthTheme(int month) {
     const themes = {
-      1: '새로운 시작', 2: '준비와 계획', 3: '성장의 싹',
-      4: '활발한 교류', 5: '열정의 절정', 6: '최고의 에너지',
-      7: '결실 준비', 8: '성과 수확', 9: '정리의 시간',
-      10: '마무리', 11: '변화의 바람', 12: '휴식과 성찰',
+      1: '새로운 시작',
+      2: '준비와 계획',
+      3: '성장의 싹',
+      4: '활발한 교류',
+      5: '열정의 절정',
+      6: '최고의 에너지',
+      7: '결실 준비',
+      8: '성과 수확',
+      9: '정리의 시간',
+      10: '마무리',
+      11: '변화의 바람',
+      12: '휴식과 성찰',
     };
     return themes[month] ?? '평온';
   }
@@ -447,36 +649,24 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     final recommendations = <String>[];
 
     // E/I 차원 분석
-    dimensionGaps.add(_analyzeDimension(
-      'E/I',
-      sajuBasedMbti[0],
-      actualMbti.type[0],
-      '에너지 방향',
-    ));
+    dimensionGaps.add(
+      _analyzeDimension('E/I', sajuBasedMbti[0], actualMbti.type[0], '에너지 방향'),
+    );
 
     // N/S 차원 분석
-    dimensionGaps.add(_analyzeDimension(
-      'N/S',
-      sajuBasedMbti[1],
-      actualMbti.type[1],
-      '정보 수집',
-    ));
+    dimensionGaps.add(
+      _analyzeDimension('N/S', sajuBasedMbti[1], actualMbti.type[1], '정보 수집'),
+    );
 
     // T/F 차원 분석
-    dimensionGaps.add(_analyzeDimension(
-      'T/F',
-      sajuBasedMbti[2],
-      actualMbti.type[2],
-      '의사 결정',
-    ));
+    dimensionGaps.add(
+      _analyzeDimension('T/F', sajuBasedMbti[2], actualMbti.type[2], '의사 결정'),
+    );
 
     // J/P 차원 분석
-    dimensionGaps.add(_analyzeDimension(
-      'J/P',
-      sajuBasedMbti[3],
-      actualMbti.type[3],
-      '생활 양식',
-    ));
+    dimensionGaps.add(
+      _analyzeDimension('J/P', sajuBasedMbti[3], actualMbti.type[3], '생활 양식'),
+    );
 
     // 괴리 점수 계산
     final matchCount = dimensionGaps.where((d) => !d.hasGap).length;
@@ -485,7 +675,9 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     // 맞춤형 조언 생성
     for (final gap in dimensionGaps) {
       if (gap.hasGap) {
-        recommendations.add(_getRecommendation(gap.dimension, gap.sajuValue, gap.actualValue));
+        recommendations.add(
+          _getRecommendation(gap.dimension, gap.sajuValue, gap.actualValue),
+        );
       }
     }
 
@@ -494,30 +686,37 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     String hiddenPotential;
 
     if (gapScore >= 75) {
-      interpretation = '현재의 모습과 내면의 잠재력 사이에 큰 괴리가 있습니다. '
+      interpretation =
+          '현재의 모습과 내면의 잠재력 사이에 큰 괴리가 있습니다. '
           '당신은 ${actualMbti.koreanName}(${actualMbti.type})로 살고 있지만, '
           '사주는 ${_getMbtiKoreanName(sajuBasedMbti)}($sajuBasedMbti)의 기질을 품고 있습니다. '
           '이것은 결함이 아니라 풍부한 잠재력의 증거입니다.';
-      hiddenPotential = '2026년 병오년에는 숨겨진 ${_getMbtiKoreanName(sajuBasedMbti)} 기질이 '
+      hiddenPotential =
+          '2026년 병오년에는 숨겨진 ${_getMbtiKoreanName(sajuBasedMbti)} 기질이 '
           '깨어날 수 있습니다. 화(火)의 강한 에너지가 내면의 잠재력을 자극합니다. '
           '새로운 도전을 두려워하지 마세요!';
       recommendations.add('내면의 목소리에 귀 기울여 보세요. 사주가 말하는 당신의 모습을 탐구해보는 것도 좋습니다.');
     } else if (gapScore >= 50) {
-      interpretation = '내면과 외면 사이에 흥미로운 차이가 있습니다. '
+      interpretation =
+          '내면과 외면 사이에 흥미로운 차이가 있습니다. '
           '이 괴리는 때로는 내적 갈등의 원인이 되기도 하지만, '
           '동시에 상황에 따라 다양한 모습을 보여줄 수 있는 유연성의 원천이기도 합니다.';
-      hiddenPotential = '양면성을 긍정적으로 활용하면 다양한 상황에서 빛날 수 있습니다. '
+      hiddenPotential =
+          '양면성을 긍정적으로 활용하면 다양한 상황에서 빛날 수 있습니다. '
           '2026년에는 두 성향 모두를 활용할 기회가 올 것입니다.';
       recommendations.add('상황에 따라 두 가지 모드를 의식적으로 전환해보세요.');
     } else if (gapScore >= 25) {
-      interpretation = '대체로 자연스러운 흐름 속에 살고 있습니다. '
+      interpretation =
+          '대체로 자연스러운 흐름 속에 살고 있습니다. '
           '약간의 괴리는 오히려 성장의 여지를 남겨둡니다.';
       hiddenPotential = '현재의 방향을 유지하면서 작은 변화를 시도해보세요.';
     } else {
-      interpretation = '현재의 모습이 타고난 기질과 매우 잘 일치합니다! '
+      interpretation =
+          '현재의 모습이 타고난 기질과 매우 잘 일치합니다! '
           '자연스럽고 진정성 있게 자신만의 길을 걸어가고 있습니다. '
           '이것은 매우 드문 조화입니다.';
-      hiddenPotential = '당신은 이미 최적의 상태에 있습니다. '
+      hiddenPotential =
+          '당신은 이미 최적의 상태에 있습니다. '
           '현재의 방향을 믿고 꾸준히 나아가세요. 2026년에도 순조로울 것입니다.';
     }
 
@@ -627,7 +826,11 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
     );
   }
 
-  String _getRecommendation(String dimension, String sajuValue, String actualValue) {
+  String _getRecommendation(
+    String dimension,
+    String sajuValue,
+    String actualValue,
+  ) {
     switch (dimension) {
       case 'E/I':
         if (sajuValue == 'E') {
@@ -660,10 +863,22 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
 
   String _getMbtiKoreanName(String type) {
     const names = {
-      'INTJ': '전략가', 'INTP': '논리술사', 'ENTJ': '통솔자', 'ENTP': '변론가',
-      'INFJ': '옹호자', 'INFP': '중재자', 'ENFJ': '선도자', 'ENFP': '활동가',
-      'ISTJ': '현실주의자', 'ISFJ': '수호자', 'ESTJ': '경영자', 'ESFJ': '집정관',
-      'ISTP': '장인', 'ISFP': '모험가', 'ESTP': '사업가', 'ESFP': '연예인',
+      'INTJ': '전략가',
+      'INTP': '논리술사',
+      'ENTJ': '통솔자',
+      'ENTP': '변론가',
+      'INFJ': '옹호자',
+      'INFP': '중재자',
+      'ENFJ': '선도자',
+      'ENFP': '활동가',
+      'ISTJ': '현실주의자',
+      'ISFJ': '수호자',
+      'ESTJ': '경영자',
+      'ESFJ': '집정관',
+      'ISTP': '장인',
+      'ISFP': '모험가',
+      'ESTP': '사업가',
+      'ESFP': '연예인',
     };
     return names[type] ?? type;
   }

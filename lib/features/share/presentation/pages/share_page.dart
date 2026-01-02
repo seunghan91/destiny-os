@@ -38,9 +38,7 @@ class _SharePageState extends State<SharePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
-      appBar: AppBar(
-        title: const Text('공유하기'),
-      ),
+      appBar: AppBar(title: const Text('공유하기')),
       body: BlocBuilder<DestinyBloc, DestinyState>(
         builder: (context, state) {
           if (state is! DestinySuccess) {
@@ -172,10 +170,7 @@ class _SharePageState extends State<SharePage> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.fire,
-            AppColors.fire.withValues(alpha: 0.8),
-          ],
+          colors: [AppColors.fire, AppColors.fire.withValues(alpha: 0.8)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -194,7 +189,7 @@ class _SharePageState extends State<SharePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Destiny.OS',
+                '2026 신년운세',
                 style: AppTypography.labelSmall.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
@@ -272,9 +267,7 @@ class _SharePageState extends State<SharePage> {
             ),
             child: Text(
               '${state.mbtiType.type} 유형',
-              style: AppTypography.labelMedium.copyWith(
-                color: Colors.white,
-              ),
+              style: AppTypography.labelMedium.copyWith(color: Colors.white),
             ),
           ),
           const SizedBox(height: 24),
@@ -316,7 +309,7 @@ class _SharePageState extends State<SharePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Destiny.OS',
+                '2026 신년운세',
                 style: AppTypography.labelSmall.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
@@ -328,9 +321,7 @@ class _SharePageState extends State<SharePage> {
 
           Text(
             '나의 사주팔자',
-            style: AppTypography.titleLarge.copyWith(
-              color: Colors.white,
-            ),
+            style: AppTypography.titleLarge.copyWith(color: Colors.white),
           ),
           const SizedBox(height: 24),
 
@@ -355,9 +346,7 @@ class _SharePageState extends State<SharePage> {
             ),
             child: Text(
               '일간: ${chart.dayPillar.heavenlyStem} (${_getElementName(chart.dayPillar.heavenlyStem)})',
-              style: AppTypography.labelMedium.copyWith(
-                color: Colors.white,
-              ),
+              style: AppTypography.labelMedium.copyWith(color: Colors.white),
             ),
           ),
           const SizedBox(height: 20),
@@ -421,10 +410,7 @@ class _SharePageState extends State<SharePage> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.wood,
-            AppColors.wood.withValues(alpha: 0.8),
-          ],
+          colors: [AppColors.wood, AppColors.wood.withValues(alpha: 0.8)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -443,7 +429,7 @@ class _SharePageState extends State<SharePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Destiny.OS',
+                '2026 신년운세',
                 style: AppTypography.labelSmall.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
@@ -455,9 +441,7 @@ class _SharePageState extends State<SharePage> {
 
           Text(
             'Gap Analysis',
-            style: AppTypography.titleLarge.copyWith(
-              color: Colors.white,
-            ),
+            style: AppTypography.titleLarge.copyWith(color: Colors.white),
           ),
           Text(
             '사주 vs MBTI 괴리 분석',
@@ -571,7 +555,11 @@ class _SharePageState extends State<SharePage> {
         color: AppColors.surfaceOf(context),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
+            color: AppColors.shadowOf(
+              context,
+              lightOpacity: 0.05,
+              darkOpacity: 0.12,
+            ),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -720,10 +708,9 @@ class _SharePageState extends State<SharePage> {
 
       if (canLaunchKakao) {
         // 카카오톡 공유 - 시스템 공유 시트를 통해 카카오톡 선택하도록 유도
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text: '나의 2026년 운세를 확인해보세요! 🐴✨\n#DestinyOS #2026운세',
-        );
+        await Share.shareXFiles([
+          XFile(file.path),
+        ], text: '나의 2026년 운세를 확인해보세요! 🐴✨\n#2026신년운세 #2026운세');
       } else {
         // 카카오톡이 설치되지 않은 경우
         _showKakaoNotInstalledDialog();
@@ -800,20 +787,18 @@ class _SharePageState extends State<SharePage> {
   /// iOS 인스타그램 스토리 공유
   Future<void> _shareToInstagramStoryIOS(File imageFile) async {
     // iOS에서는 시스템 공유 시트를 통해 인스타그램 선택
-    await Share.shareXFiles(
-      [XFile(imageFile.path)],
-      text: '나의 2026년 운세 🐴✨ #DestinyOS',
-    );
+    await Share.shareXFiles([
+      XFile(imageFile.path),
+    ], text: '나의 2026년 운세 🐴✨ #2026신년운세');
     _showSuccess('인스타그램에서 스토리로 공유해주세요!');
   }
 
   /// Android 인스타그램 스토리 공유
   Future<void> _shareToInstagramStoryAndroid(File imageFile) async {
     // Android에서도 시스템 공유 시트 사용
-    await Share.shareXFiles(
-      [XFile(imageFile.path)],
-      text: '나의 2026년 운세 🐴✨ #DestinyOS',
-    );
+    await Share.shareXFiles([
+      XFile(imageFile.path),
+    ], text: '나의 2026년 운세 🐴✨ #2026신년운세');
     _showSuccess('인스타그램에서 스토리로 공유해주세요!');
   }
 
@@ -829,11 +814,19 @@ class _SharePageState extends State<SharePage> {
               height: 24,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF833AB4), Color(0xFFE1306C), Color(0xFFF56040)],
+                  colors: [
+                    Color(0xFF833AB4),
+                    Color(0xFFE1306C),
+                    Color(0xFFF56040),
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+              child: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
             const SizedBox(width: 8),
             const Text('인스타그램'),
@@ -852,8 +845,9 @@ class _SharePageState extends State<SharePage> {
 
   Future<Uint8List?> _captureWidget() async {
     try {
-      final boundary = _shareCardKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
+      final boundary =
+          _shareCardKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
       if (boundary == null) return null;
 
       final image = await boundary.toImage(pixelRatio: 3.0);
@@ -879,10 +873,9 @@ class _SharePageState extends State<SharePage> {
       final file = File('${tempDir.path}/destiny_share.png');
       await file.writeAsBytes(imageBytes);
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: '나의 2026년 운세를 확인해보세요! 🔮\n#DestinyOS #2026운세 #사주',
-      );
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: '나의 2026년 운세를 확인해보세요! 🔮\n#2026신년운세 #2026운세 #사주');
     } catch (e) {
       _showError('공유에 실패했습니다: $e');
     } finally {
@@ -910,10 +903,9 @@ class _SharePageState extends State<SharePage> {
 
       // iOS/Android 공유 시트를 통해 "이미지 저장" 옵션 제공
       // 사용자가 직접 사진 앱에 저장하거나 다른 앱으로 공유 가능
-      final result = await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/png')],
-        subject: 'Destiny.OS 운세 카드',
-      );
+      final result = await Share.shareXFiles([
+        XFile(file.path, mimeType: 'image/png'),
+      ], subject: '2026 신년운세 운세 카드');
 
       if (result.status == ShareResultStatus.success) {
         _showSuccess('이미지가 저장되었습니다');
@@ -930,10 +922,11 @@ class _SharePageState extends State<SharePage> {
   Future<void> _copyLink() async {
     // 앱 스토어 링크 (출시 후 실제 링크로 교체)
     const appLink = 'https://destinyos.app/download';
-    const shareText = '나의 2026년 운세를 확인해보세요! 🔮\n\n'
+    const shareText =
+        '나의 2026년 운세를 확인해보세요! 🔮\n\n'
         '사주팔자와 MBTI를 결합한 새로운 운세 분석\n'
         '$appLink\n\n'
-        '#DestinyOS #2026운세 #사주 #MBTI';
+        '#2026신년운세 #2026운세 #사주 #MBTI';
 
     await Clipboard.setData(const ClipboardData(text: shareText));
     HapticFeedback.lightImpact();
@@ -950,9 +943,7 @@ class _SharePageState extends State<SharePage> {
           ),
           backgroundColor: AppColors.successOf(context),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     }
@@ -981,14 +972,30 @@ class _SharePageState extends State<SharePage> {
   String _getHanja(String korean) {
     // 천간 (heavenly stems)
     const cheonganMap = {
-      '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊',
-      '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸',
+      '갑': '甲',
+      '을': '乙',
+      '병': '丙',
+      '정': '丁',
+      '무': '戊',
+      '기': '己',
+      '경': '庚',
+      '신': '辛',
+      '임': '壬',
+      '계': '癸',
     };
     // 지지 (earthly branches)
     const jijiMap = {
-      '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰',
-      '사': '巳', '오': '午', '미': '未', '유': '酉',
-      '술': '戌', '해': '亥',
+      '자': '子',
+      '축': '丑',
+      '인': '寅',
+      '묘': '卯',
+      '진': '辰',
+      '사': '巳',
+      '오': '午',
+      '미': '未',
+      '유': '酉',
+      '술': '戌',
+      '해': '亥',
     };
     return cheonganMap[korean] ?? jijiMap[korean] ?? korean;
   }
@@ -1002,11 +1009,16 @@ class _SharePageState extends State<SharePage> {
 
   String _getElementName(String stem) {
     const elementMap = {
-      '갑': '목(木)', '을': '목(木)',
-      '병': '화(火)', '정': '화(火)',
-      '무': '토(土)', '기': '토(土)',
-      '경': '금(金)', '신': '금(金)',
-      '임': '수(水)', '계': '수(水)',
+      '갑': '목(木)',
+      '을': '목(木)',
+      '병': '화(火)',
+      '정': '화(火)',
+      '무': '토(土)',
+      '기': '토(土)',
+      '경': '금(金)',
+      '신': '금(金)',
+      '임': '수(水)',
+      '계': '수(水)',
     };
     return elementMap[stem] ?? '';
   }

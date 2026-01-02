@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../compatibility/data/services/compatibility_calculator.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
 
 /// 공유 페이지
@@ -34,42 +36,265 @@ class _SharePageState extends State<SharePage> {
     _ShareCardType('Gap 분석', Icons.compare_arrows, AppColors.woodOf(context)),
   ];
 
+  /// GoRouterState에서 extra 데이터 가져오기
+  Map<String, dynamic>? _getExtraData(BuildContext context) {
+    try {
+      final state = GoRouterState.of(context);
+      return state.extra as Map<String, dynamic>?;
+    } catch (e) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final extraData = _getExtraData(context);
+    final isCompatibilityShare = extraData?['type'] == 'compatibility';
+
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(title: const Text('공유하기')),
-      body: BlocBuilder<DestinyBloc, DestinyState>(
-        builder: (context, state) {
-          if (state is! DestinySuccess) {
-            return _buildNoDataView();
-          }
+      body: isCompatibilityShare
+          ? _buildCompatibilityShareView(extraData!)
+          : BlocBuilder<DestinyBloc, DestinyState>(
+              builder: (context, state) {
+                if (state is! DestinySuccess) {
+                  return _buildNoDataView();
+                }
 
-          return Column(
-            children: [
-              // 카드 타입 선택
-              _buildCardTypeSelector(),
+                return Column(
+                  children: [
+                    // 카드 타입 선택
+                    _buildCardTypeSelector(),
 
-              // 공유 카드 미리보기
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: RepaintBoundary(
-                      key: _shareCardKey,
-                      child: _buildShareCard(state),
+                    // 공유 카드 미리보기
+                    Expanded(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: RepaintBoundary(
+                            key: _shareCardKey,
+                            child: _buildShareCard(state),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+
+                    // 공유 버튼들
+                    _buildShareButtons(),
+                  ],
+                );
+              },
+            ),
+    );
+  }
+
+  /// 궁합 분석 공유 뷰
+  Widget _buildCompatibilityShareView(Map<String, dynamic> data) {
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: RepaintBoundary(
+                key: _shareCardKey,
+                child: _buildCompatibilityCard(data),
+              ),
+            ),
+          ),
+        ),
+        _buildShareButtons(),
+      ],
+    );
+  }
+
+  /// 궁합 분석 카드 UI
+  Widget _buildCompatibilityCard(Map<String, dynamic> data) {
+    final compatibilityResult =
+        data['compatibilityResult'] as CompatibilityResult?;
+    final partnerName = data['partnerName'] as String? ?? '상대방';
+    final myName = data['myName'] as String? ?? '나';
+
+    if (compatibilityResult == null) {
+      return _buildNoDataView();
+    }
+
+    return Container(
+      width: 320,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 헤더
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '궁합 분석',
+                style: AppTypography.labelSmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
               ),
-
-              // 공유 버튼들
-              _buildShareButtons(),
+              const Text('💗', style: TextStyle(fontSize: 20)),
             ],
-          );
-        },
+          ),
+          const SizedBox(height: 24),
+
+          // 이름
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                myName,
+                style: AppTypography.titleMedium.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '&',
+                style: AppTypography.titleMedium.copyWith(
+                  color: Colors.white.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                partnerName,
+                style: AppTypography.titleMedium.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // 점수
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${compatibilityResult.overallScore}',
+                      style: AppTypography.fortuneScore.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        '점',
+                        style: AppTypography.headlineMedium.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _getCompatibilityGrade(compatibilityResult.overallScore),
+                  style: AppTypography.labelLarge.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // 세부 점수
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildCompatibilityMiniScore(
+                '연애',
+                compatibilityResult.loveScore,
+                Icons.favorite,
+              ),
+              _buildCompatibilityMiniScore(
+                '결혼',
+                compatibilityResult.marriageScore,
+                Icons.home,
+              ),
+              _buildCompatibilityMiniScore(
+                '사업',
+                compatibilityResult.businessScore,
+                Icons.work,
+              ),
+              _buildCompatibilityMiniScore(
+                '우정',
+                compatibilityResult.friendshipScore,
+                Icons.people,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // 푸터
+          Text(
+            '나의 궁합 분석 보러가기 →',
+            style: AppTypography.caption.copyWith(
+              color: Colors.white.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildCompatibilityMiniScore(String label, int score, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 20),
+        const SizedBox(height: 4),
+        Text(
+          '$score',
+          style: AppTypography.headlineSmall.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(
+            color: Colors.white.withValues(alpha: 0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getCompatibilityGrade(int score) {
+    if (score >= 90) return '천생연분';
+    if (score >= 80) return '아주 좋은 궁합';
+    if (score >= 70) return '좋은 궁합';
+    if (score >= 60) return '보통 궁합';
+    if (score >= 50) return '노력이 필요한 궁합';
+    return '어려운 궁합';
   }
 
   Widget _buildNoDataView() {

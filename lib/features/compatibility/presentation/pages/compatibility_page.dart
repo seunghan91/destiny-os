@@ -6,7 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
-import '../../../saju/data/services/saju_calculator.dart' hide CompatibilityResult;
+import '../../../saju/data/services/saju_calculator.dart'
+    hide CompatibilityResult;
 import '../../../saju/domain/entities/saju_chart.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
 import '../../../saju/presentation/widgets/siju_picker.dart';
@@ -18,11 +19,7 @@ class CompatibilityPage extends StatefulWidget {
   final SajuChart? mySajuChart;
   final SajuChart? partnerSajuChart;
 
-  const CompatibilityPage({
-    super.key,
-    this.mySajuChart,
-    this.partnerSajuChart,
-  });
+  const CompatibilityPage({super.key, this.mySajuChart, this.partnerSajuChart});
 
   @override
   State<CompatibilityPage> createState() => _CompatibilityPageState();
@@ -131,7 +128,17 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
-              context.push('/share');
+              context.push(
+                '/share',
+                extra: {
+                  'type': 'compatibility',
+                  'compatibilityResult': _compatibilityResult,
+                  'partnerName': _partnerNameController.text.isNotEmpty
+                      ? _partnerNameController.text
+                      : '상대방',
+                  'myName': _myName,
+                },
+              );
             },
           ),
         ],
@@ -182,9 +189,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(title: const Text('궁합 분석')),
-      body: const Center(
-        child: CircularProgressIndicator(),
-      ),
+      body: const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -208,14 +213,16 @@ class _CompatibilityPageState extends State<CompatibilityPage>
         runSpacing: 8,
         alignment: WrapAlignment.center,
         children: allRelations.take(5).map((relation) {
-          final isGood = relation.contains('합') ||
-                         relation.contains('상생') ||
-                         relation.contains('동일');
-          final isBad = relation.contains('충') ||
-                        relation.contains('형') ||
-                        relation.contains('해') ||
-                        relation.contains('파') ||
-                        relation.contains('상극');
+          final isGood =
+              relation.contains('합') ||
+              relation.contains('상생') ||
+              relation.contains('동일');
+          final isBad =
+              relation.contains('충') ||
+              relation.contains('형') ||
+              relation.contains('해') ||
+              relation.contains('파') ||
+              relation.contains('상극');
 
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -223,15 +230,15 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               color: isGood
                   ? AppColors.fortuneGood.withValues(alpha: 0.1)
                   : isBad
-                      ? AppColors.warning.withValues(alpha: 0.1)
-                      : AppColors.surfaceVariant,
+                  ? AppColors.warning.withValues(alpha: 0.1)
+                  : AppColors.surfaceVariant,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isGood
                     ? AppColors.fortuneGood.withValues(alpha: 0.3)
                     : isBad
-                        ? AppColors.warning.withValues(alpha: 0.3)
-                        : AppColors.border,
+                    ? AppColors.warning.withValues(alpha: 0.3)
+                    : AppColors.border,
               ),
             ),
             child: Text(
@@ -240,8 +247,8 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 color: isGood
                     ? AppColors.fortuneGood
                     : isBad
-                        ? AppColors.warning
-                        : AppColors.textSecondary,
+                    ? AppColors.warning
+                    : AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -312,9 +319,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
             children: [
               Text(
                 '${result.overallScore}',
-                style: AppTypography.fortuneScore.copyWith(
-                  color: Colors.white,
-                ),
+                style: AppTypography.fortuneScore.copyWith(color: Colors.white),
               ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -330,9 +335,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           const SizedBox(height: 4),
           Text(
             _getScoreGrade(result.overallScore),
-            style: AppTypography.titleMedium.copyWith(
-              color: Colors.white,
-            ),
+            style: AppTypography.titleMedium.copyWith(color: Colors.white),
           ),
           const SizedBox(height: 24),
           Row(
@@ -444,7 +447,12 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       return Column(
         crossAxisAlignment: alignment,
         children: [
-          Text(name, style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            name,
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
           Text('데이터 없음', style: AppTypography.caption),
         ],
@@ -452,7 +460,8 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     }
 
     final dayMaster = chart.dayPillar.heavenlyStem;
-    final pillarText = '${_getHanja(chart.yearPillar.heavenlyStem)}${_getHanja(chart.yearPillar.earthlyBranch)} '
+    final pillarText =
+        '${_getHanja(chart.yearPillar.heavenlyStem)}${_getHanja(chart.yearPillar.earthlyBranch)} '
         '${_getHanja(chart.monthPillar.heavenlyStem)}${_getHanja(chart.monthPillar.earthlyBranch)} '
         '${_getHanja(chart.dayPillar.heavenlyStem)}${_getHanja(chart.dayPillar.earthlyBranch)} '
         '${_getHanja(chart.hourPillar.heavenlyStem)}${_getHanja(chart.hourPillar.earthlyBranch)}';
@@ -460,7 +469,12 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     return Column(
       crossAxisAlignment: alignment,
       children: [
-        Text(name, style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          name,
+          style: AppTypography.titleMedium.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -479,7 +493,9 @@ class _CompatibilityPageState extends State<CompatibilityPage>
         Text(
           pillarText,
           style: AppTypography.bodySmall.copyWith(fontFamily: 'serif'),
-          textAlign: alignment == CrossAxisAlignment.end ? TextAlign.end : TextAlign.start,
+          textAlign: alignment == CrossAxisAlignment.end
+              ? TextAlign.end
+              : TextAlign.start,
         ),
       ],
     );
@@ -524,18 +540,27 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               children: [
                 Row(
                   children: [
-                    Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+                    Icon(
+                      Icons.info_outline,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       '일주 분석',
-                      style: AppTypography.titleSmall.copyWith(color: AppColors.primary),
+                      style: AppTypography.titleSmall.copyWith(
+                        color: AppColors.primary,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
                   result.dayPillarAnalysis.description,
-                  style: AppTypography.bodyMedium.copyWith(height: 1.5, color: AppColors.textPrimaryOf(context)),
+                  style: AppTypography.bodyMedium.copyWith(
+                    height: 1.5,
+                    color: AppColors.textPrimaryOf(context),
+                  ),
                 ),
               ],
             ),
@@ -574,16 +599,30 @@ class _CompatibilityPageState extends State<CompatibilityPage>
             ],
           ),
           const SizedBox(height: 12),
-          ...items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• ', style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimaryOf(context))),
-                    Expanded(child: Text(item, style: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimaryOf(context)))),
-                  ],
-                ),
-              )),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '• ',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textPrimaryOf(context),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      item,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textPrimaryOf(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -598,11 +637,18 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('오행 궁합 분석', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
+          Text(
+            '오행 궁합 분석',
+            style: AppTypography.headlineSmall.copyWith(
+              color: AppColors.textPrimaryOf(context),
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             '두 분의 사주에서 각 오행이 어떻게 조화를 이루는지 분석합니다.',
-            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondaryOf(context),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -621,7 +667,9 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     children: [
                       Text(
                         '오행 균형 점수',
-                        style: AppTypography.labelMedium.copyWith(color: Colors.white.withValues(alpha: 0.8)),
+                        style: AppTypography.labelMedium.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -636,14 +684,19 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 ),
                 if (elements.complementaryElements.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '상호 보완: ${elements.complementaryElements.join(", ")}',
-                      style: AppTypography.labelSmall.copyWith(color: Colors.white),
+                      style: AppTypography.labelSmall.copyWith(
+                        color: Colors.white,
+                      ),
                     ),
                   ),
               ],
@@ -718,13 +771,25 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     children: [
                       Text(
                         '$element(${_getElementHanja(element)})',
-                        style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimaryOf(context)),
+                        style: AppTypography.titleSmall.copyWith(
+                          color: AppColors.textPrimaryOf(context),
+                        ),
                       ),
                       Row(
                         children: [
-                          Text('나: $person1', style: AppTypography.caption.copyWith(color: AppColors.textSecondaryOf(context))),
+                          Text(
+                            '나: $person1',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textSecondaryOf(context),
+                            ),
+                          ),
                           const SizedBox(width: 8),
-                          Text('상대: $person2', style: AppTypography.caption.copyWith(color: AppColors.textSecondaryOf(context))),
+                          Text(
+                            '상대: $person2',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textSecondaryOf(context),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -735,32 +800,49 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 children: [
                   if (isLacking)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.warningOf(context).withValues(alpha: 0.1),
+                        color: AppColors.warningOf(
+                          context,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         '부족',
-                        style: AppTypography.labelSmall.copyWith(color: AppColors.warningOf(context)),
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.warningOf(context),
+                        ),
                       ),
                     ),
                   if (isExcessive)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.errorOf(context).withValues(alpha: 0.1),
+                        color: AppColors.errorOf(
+                          context,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         '과다',
-                        style: AppTypography.labelSmall.copyWith(color: AppColors.errorOf(context)),
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.errorOf(context),
+                        ),
                       ),
                     ),
                   const SizedBox(width: 8),
                   Text(
                     '$combined',
-                    style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimaryOf(context)),
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimaryOf(context),
+                    ),
                   ),
                 ],
               ),
@@ -793,18 +875,32 @@ class _CompatibilityPageState extends State<CompatibilityPage>
         children: [
           Row(
             children: [
-              Icon(Icons.info_outline, color: AppColors.primaryOf(context), size: 20),
+              Icon(
+                Icons.info_outline,
+                color: AppColors.primaryOf(context),
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 '오행 상생상극 관계',
-                style: AppTypography.titleSmall.copyWith(color: AppColors.primaryOf(context)),
+                style: AppTypography.titleSmall.copyWith(
+                  color: AppColors.primaryOf(context),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          _buildCycleRow('상생', '목->화->토->금->수->목', AppColors.fortuneGoodOf(context)),
+          _buildCycleRow(
+            '상생',
+            '목->화->토->금->수->목',
+            AppColors.fortuneGoodOf(context),
+          ),
           const SizedBox(height: 8),
-          _buildCycleRow('상극', '목->토, 토->수, 수->화, 화->금, 금->목', AppColors.warningOf(context)),
+          _buildCycleRow(
+            '상극',
+            '목->토, 토->수, 수->화, 화->금, 금->목',
+            AppColors.warningOf(context),
+          ),
         ],
       ),
     );
@@ -827,7 +923,14 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           ),
         ),
         const SizedBox(width: 8),
-        Expanded(child: Text(cycle, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)))),
+        Expanded(
+          child: Text(
+            cycle,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondaryOf(context),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -840,7 +943,12 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('관계 발전을 위한 조언', style: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryOf(context))),
+          Text(
+            '관계 발전을 위한 조언',
+            style: AppTypography.headlineSmall.copyWith(
+              color: AppColors.textPrimaryOf(context),
+            ),
+          ),
           const SizedBox(height: 24),
           ...List.generate(result.insights.advice.length, (index) {
             return _buildAdviceCard(
@@ -927,7 +1035,10 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           Expanded(
             child: Text(
               advice,
-              style: AppTypography.bodyMedium.copyWith(height: 1.5, color: AppColors.textPrimaryOf(context)),
+              style: AppTypography.bodyMedium.copyWith(
+                height: 1.5,
+                color: AppColors.textPrimaryOf(context),
+              ),
             ),
           ),
         ],
@@ -969,7 +1080,9 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryOf(context).withValues(alpha: 0.2),
+                        color: AppColors.primaryOf(
+                          context,
+                        ).withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Text('💗', style: TextStyle(fontSize: 24)),
@@ -981,12 +1094,17 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                         children: [
                           Text(
                             '궁합을 확인해보세요',
-                            style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimaryOf(context)),
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimaryOf(context),
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '상대방의 생년월일과 태어난 시간을 입력하면\n두 분의 궁합을 분석해드립니다.',
-                            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryOf(context)),
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondaryOf(context),
+                            ),
                           ),
                         ],
                       ),
@@ -1004,14 +1122,19 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 style: AppTypography.bodyMedium,
                 decoration: InputDecoration(
                   hintText: '상대방 이름',
-                  hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiaryOf(context)),
+                  hintStyle: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textTertiaryOf(context),
+                  ),
                   filled: true,
                   fillColor: AppColors.surfaceOf(context),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -1027,14 +1150,20 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     color: AppColors.surfaceOf(context),
                     borderRadius: BorderRadius.circular(12),
                     border: _partnerBirthDate != null
-                        ? Border.all(color: AppColors.primaryOf(context).withValues(alpha: 0.5))
+                        ? Border.all(
+                            color: AppColors.primaryOf(
+                              context,
+                            ).withValues(alpha: 0.5),
+                          )
                         : null,
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.calendar_today_rounded,
-                        color: _partnerBirthDate != null ? AppColors.primaryOf(context) : AppColors.textTertiaryOf(context),
+                        color: _partnerBirthDate != null
+                            ? AppColors.primaryOf(context)
+                            : AppColors.textTertiaryOf(context),
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -1044,11 +1173,16 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                               ? '${_partnerBirthDate!.year}년 ${_partnerBirthDate!.month}월 ${_partnerBirthDate!.day}일'
                               : '생년월일을 선택하세요',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: _partnerBirthDate != null ? AppColors.textPrimaryOf(context) : AppColors.textTertiaryOf(context),
+                            color: _partnerBirthDate != null
+                                ? AppColors.textPrimaryOf(context)
+                                : AppColors.textTertiaryOf(context),
                           ),
                         ),
                       ),
-                      Icon(Icons.chevron_right, color: AppColors.textTertiaryOf(context)),
+                      Icon(
+                        Icons.chevron_right,
+                        color: AppColors.textTertiaryOf(context),
+                      ),
                     ],
                   ),
                 ),
@@ -1080,14 +1214,20 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     color: AppColors.surfaceOf(context),
                     borderRadius: BorderRadius.circular(12),
                     border: _partnerSiju != null
-                        ? Border.all(color: AppColors.primaryOf(context).withValues(alpha: 0.5))
+                        ? Border.all(
+                            color: AppColors.primaryOf(
+                              context,
+                            ).withValues(alpha: 0.5),
+                          )
                         : null,
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.access_time_rounded,
-                        color: _partnerSiju != null ? AppColors.primaryOf(context) : AppColors.textTertiaryOf(context),
+                        color: _partnerSiju != null
+                            ? AppColors.primaryOf(context)
+                            : AppColors.textTertiaryOf(context),
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -1097,11 +1237,16 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                               ? '${_partnerSiju!.name} (${_partnerSiju!.timeRange})'
                               : '태어난 시간을 선택하세요',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: _partnerSiju != null ? AppColors.textPrimaryOf(context) : AppColors.textTertiaryOf(context),
+                            color: _partnerSiju != null
+                                ? AppColors.textPrimaryOf(context)
+                                : AppColors.textTertiaryOf(context),
                           ),
                         ),
                       ),
-                      Icon(Icons.chevron_right, color: AppColors.textTertiaryOf(context)),
+                      Icon(
+                        Icons.chevron_right,
+                        color: AppColors.textTertiaryOf(context),
+                      ),
                     ],
                   ),
                 ),
@@ -1115,7 +1260,9 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 children: [
                   Expanded(child: _buildGenderButton('남성', 'male', Icons.male)),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildGenderButton('여성', 'female', Icons.female)),
+                  Expanded(
+                    child: _buildGenderButton('여성', 'female', Icons.female),
+                  ),
                 ],
               ),
               const SizedBox(height: 40),
@@ -1130,19 +1277,26 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     backgroundColor: AppColors.primaryOf(context),
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: AppColors.grey300Of(context),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     elevation: 0,
                   ),
                   child: _isAnalyzing
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : Text(
                           '궁합 분석하기',
                           style: AppTypography.labelLarge.copyWith(
-                            color: _canAnalyze ? Colors.white : AppColors.textTertiaryOf(context),
+                            color: _canAnalyze
+                                ? Colors.white
+                                : AppColors.textTertiaryOf(context),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1152,7 +1306,9 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               Center(
                 child: Text(
                   '* 시간을 모르시면 "시간 모름"을 선택하세요',
-                  style: AppTypography.caption.copyWith(color: AppColors.textTertiaryOf(context)),
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textTertiaryOf(context),
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
@@ -1173,20 +1329,32 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     );
   }
 
-  Widget _buildCalendarTypeChip(String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildCalendarTypeChip(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryOf(context) : AppColors.surfaceOf(context),
+          color: isSelected
+              ? AppColors.primaryOf(context)
+              : AppColors.surfaceOf(context),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? AppColors.primaryOf(context) : AppColors.borderOf(context)),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primaryOf(context)
+                : AppColors.borderOf(context),
+          ),
         ),
         child: Text(
           label,
           style: AppTypography.labelSmall.copyWith(
-            color: isSelected ? Colors.white : AppColors.textSecondaryOf(context),
+            color: isSelected
+                ? Colors.white
+                : AppColors.textSecondaryOf(context),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1204,22 +1372,34 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryOf(context).withValues(alpha: 0.1) : AppColors.surfaceOf(context),
+          color: isSelected
+              ? AppColors.primaryOf(context).withValues(alpha: 0.1)
+              : AppColors.surfaceOf(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primaryOf(context) : AppColors.borderOf(context),
+            color: isSelected
+                ? AppColors.primaryOf(context)
+                : AppColors.borderOf(context),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isSelected ? AppColors.primaryOf(context) : AppColors.textSecondaryOf(context), size: 20),
+            Icon(
+              icon,
+              color: isSelected
+                  ? AppColors.primaryOf(context)
+                  : AppColors.textSecondaryOf(context),
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               label,
               style: AppTypography.bodyMedium.copyWith(
-                color: isSelected ? AppColors.primaryOf(context) : AppColors.textSecondaryOf(context),
+                color: isSelected
+                    ? AppColors.primaryOf(context)
+                    : AppColors.textSecondaryOf(context),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -1263,13 +1443,20 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                       onPressed: () => Navigator.pop(context),
                       child: const Text('취소'),
                     ),
-                    Text('생년월일 선택', style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600)),
+                    Text(
+                      '생년월일 선택',
+                      style: AppTypography.titleSmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () {
                         Navigator.pop(context);
                         if (_partnerBirthDate == null) {
-                          setState(() => _partnerBirthDate = DateTime(1990, 1, 1));
+                          setState(
+                            () => _partnerBirthDate = DateTime(1990, 1, 1),
+                          );
                         }
                       },
                       child: const Text('확인'),
@@ -1326,7 +1513,12 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     onPressed: () => Navigator.pop(context),
                     child: const Text('취소'),
                   ),
-                  Text('태어난 시간', style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    '태어난 시간',
+                    style: AppTypography.titleSmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(width: 48),
                 ],
               ),
@@ -1351,14 +1543,20 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primaryOf(context).withValues(alpha: 0.1) : AppColors.surfaceVariantOf(context),
+                        color: isSelected
+                            ? AppColors.primaryOf(
+                                context,
+                              ).withValues(alpha: 0.1)
+                            : AppColors.surfaceVariantOf(context),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(
                         child: Text(
                           siju.hanja,
                           style: AppTypography.titleMedium.copyWith(
-                            color: isSelected ? AppColors.primaryOf(context) : AppColors.textSecondaryOf(context),
+                            color: isSelected
+                                ? AppColors.primaryOf(context)
+                                : AppColors.textSecondaryOf(context),
                           ),
                         ),
                       ),
@@ -1366,15 +1564,26 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     title: Text(
                       siju.name,
                       style: AppTypography.bodyMedium.copyWith(
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? AppColors.primaryOf(context) : AppColors.textPrimaryOf(context),
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                        color: isSelected
+                            ? AppColors.primaryOf(context)
+                            : AppColors.textPrimaryOf(context),
                       ),
                     ),
                     subtitle: Text(
                       siju.timeRange,
-                      style: AppTypography.caption.copyWith(color: AppColors.textTertiaryOf(context)),
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textTertiaryOf(context),
+                      ),
                     ),
-                    trailing: isSelected ? Icon(Icons.check_circle, color: AppColors.primaryOf(context)) : null,
+                    trailing: isSelected
+                        ? Icon(
+                            Icons.check_circle,
+                            color: AppColors.primaryOf(context),
+                          )
+                        : null,
                   );
                 },
               ),
@@ -1450,8 +1659,16 @@ class _CompatibilityPageState extends State<CompatibilityPage>
 
   String _getStemElement(String stem) {
     const mapping = {
-      '갑': '목', '을': '목', '병': '화', '정': '화', '무': '토',
-      '기': '토', '경': '금', '신': '금', '임': '수', '계': '수',
+      '갑': '목',
+      '을': '목',
+      '병': '화',
+      '정': '화',
+      '무': '토',
+      '기': '토',
+      '경': '금',
+      '신': '금',
+      '임': '수',
+      '계': '수',
     };
     return mapping[stem] ?? '토';
   }
@@ -1463,13 +1680,30 @@ class _CompatibilityPageState extends State<CompatibilityPage>
 
   String _getHanja(String korean) {
     const cheonganMap = {
-      '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊',
-      '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸',
+      '갑': '甲',
+      '을': '乙',
+      '병': '丙',
+      '정': '丁',
+      '무': '戊',
+      '기': '己',
+      '경': '庚',
+      '신': '辛',
+      '임': '壬',
+      '계': '癸',
     };
     const jijiMap = {
-      '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰',
-      '사': '巳', '오': '午', '미': '未', '신': '申', '유': '酉',
-      '술': '戌', '해': '亥',
+      '자': '子',
+      '축': '丑',
+      '인': '寅',
+      '묘': '卯',
+      '진': '辰',
+      '사': '巳',
+      '오': '午',
+      '미': '未',
+      '신': '申',
+      '유': '酉',
+      '술': '戌',
+      '해': '亥',
     };
     return cheonganMap[korean] ?? jijiMap[korean] ?? korean;
   }
@@ -1488,11 +1722,12 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: AppColors.backgroundOf(context),
-      child: tabBar,
-    );
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: AppColors.backgroundOf(context), child: tabBar);
   }
 
   @override

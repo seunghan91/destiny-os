@@ -73,22 +73,102 @@ const List<MbtiDimension> mbtiDimensions = [
 
 /// MBTI 유형별 닉네임과 설명
 const Map<String, Map<String, dynamic>> mbtiTypeInfo = {
-  'INTJ': {'nickname': '전략가', 'emoji': '🧠', 'description': '독창적인 전략가', 'color': 0xFF7C3AED},
-  'INTP': {'nickname': '논리술사', 'emoji': '🔬', 'description': '혁신적인 발명가', 'color': 0xFF7C3AED},
-  'ENTJ': {'nickname': '통솔자', 'emoji': '👑', 'description': '대담한 리더', 'color': 0xFF7C3AED},
-  'ENTP': {'nickname': '변론가', 'emoji': '💡', 'description': '논쟁을 즐기는 발명가', 'color': 0xFF7C3AED},
-  'INFJ': {'nickname': '옹호자', 'emoji': '🌟', 'description': '조용하고 신비로운', 'color': 0xFF059669},
-  'INFP': {'nickname': '중재자', 'emoji': '🦋', 'description': '이상주의적 치유자', 'color': 0xFF059669},
-  'ENFJ': {'nickname': '선도자', 'emoji': '🌈', 'description': '카리스마 넘치는', 'color': 0xFF059669},
-  'ENFP': {'nickname': '활동가', 'emoji': '✨', 'description': '열정적인 탐험가', 'color': 0xFF059669},
-  'ISTJ': {'nickname': '현실주의자', 'emoji': '📊', 'description': '신뢰할 수 있는', 'color': 0xFF0284C7},
-  'ISFJ': {'nickname': '수호자', 'emoji': '🛡️', 'description': '헌신적인 보호자', 'color': 0xFF0284C7},
-  'ESTJ': {'nickname': '경영자', 'emoji': '📋', 'description': '체계적인 관리자', 'color': 0xFF0284C7},
-  'ESFJ': {'nickname': '집정관', 'emoji': '🤝', 'description': '친절한 협력자', 'color': 0xFF0284C7},
-  'ISTP': {'nickname': '장인', 'emoji': '🛠️', 'description': '대담한 탐험가', 'color': 0xFFDC2626},
-  'ISFP': {'nickname': '모험가', 'emoji': '🎨', 'description': '유연한 예술가', 'color': 0xFFDC2626},
-  'ESTP': {'nickname': '사업가', 'emoji': '🚀', 'description': '영리한 행동가', 'color': 0xFFDC2626},
-  'ESFP': {'nickname': '연예인', 'emoji': '🎭', 'description': '즉흥적인 연예인', 'color': 0xFFDC2626},
+  'INTJ': {
+    'nickname': '전략가',
+    'emoji': '🧠',
+    'description': '독창적인 전략가',
+    'color': 0xFF7C3AED,
+  },
+  'INTP': {
+    'nickname': '논리술사',
+    'emoji': '🔬',
+    'description': '혁신적인 발명가',
+    'color': 0xFF7C3AED,
+  },
+  'ENTJ': {
+    'nickname': '통솔자',
+    'emoji': '👑',
+    'description': '대담한 리더',
+    'color': 0xFF7C3AED,
+  },
+  'ENTP': {
+    'nickname': '변론가',
+    'emoji': '💡',
+    'description': '논쟁을 즐기는 발명가',
+    'color': 0xFF7C3AED,
+  },
+  'INFJ': {
+    'nickname': '옹호자',
+    'emoji': '🌟',
+    'description': '조용하고 신비로운',
+    'color': 0xFF059669,
+  },
+  'INFP': {
+    'nickname': '중재자',
+    'emoji': '🦋',
+    'description': '이상주의적 치유자',
+    'color': 0xFF059669,
+  },
+  'ENFJ': {
+    'nickname': '선도자',
+    'emoji': '🌈',
+    'description': '카리스마 넘치는',
+    'color': 0xFF059669,
+  },
+  'ENFP': {
+    'nickname': '활동가',
+    'emoji': '✨',
+    'description': '열정적인 탐험가',
+    'color': 0xFF059669,
+  },
+  'ISTJ': {
+    'nickname': '현실주의자',
+    'emoji': '📊',
+    'description': '신뢰할 수 있는',
+    'color': 0xFF0284C7,
+  },
+  'ISFJ': {
+    'nickname': '수호자',
+    'emoji': '🛡️',
+    'description': '헌신적인 보호자',
+    'color': 0xFF0284C7,
+  },
+  'ESTJ': {
+    'nickname': '경영자',
+    'emoji': '📋',
+    'description': '체계적인 관리자',
+    'color': 0xFF0284C7,
+  },
+  'ESFJ': {
+    'nickname': '집정관',
+    'emoji': '🤝',
+    'description': '친절한 협력자',
+    'color': 0xFF0284C7,
+  },
+  'ISTP': {
+    'nickname': '장인',
+    'emoji': '🛠️',
+    'description': '대담한 탐험가',
+    'color': 0xFFDC2626,
+  },
+  'ISFP': {
+    'nickname': '모험가',
+    'emoji': '🎨',
+    'description': '유연한 예술가',
+    'color': 0xFFDC2626,
+  },
+  'ESTP': {
+    'nickname': '사업가',
+    'emoji': '🚀',
+    'description': '영리한 행동가',
+    'color': 0xFFDC2626,
+  },
+  'ESFP': {
+    'nickname': '연예인',
+    'emoji': '🎭',
+    'description': '즉흥적인 연예인',
+    'color': 0xFFDC2626,
+  },
 };
 
 /// MBTI 차원 선택 위젯 (4x2 타일 형식)
@@ -272,6 +352,14 @@ class _DimensionTile extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isCompact = screenWidth < 400;
 
+    final primary = AppColors.primaryOf(context);
+    final surface = AppColors.surfaceOf(context);
+    final surfaceVariant = AppColors.surfaceVariantOf(context);
+    final border = AppColors.borderOf(context);
+    final textPrimary = AppColors.textPrimaryOf(context);
+    final textSecondary = AppColors.textSecondaryOf(context);
+    final textTertiary = AppColors.textTertiaryOf(context);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -279,23 +367,23 @@ class _DimensionTile extends StatelessWidget {
         padding: EdgeInsets.all(isCompact ? 12 : 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary
+              ? primary
               : isOtherSelected
-                  ? AppColors.surfaceVariant.withValues(alpha: 0.5)
-                  : AppColors.surface,
+              ? surfaceVariant.withValues(alpha: 0.5)
+              : surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? AppColors.primary
+                ? primary
                 : isOtherSelected
-                    ? AppColors.border.withValues(alpha: 0.5)
-                    : AppColors.border,
+                ? border.withValues(alpha: 0.5)
+                : border,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.25),
+                    color: primary.withValues(alpha: 0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -314,7 +402,7 @@ class _DimensionTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.white.withValues(alpha: 0.2)
-                        : AppColors.primary.withValues(alpha: 0.1),
+                        : primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
@@ -323,7 +411,7 @@ class _DimensionTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isCompact ? 18 : 20,
                         fontWeight: FontWeight.w800,
-                        color: isSelected ? AppColors.white : AppColors.primary,
+                        color: isSelected ? AppColors.white : primary,
                       ),
                     ),
                   ),
@@ -339,8 +427,8 @@ class _DimensionTile extends StatelessWidget {
                           color: isSelected
                               ? AppColors.white
                               : isOtherSelected
-                                  ? AppColors.textTertiary
-                                  : AppColors.textPrimary,
+                              ? textTertiary
+                              : textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -363,8 +451,8 @@ class _DimensionTile extends StatelessWidget {
                 color: isSelected
                     ? AppColors.white.withValues(alpha: 0.85)
                     : isOtherSelected
-                        ? AppColors.textTertiary.withValues(alpha: 0.7)
-                        : AppColors.textSecondary,
+                    ? textTertiary.withValues(alpha: 0.7)
+                    : textSecondary,
                 height: 1.3,
               ),
               maxLines: 2,
@@ -395,6 +483,8 @@ class _MbtiResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textSecondary = AppColors.textSecondaryOf(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -408,9 +498,7 @@ class _MbtiResultCard extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -430,10 +518,7 @@ class _MbtiResultCard extends StatelessWidget {
               ],
             ),
             child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 26),
-              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 26)),
             ),
           ),
           const SizedBox(width: 14),
@@ -474,9 +559,7 @@ class _MbtiResultCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '$nickname시군요! $description',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTypography.bodySmall.copyWith(color: textSecondary),
                 ),
               ],
             ),

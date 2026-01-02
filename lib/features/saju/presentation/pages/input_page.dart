@@ -64,7 +64,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.errorOf(context),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -174,6 +174,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildNameSection() {
+    final primary = AppColors.primaryOf(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -185,7 +187,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: _nameController.text.isNotEmpty
-                  ? AppColors.primary.withValues(alpha: 0.3)
+                  ? primary.withValues(alpha: 0.3)
                   : AppColors.borderOf(context),
               width: _nameController.text.isNotEmpty ? 1.5 : 1,
             ),
@@ -207,14 +209,14 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 height: 48,
                 decoration: BoxDecoration(
                   color: _nameController.text.isNotEmpty
-                      ? AppColors.primary.withValues(alpha: 0.1)
+                      ? primary.withValues(alpha: 0.1)
                       : AppColors.surfaceVariantOf(context),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.person_outline_rounded,
                   color: _nameController.text.isNotEmpty
-                      ? AppColors.primary
+                      ? primary
                       : AppColors.textTertiaryOf(context),
                   size: 24,
                 ),
@@ -243,6 +245,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
 
   Widget _buildAnalysisOptions() {
     final bool showGapBadge = _analyzeSaju && _analyzeMbti;
+
+    final primary = AppColors.primaryOf(context);
+    final fire = AppColors.fireOf(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,18 +278,19 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             if (showGapBadge) ...[
               const SizedBox(width: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withValues(alpha: 0.15),
-                      AppColors.fire.withValues(alpha: 0.15),
+                      primary.withValues(alpha: 0.15),
+                      fire.withValues(alpha: 0.15),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: primary.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -294,7 +300,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     Text(
                       'Gap',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.primary,
+                        color: primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -314,22 +320,24 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final primary = AppColors.primaryOf(context);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.surfaceOf(context),
+          color: isSelected ? primary : AppColors.surfaceOf(context),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.borderOf(context),
+            color: isSelected ? primary : AppColors.borderOf(context),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+                    color: primary.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -355,7 +363,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               isSelected ? Icons.check_circle : Icons.circle_outlined,
               size: 16,
               color: isSelected
-                  ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9)
+                  ? Theme.of(
+                      context,
+                    ).colorScheme.onPrimary.withValues(alpha: 0.9)
                   : AppColors.textTertiaryOf(context),
             ),
           ],
@@ -365,6 +375,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildBirthDateSection() {
+    final primary = AppColors.primaryOf(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -379,7 +391,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _birthDate != null
-                    ? AppColors.primary.withValues(alpha: 0.3)
+                    ? primary.withValues(alpha: 0.3)
                     : AppColors.borderOf(context),
                 width: _birthDate != null ? 1.5 : 1,
               ),
@@ -391,14 +403,14 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                   height: 48,
                   decoration: BoxDecoration(
                     color: _birthDate != null
-                        ? AppColors.primary.withValues(alpha: 0.1)
+                        ? primary.withValues(alpha: 0.1)
                         : AppColors.surfaceVariantOf(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.calendar_month_rounded,
                     color: _birthDate != null
-                        ? AppColors.primary
+                        ? primary
                         : AppColors.textTertiaryOf(context),
                     size: 24,
                   ),
@@ -426,7 +438,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                         Text(
                           _getZodiacInfo(),
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.primary,
+                            color: primary,
                           ),
                         ),
                       ],
@@ -450,6 +462,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildLunarToggle() {
+    final earth = AppColors.earthOf(context);
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -459,12 +473,12 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: _isLunar
-              ? AppColors.earth.withValues(alpha: 0.1)
+              ? earth.withValues(alpha: 0.1)
               : AppColors.surfaceOf(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: _isLunar
-                ? AppColors.earth.withValues(alpha: 0.3)
+                ? earth.withValues(alpha: 0.3)
                 : AppColors.borderOf(context),
           ),
         ),
@@ -475,7 +489,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             Text(
               '음력으로 입력',
               style: AppTypography.bodyMedium.copyWith(
-                color: _isLunar ? AppColors.earth : AppColors.textSecondaryOf(context),
+                color: _isLunar ? earth : AppColors.textSecondaryOf(context),
                 fontWeight: _isLunar ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
@@ -486,9 +500,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _isLunar ? AppColors.earth : Colors.transparent,
+                color: _isLunar ? earth : Colors.transparent,
                 border: Border.all(
-                  color: _isLunar ? AppColors.earth : AppColors.grey400,
+                  color: _isLunar ? earth : AppColors.grey400Of(context),
                   width: 2,
                 ),
               ),
@@ -503,6 +517,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildBirthTimeSection() {
+    final wood = AppColors.woodOf(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -517,7 +533,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _selectedSiju != null
-                    ? AppColors.wood.withValues(alpha: 0.3)
+                    ? wood.withValues(alpha: 0.3)
                     : AppColors.borderOf(context),
                 width: _selectedSiju != null ? 1.5 : 1,
               ),
@@ -529,7 +545,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                   height: 48,
                   decoration: BoxDecoration(
                     color: _selectedSiju != null
-                        ? AppColors.wood.withValues(alpha: 0.1)
+                        ? wood.withValues(alpha: 0.1)
                         : AppColors.surfaceVariantOf(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -568,9 +584,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                         const SizedBox(height: 4),
                         Text(
                           _selectedSiju!.timeRange,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.wood,
-                          ),
+                          style: AppTypography.bodySmall.copyWith(color: wood),
                         ),
                       ],
                     ],
@@ -589,6 +603,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildGenderSection() {
+    final primary = AppColors.primaryOf(context);
+    final fire = AppColors.fireOf(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -601,7 +618,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 value: 'male',
                 label: '남성',
                 icon: Icons.male_rounded,
-                color: AppColors.primary,
+                color: primary,
               ),
             ),
             const SizedBox(width: 12),
@@ -610,7 +627,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 value: 'female',
                 label: '여성',
                 icon: Icons.female_rounded,
-                color: AppColors.fire,
+                color: fire,
               ),
             ),
           ],
@@ -721,7 +738,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           Text(
             '*',
             style: AppTypography.titleMedium.copyWith(
-              color: AppColors.fire,
+              color: AppColors.fireOf(context),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -740,8 +757,11 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildAnalyzeButton() {
-    final canProceed = _birthDate != null &&
+    final canProceed =
+        _birthDate != null &&
         (_analyzeSaju || (_analyzeMbti && _selectedMbti != null));
+
+    final primary = AppColors.primaryOf(context);
 
     return Column(
       children: [
@@ -751,8 +771,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           child: ElevatedButton(
             onPressed: canProceed ? _startAnalysis : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              disabledBackgroundColor: AppColors.grey300,
+              backgroundColor: primary,
+              disabledBackgroundColor: AppColors.grey300Of(context),
               foregroundColor: Theme.of(context).colorScheme.onPrimary,
               disabledForegroundColor: AppColors.textTertiaryOf(context),
               shape: RoundedRectangleBorder(
@@ -791,13 +811,15 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   }
 
   Widget _buildAnalyzingScreen(DestinyAnalyzing state) {
+    final primary = AppColors.primaryOf(context);
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.primary.withValues(alpha: 0.05),
+            primary.withValues(alpha: 0.05),
             AppColors.backgroundOf(context),
           ],
         ),
@@ -821,10 +843,10 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              AppColors.fire,
-                              AppColors.earth,
-                              AppColors.wood,
-                              AppColors.water,
+                              AppColors.fireOf(context),
+                              AppColors.earthOf(context),
+                              AppColors.woodOf(context),
+                              AppColors.waterOf(context),
                             ],
                           ),
                         ),
@@ -872,8 +894,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 SizedBox(
                   width: 200,
                   child: LinearProgressIndicator(
-                    backgroundColor: AppColors.grey200,
-                    valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                    backgroundColor: AppColors.grey200Of(context),
+                    valueColor: AlwaysStoppedAnimation(primary),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -888,8 +910,20 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   String _getZodiacInfo() {
     if (_birthDate == null) return '';
     final year = _birthDate!.year;
-    const animals = ['🐭쥐', '🐮소', '🐯호랑이', '🐰토끼', '🐲용', '🐍뱀',
-                     '🐴말', '🐑양', '🐵원숭이', '🐔닭', '🐶개', '🐷돼지'];
+    const animals = [
+      '🐭쥐',
+      '🐮소',
+      '🐯호랑이',
+      '🐰토끼',
+      '🐲용',
+      '🐍뱀',
+      '🐴말',
+      '🐑양',
+      '🐵원숭이',
+      '🐔닭',
+      '🐶개',
+      '🐷돼지',
+    ];
     return '${animals[(year - 4) % 12]}띠';
   }
 
@@ -929,8 +963,11 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
     final int currentYear = now.year;
     final int currentMonth = now.month;
     final int currentDay = now.day;
-    
-    final List<int> years = List.generate(currentYear - minYear + 1, (i) => minYear + i);
+
+    final List<int> years = List.generate(
+      currentYear - minYear + 1,
+      (i) => minYear + i,
+    );
     final List<int> months = List.generate(12, (i) => i + 1);
 
     int getDaysInMonth(int year, int month) {
@@ -951,8 +988,12 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               selectedDay = days.length;
             }
 
+            final primary = Theme.of(context).colorScheme.primary;
+            final surface = Theme.of(context).colorScheme.surface;
+            final surfaceVariant = Theme.of(context).colorScheme.surfaceVariant;
+
             return AlertDialog(
-              backgroundColor: AppColors.surfaceOf(context),
+              backgroundColor: surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -984,7 +1025,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                               setDialogState(() {
                                 selectedYear = value!;
                                 // 미래 날짜 방지
-                                if (selectedYear == currentYear && selectedMonth > currentMonth) {
+                                if (selectedYear == currentYear &&
+                                    selectedMonth > currentMonth) {
                                   selectedMonth = currentMonth;
                                 }
                               });
@@ -1028,7 +1070,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                             value: selectedDay,
                             items: days.where((d) {
                               // 현재 연도, 현재 월이면 현재 일까지만
-                              if (selectedYear == currentYear && selectedMonth == currentMonth) {
+                              if (selectedYear == currentYear &&
+                                  selectedMonth == currentMonth) {
                                 return d <= currentDay;
                               }
                               return true;
@@ -1046,27 +1089,23 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     const SizedBox(height: 16),
                     // 선택된 날짜 표시
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
                       decoration: BoxDecoration(
-                        color: Color.alphaBlend(
-                          AppColors.primary.withValues(alpha: 0.1),
-                          Colors.white,
-                        ),
+                        color: surfaceVariant,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 18,
-                            color: AppColors.primary,
-                          ),
+                          Icon(Icons.calendar_today, size: 18, color: primary),
                           const SizedBox(width: 8),
                           Text(
                             '$selectedYear년 $selectedMonth월 $selectedDay일',
                             style: AppTypography.bodyLarge.copyWith(
-                              color: AppColors.primary,
+                              color: primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1088,23 +1127,30 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    final selectedDate = DateTime(selectedYear, selectedMonth, selectedDay);
+                    final selectedDate = DateTime(
+                      selectedYear,
+                      selectedMonth,
+                      selectedDay,
+                    );
                     HapticFeedback.mediumImpact();
                     setState(() => _birthDate = selectedDate);
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    backgroundColor: primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                   child: Text(
                     '확인',
                     style: AppTypography.bodyMedium.copyWith(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1124,6 +1170,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
     required String Function(T) itemLabel,
     required ValueChanged<T?> onChanged,
   }) {
+    final border = AppColors.borderOf(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1137,14 +1185,18 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         const SizedBox(height: 4),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.grey300),
+            border: Border.all(color: border),
             borderRadius: BorderRadius.circular(10),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T>(
               value: items.contains(value) ? value : items.first,
               isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondaryOf(context), size: 20),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.textSecondaryOf(context),
+                size: 20,
+              ),
               borderRadius: BorderRadius.circular(10),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               dropdownColor: AppColors.surfaceOf(context),
@@ -1188,7 +1240,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.grey300,
+                color: AppColors.borderOf(context),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1221,7 +1273,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     child: Text(
                       '확인',
                       style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.primary,
+                        color: AppColors.primaryOf(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1271,9 +1323,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('입력 안내'),
         content: Column(
           mainAxisSize: MainAxisSize.min,

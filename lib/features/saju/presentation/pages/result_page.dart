@@ -26,7 +26,6 @@ class ResultPage extends StatefulWidget {
 
 class _ResultPageState extends State<ResultPage> {
   bool _showPwaBanner = false;
-  bool _pwaPromptShown = false;
 
   @override
   void initState() {
@@ -48,14 +47,6 @@ class _ResultPageState extends State<ResultPage> {
     if (shouldShow && mounted) {
       setState(() => _showPwaBanner = true);
     }
-  }
-
-  /// PWA 설치 다이얼로그 표시
-  Future<void> _showPwaInstallDialog() async {
-    if (_pwaPromptShown) return;
-    _pwaPromptShown = true;
-
-    await PwaInstallPrompt.showAsDialog(context);
   }
 
   // 십이운성 (十二運星) 순서

@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../fortune_2026/data/services/fortune_view_access_service.dart';
 import '../../../compatibility/data/services/compatibility_calculator.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
 
@@ -252,7 +253,46 @@ class _SharePageState extends State<SharePage> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+
+          // 관계 배지 (천간합, 육합, 충 등)
+          if (compatibilityResult.dayPillarAnalysis.relations.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              alignment: WrapAlignment.center,
+              children: compatibilityResult.dayPillarAnalysis.relations
+                  .take(3) // 최대 3개만 표시
+                  .map(
+                    (relation) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        relation,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          if (compatibilityResult.dayPillarAnalysis.relations.isNotEmpty)
+            const SizedBox(height: 16),
+          if (compatibilityResult.dayPillarAnalysis.relations.isEmpty)
+            const SizedBox(height: 8),
 
           // 푸터
           Text(
@@ -916,6 +956,8 @@ class _SharePageState extends State<SharePage> {
     setState(() => _isGenerating = true);
     HapticFeedback.lightImpact();
 
+    await FortuneViewAccessService.claimShareBonus();
+
     try {
       final imageBytes = await _captureWidget();
       if (imageBytes == null) {
@@ -974,6 +1016,8 @@ class _SharePageState extends State<SharePage> {
   Future<void> _shareToInstagramStory() async {
     setState(() => _isGenerating = true);
     HapticFeedback.lightImpact();
+
+    await FortuneViewAccessService.claimShareBonus();
 
     try {
       final imageBytes = await _captureWidget();
@@ -1087,6 +1131,8 @@ class _SharePageState extends State<SharePage> {
   Future<void> _shareImage() async {
     setState(() => _isGenerating = true);
 
+    await FortuneViewAccessService.claimShareBonus();
+
     try {
       final imageBytes = await _captureWidget();
       if (imageBytes == null) {
@@ -1110,6 +1156,8 @@ class _SharePageState extends State<SharePage> {
 
   Future<void> _saveImage() async {
     setState(() => _isGenerating = true);
+
+    await FortuneViewAccessService.claimShareBonus();
 
     try {
       final imageBytes = await _captureWidget();
@@ -1145,6 +1193,8 @@ class _SharePageState extends State<SharePage> {
   }
 
   Future<void> _copyLink() async {
+    await FortuneViewAccessService.claimShareBonus();
+
     // 앱 스토어 링크 (출시 후 실제 링크로 교체)
     const appLink = 'https://destinyos.app/download';
     const shareText =

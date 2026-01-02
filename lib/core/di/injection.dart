@@ -13,6 +13,9 @@ import '../../features/saju/data/services/saju_calculator.dart';
 import '../../features/saju/presentation/bloc/destiny_bloc.dart';
 import '../services/notifications/firebase_notification_service.dart';
 import '../services/usage/usage_service.dart';
+import '../services/auth/auth_manager.dart';
+import '../services/auth/user_profile_service.dart';
+import '../services/auth/credit_service.dart';
 
 /// 전역 서비스 로케이터
 final GetIt getIt = GetIt.instance;
@@ -58,7 +61,20 @@ Future<void> configureDependencies() async {
     getIt.registerLazySingleton<UsageService>(
       () => UsageService(client: getIt<SupabaseClient>()),
     );
+
+    // 사용자 프로필 서비스
+    getIt.registerLazySingleton<UserProfileService>(
+      () => UserProfileService(client: getIt<SupabaseClient>()),
+    );
+
+    // 크레딧 서비스
+    getIt.registerLazySingleton<CreditService>(
+      () => CreditService(client: getIt<SupabaseClient>()),
+    );
   }
+
+  // AuthManager (싱글톤 인스턴스 참조)
+  getIt.registerLazySingleton<AuthManager>(() => AuthManager());
 
   // CreditService는 static 메서드만 사용하므로 별도 등록 불필요
 

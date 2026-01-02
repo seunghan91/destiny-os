@@ -6,12 +6,57 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../data/services/fortune_view_access_service.dart';
+import '../../data/services/fortune_view_payment_service.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
 import '../../domain/entities/fortune_2026.dart';
 
 /// 2026년 병오년 운세 상세 페이지
-class Fortune2026Page extends StatelessWidget {
+class Fortune2026Page extends StatefulWidget {
   const Fortune2026Page({super.key});
+
+  @override
+  State<Fortune2026Page> createState() => _Fortune2026PageState();
+}
+
+class _Fortune2026PageState extends State<Fortune2026Page> {
+  bool _loadingAccess = true;
+  bool _hasAccess = false;
+  bool _canClaimShareBonus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initAccess();
+  }
+
+  Future<void> _initAccess() async {
+    await FortuneViewAccessService.initializeIfNeeded();
+    final ok = await FortuneViewAccessService.consumeOne();
+    if (!mounted) return;
+    final canClaim = ok
+        ? false
+        : await FortuneViewAccessService.canClaimShareBonus();
+    setState(() {
+      _hasAccess = ok;
+      _canClaimShareBonus = canClaim;
+      _loadingAccess = false;
+    });
+  }
+
+  Future<void> _refreshAccessAfterAction() async {
+    setState(() => _loadingAccess = true);
+    final ok = await FortuneViewAccessService.consumeOne();
+    if (!mounted) return;
+    final canClaim = ok
+        ? false
+        : await FortuneViewAccessService.canClaimShareBonus();
+    setState(() {
+      _hasAccess = ok;
+      _canClaimShareBonus = canClaim;
+      _loadingAccess = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +67,16 @@ class Fortune2026Page extends StatelessWidget {
             appBar: AppBar(title: const Text('2026 병오년')),
             body: const Center(child: Text('분석 데이터가 없습니다.\n먼저 사주 분석을 진행해주세요.')),
           );
+        }
+
+        if (_loadingAccess) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (!_hasAccess) {
+          return _buildLockedView(context);
         }
 
         final fortune = state.fortune2026;
@@ -118,6 +173,121 @@ class Fortune2026Page extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildLockedView(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundOf(context),
+      appBar: AppBar(title: const Text('2026 병오년')),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceOf(context),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.borderOf(context)),
+                ),
+                child: Column(
+                  children: [
+                    const Text('🔒', style: TextStyle(fontSize: 36)),
+                    const SizedBox(height: 12),
+                    Text(
+                      '무료 1회 열람을 사용했어요',
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '친구에게 초대 링크를 공유하면\n2026 운세를 1번 더 볼 수 있어요.',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondaryOf(context),
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              ElevatedButton.icon(
+                onPressed: _canClaimShareBonus
+                    ? () async {
+                        final router = GoRouter.of(context);
+                        HapticFeedback.mediumImpact();
+                        await FortuneViewAccessService.claimShareBonus();
+                        if (!mounted) return;
+                        await router.push('/share');
+                        if (!mounted) return;
+                        await _refreshAccessAfterAction();
+                      }
+                    : null,
+                icon: const Icon(Icons.share),
+                label: Text(
+                  _canClaimShareBonus
+                      ? 'URL 생성/공유로 1회 더 보기'
+                      : '공유 혜택(1회)을 이미 사용했어요',
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  final errorColor = AppColors.errorOf(context);
+                  HapticFeedback.mediumImpact();
+                  setState(() => _loadingAccess = true);
+                  final success =
+                      await FortuneViewPaymentService.purchaseOneView();
+                  if (!mounted) return;
+                  if (success) {
+                    await _refreshAccessAfterAction();
+                  } else {
+                    setState(() => _loadingAccess = false);
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: const Text('결제에 실패했습니다. 다시 시도해주세요.'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: errorColor,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.payment_rounded),
+                label: const Text('1,000원으로 1회 추가 열람'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '공유 보너스는 1회만 제공됩니다.',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textTertiaryOf(context),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

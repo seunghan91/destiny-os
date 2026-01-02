@@ -31,11 +31,9 @@ class SajuCalculator {
 
   // 천간 목록 (한글)
   static const List<String> _stems = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
-  static const List<String> _stemsHanja = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 
   // 지지 목록 (한글)
   static const List<String> _branches = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
-  static const List<String> _branchesHanja = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
   // 오행 (천간 → 오행)
   static const Map<String, String> _stemToElement = {
@@ -462,12 +460,6 @@ class SajuCalculator {
         );
     }
   }
-
-  // 중국어 간체 천간 (lunar 패키지가 반환할 수 있는 형식)
-  static const List<String> _stemsSimplified = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-  
-  // 중국어 간체 지지 (lunar 패키지가 반환할 수 있는 형식)
-  static const List<String> _branchesSimplified = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
   /// 천간 → 한글 천간 변환 (한자, 간체 모두 지원)
   /// lunar 패키지가 때때로 천간+지지를 함께 반환할 수 있으므로 첫 글자만 추출

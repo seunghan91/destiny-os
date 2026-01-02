@@ -625,8 +625,9 @@ class _DaewoonPageState extends State<DaewoonPage>
 
           ...List.generate(3, (index) {
             final items = overview['phases'] as List<Map<String, String>>?;
-            if (items == null || index >= items.length)
+            if (items == null || index >= items.length) {
               return const SizedBox.shrink();
+            }
             final phase = items[index];
             return _buildPhaseItem(
               phase['period'] ?? '',
@@ -2436,18 +2437,33 @@ class _DaewoonPageState extends State<DaewoonPage>
   }
 
   List<String> _getKeywordsForTheme(String theme) {
-    if (theme.contains('재물')) return ['#투자', '#사업', '#수입증가', '#재테크'];
-    if (theme.contains('명예')) return ['#승진', '#인정', '#성공', '#리더십'];
-    if (theme.contains('학습') || theme.contains('성장'))
+    if (theme.contains('재물')) {
+      return ['#투자', '#사업', '#수입증가', '#재테크'];
+    }
+    if (theme.contains('명예')) {
+      return ['#승진', '#인정', '#성공', '#리더십'];
+    }
+    if (theme.contains('학습') || theme.contains('성장')) {
       return ['#공부', '#자격증', '#독서', '#멘토'];
-    if (theme.contains('표현') || theme.contains('성취'))
+    }
+    if (theme.contains('표현') || theme.contains('성취')) {
       return ['#창작', '#예술', '#도전', '#성과'];
-    if (theme.contains('자아')) return ['#자기발견', '#독립', '#정체성', '#결단'];
-    if (theme.contains('도전') || theme.contains('발전'))
+    }
+    if (theme.contains('자아')) {
+      return ['#자기발견', '#독립', '#정체성', '#결단'];
+    }
+    if (theme.contains('도전') || theme.contains('발전')) {
       return ['#변화', '#기회', '#용기', '#돌파'];
-    if (theme.contains('안정')) return ['#평화', '#균형', '#유지', '#안식'];
-    if (theme.contains('인간관계')) return ['#네트워킹', '#소통', '#협력', '#신뢰'];
-    if (theme.contains('지혜')) return ['#통찰', '#경험', '#가르침', '#평온'];
+    }
+    if (theme.contains('안정')) {
+      return ['#평화', '#균형', '#유지', '#안식'];
+    }
+    if (theme.contains('인간관계')) {
+      return ['#네트워킹', '#소통', '#협력', '#신뢰'];
+    }
+    if (theme.contains('지혜')) {
+      return ['#통찰', '#경험', '#가르침', '#평온'];
+    }
     return ['#운세', '#행운', '#변화'];
   }
 

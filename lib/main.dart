@@ -13,6 +13,7 @@ import 'core/services/apps_in_toss/apps_in_toss_service.dart';
 import 'core/services/notifications/firebase_notification_service.dart';
 import 'core/services/pwa/pwa_service.dart';
 import 'core/services/pwa/web_notification_service.dart';
+import 'core/services/auth/auth_manager.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -82,6 +83,14 @@ void main() async {
 
   // 의존성 주입 초기화
   await configureDependencies();
+
+  // AuthManager 초기화 (Firebase Auth + Supabase 연동)
+  try {
+    await AuthManager().initialize();
+    debugPrint('✅ AuthManager initialized successfully');
+  } catch (e) {
+    debugPrint('⚠️  AuthManager initialization failed: $e');
+  }
 
   // 웹 플랫폼 서비스 초기화
   if (kIsWeb) {

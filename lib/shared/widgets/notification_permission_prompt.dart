@@ -367,7 +367,7 @@ class _NotificationSettingsTileState extends State<NotificationSettingsTile> {
           : Switch.adaptive(
               value: _isEnabled,
               onChanged: _toggleNotifications,
-              activeColor: AppColors.fortuneGood,
+              activeThumbColor: AppColors.fortuneGood,
             ),
     );
   }

@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import '../constants/saju_constants.dart';
 
 /// 천간/지지(干支) 문자열을 견고하게 파싱/정규화하는 유틸.
@@ -35,7 +33,6 @@ class GanjiParser {
   /// 임의의 문자열에서 천간(한글)을 추출해 반환한다.
   ///
   /// 성공하면 '갑'~'계' 중 하나를 반환, 실패하면 null.
-  @visibleForTesting
   static String? toKoreanHeavenlyStemOrNull(String input) {
     final normalized = _normalize(input);
     if (normalized.isEmpty) return null;
@@ -57,7 +54,6 @@ class GanjiParser {
   /// 임의의 문자열에서 지지(한글)을 추출해 반환한다.
   ///
   /// 성공하면 '자'~'해' 중 하나를 반환, 실패하면 null.
-  @visibleForTesting
   static String? toKoreanEarthlyBranchOrNull(String input) {
     final normalized = _normalize(input);
     if (normalized.isEmpty) return null;

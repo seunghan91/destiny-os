@@ -30,12 +30,12 @@ class DailyFortuneBloc extends Bloc<DailyFortuneEvent, DailyFortuneState> {
 
       // 사주 정보 확인
       final destinyState = _destinyBloc.state;
-      if (destinyState is! DestinySuccess || destinyState.sajuChart == null) {
+      if (destinyState is! DestinySuccess) {
         emit(const DailyFortuneError('사주 정보가 없습니다. 먼저 사주를 입력해주세요.'));
         return;
       }
 
-      final sajuChart = destinyState.sajuChart!;
+      final sajuChart = destinyState.sajuChart;
       final hasPremium = _getDailyFortune.hasPremiumAccess();
 
       final fortune = event.date != null

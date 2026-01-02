@@ -14,6 +14,7 @@ import '../../../../core/services/pwa/pwa_service.dart';
 import '../../../../core/services/pwa/web_notification_service.dart';
 import '../../../../core/services/usage/usage_service.dart';
 import '../../../../core/di/injection.dart';
+import '../widgets/login_section_widget.dart';
 
 /// 설정 페이지
 class SettingsPage extends StatefulWidget {
@@ -241,6 +242,12 @@ class _SettingsPageState extends State<SettingsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
+
+              // 로그인 섹션 (상단 고정)
+              _buildSectionHeader('계정'),
+              const LoginSectionWidget(),
+
+              const SizedBox(height: 24),
 
               // 사주 설정 섹션
               _buildSectionHeader('사주 계산 설정'),

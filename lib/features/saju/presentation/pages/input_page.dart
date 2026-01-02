@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../bloc/destiny_bloc.dart';
+import '../../../fortune_2026/data/services/fortune_view_access_service.dart';
 import '../widgets/siju_picker.dart';
 import '../widgets/mbti_dimension_selector.dart';
 
@@ -59,6 +60,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
       listener: (context, state) {
         if (state is DestinySuccess) {
           HapticFeedback.heavyImpact();
+          FortuneViewAccessService.resetToInitialCredits();
           context.go('/result');
         } else if (state is DestinyFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -990,7 +992,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
 
             final primary = Theme.of(context).colorScheme.primary;
             final surface = Theme.of(context).colorScheme.surface;
-            final surfaceVariant = Theme.of(context).colorScheme.surfaceVariant;
+            final surfaceVariant = Theme.of(context).colorScheme.surfaceContainerHighest;
 
             return AlertDialog(
               backgroundColor: surface,

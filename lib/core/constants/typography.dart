@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'colors.dart';
 
 /// Destiny.OS 타이포그래피 - Pretendard 폰트 기반
 class AppTypography {
@@ -24,7 +23,6 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     height: 1.25,
     letterSpacing: -0.5,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle displayMedium = TextStyle(
@@ -34,7 +32,6 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     height: 1.29,
     letterSpacing: -0.5,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle displaySmall = TextStyle(
@@ -44,7 +41,6 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     height: 1.33,
     letterSpacing: -0.25,
-    color: AppColors.textPrimary,
   );
 
   // Headline
@@ -54,7 +50,6 @@ class AppTypography {
     fontSize: 22,
     fontWeight: FontWeight.w600,
     height: 1.27,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineMedium = TextStyle(
@@ -63,7 +58,6 @@ class AppTypography {
     fontSize: 20,
     fontWeight: FontWeight.w600,
     height: 1.3,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineSmall = TextStyle(
@@ -72,7 +66,6 @@ class AppTypography {
     fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 1.33,
-    color: AppColors.textPrimary,
   );
 
   // Title
@@ -82,7 +75,6 @@ class AppTypography {
     fontSize: 17,
     fontWeight: FontWeight.w600,
     height: 1.41,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle titleMedium = TextStyle(
@@ -91,7 +83,6 @@ class AppTypography {
     fontSize: 16,
     fontWeight: FontWeight.w500,
     height: 1.5,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle titleSmall = TextStyle(
@@ -100,7 +91,6 @@ class AppTypography {
     fontSize: 15,
     fontWeight: FontWeight.w500,
     height: 1.47,
-    color: AppColors.textPrimary,
   );
 
   // Body
@@ -110,7 +100,6 @@ class AppTypography {
     fontSize: 16,
     fontWeight: FontWeight.w400,
     height: 1.5,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle bodyMedium = TextStyle(
@@ -119,7 +108,6 @@ class AppTypography {
     fontSize: 15,
     fontWeight: FontWeight.w400,
     height: 1.47,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle bodySmall = TextStyle(
@@ -128,7 +116,6 @@ class AppTypography {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 1.43,
-    color: AppColors.textSecondary,
   );
 
   // Label
@@ -138,7 +125,6 @@ class AppTypography {
     fontSize: 15,
     fontWeight: FontWeight.w600,
     height: 1.47,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle labelMedium = TextStyle(
@@ -147,7 +133,6 @@ class AppTypography {
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.43,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle labelSmall = TextStyle(
@@ -156,7 +141,6 @@ class AppTypography {
     fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.33,
-    color: AppColors.textSecondary,
   );
 
   // Caption
@@ -166,7 +150,6 @@ class AppTypography {
     fontSize: 12,
     fontWeight: FontWeight.w400,
     height: 1.33,
-    color: AppColors.textTertiary,
   );
 
   // Special styles
@@ -176,7 +159,6 @@ class AppTypography {
     fontSize: 24,
     fontWeight: FontWeight.w600,
     height: 1.2,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle numberLarge = TextStyle(
@@ -186,7 +168,6 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     height: 1.1,
     letterSpacing: -1,
-    color: AppColors.primary,
   );
 
   /// 운세 점수 표시용
@@ -197,7 +178,6 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     letterSpacing: -1,
     height: 1.0,
-    color: AppColors.textPrimary,
   );
 
   static TextTheme get textTheme => const TextTheme(

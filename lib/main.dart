@@ -16,9 +16,17 @@ import 'core/services/pwa/web_notification_service.dart';
 import 'core/services/auth/auth_manager.dart';
 import 'firebase_options.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 초기 렌더를 최대한 빠르게 보여주기 위해 runApp을 먼저 실행하고,
+  // 무거운 초기화(Firebase/Supabase/DI 등)는 부트스트랩 화면 뒤에서 진행한다.
+  final initFuture = _initializeApp();
+  runApp(DestinyBootstrap(initFuture: initFuture));
+}
+
+/// 앱 초기화 (부트스트랩 화면이 떠 있는 동안 실행)
+Future<void> _initializeApp() async {
   // .env 파일 로드 (존재하지 않을 경우 무시)
   try {
     await dotenv.load(fileName: '.env');
@@ -35,7 +43,9 @@ void main() async {
     debugPrint('✅ Firebase initialized successfully');
 
     // 백그라운드 메시지 핸들러 등록 (앱 종료 상태)
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    if (!kIsWeb) {
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    }
 
     // Firebase Cloud Messaging 초기화
     await FirebaseNotificationService().initialize();
@@ -54,10 +64,12 @@ void main() async {
   );
 
   // 세로 모드 고정
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  if (!kIsWeb) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
 
   // Supabase 초기화 (환경 변수 사용)
   if (EnvConfig.hasSupabaseKey) {
@@ -86,7 +98,7 @@ void main() async {
 
   // AuthManager 초기화 (Firebase Auth + Supabase 연동)
   try {
-    await AuthManager().initialize();
+    await getIt<AuthManager>().initialize();
     debugPrint('✅ AuthManager initialized successfully');
   } catch (e) {
     debugPrint('⚠️  AuthManager initialization failed: $e');
@@ -119,5 +131,123 @@ void main() async {
     }
   }
 
-  runApp(const DestinyApp());
+}
+
+/// 초기 로딩 중 사용자에게 "접속됨"을 명확히 보여주는 부트스트랩 UI
+class DestinyBootstrap extends StatelessWidget {
+  const DestinyBootstrap({super.key, required this.initFuture});
+
+  final Future<void> initFuture;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: initFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _BootstrapLoadingView();
+        }
+        if (snapshot.hasError) {
+          return _BootstrapErrorView(error: snapshot.error);
+        }
+        return const DestinyApp();
+      },
+    );
+  }
+}
+
+class _BootstrapLoadingView extends StatelessWidget {
+  const _BootstrapLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Color(0xFF0B0F1A),
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: Color(0xFF9B7BFF),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  '불러오는 중…',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BootstrapErrorView extends StatelessWidget {
+  const _BootstrapErrorView({required this.error});
+
+  final Object? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: const Color(0xFF0B0F1A),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '앱을 불러오는 중 문제가 발생했어요.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '$error',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFFB7B7C2),
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      // 웹/모바일 모두에서 동작하는 가장 단순한 재시도 UX
+                      runApp(
+                        DestinyBootstrap(initFuture: _initializeApp()),
+                      );
+                    },
+                    child: const Text('다시 시도'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

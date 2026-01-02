@@ -1,1 +1,121 @@
-{"hosting":{"public":"build/web","ignore":["firebase.json","**/.*","**/node_modules/**"],"rewrites":[{"source":"/privacy","destination":"/privacy.html"},{"source":"/terms","destination":"/terms.html"},{"source":"/about","destination":"/about.html"},{"source":"**","destination":"/index.html"}],"headers":[{"source":"**/*.html","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"X-Frame-Options","value":"DENY"},{"key":"X-XSS-Protection","value":"1; mode=block"}]},{"source":"**/*.@(js|css)","headers":[{"key":"Cache-Control","value":"max-age=31536000"}]},{"source":"**/*.@(jpg|jpeg|gif|png|svg|webp|ico)","headers":[{"key":"Cache-Control","value":"max-age=31536000"}]}]},"flutter":{"platforms":{"android":{"default":{"projectId":"destiny-os-2026","appId":"1:16973939404:android:99ce055820d4c7331df869","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"destiny-os-2026","appId":"1:16973939404:ios:f2ac5836a4eb8c521df869","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"destiny-os-2026","appId":"1:16973939404:ios:f2ac5836a4eb8c521df869","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"destiny-os-2026","configurations":{"android":"1:16973939404:android:99ce055820d4c7331df869","ios":"1:16973939404:ios:f2ac5836a4eb8c521df869","macos":"1:16973939404:ios:f2ac5836a4eb8c521df869","web":"1:16973939404:web:2cf031a507fd1a861df869"}}}}}}
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/privacy",
+        "destination": "/privacy.html"
+      },
+      {
+        "source": "/terms",
+        "destination": "/terms.html"
+      },
+      {
+        "source": "/about",
+        "destination": "/about.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.html",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "X-XSS-Protection",
+            "value": "1; mode=block"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|ico)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(woff|woff2|ttf|otf)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**/*.wasm",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "destiny-os-2026",
+          "appId": "1:16973939404:android:99ce055820d4c7331df869",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "destiny-os-2026",
+          "appId": "1:16973939404:ios:f2ac5836a4eb8c521df869",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "destiny-os-2026",
+          "appId": "1:16973939404:ios:f2ac5836a4eb8c521df869",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "destiny-os-2026",
+          "configurations": {
+            "android": "1:16973939404:android:99ce055820d4c7331df869",
+            "ios": "1:16973939404:ios:f2ac5836a4eb8c521df869",
+            "macos": "1:16973939404:ios:f2ac5836a4eb8c521df869",
+            "web": "1:16973939404:web:2cf031a507fd1a861df869"
+          }
+        }
+      }
+    }
+  }
+}

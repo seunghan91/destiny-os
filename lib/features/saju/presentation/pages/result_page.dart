@@ -41,9 +41,9 @@ class _ResultPageState extends State<ResultPage> {
   Future<void> _checkPwaPrompt() async {
     // 약간의 딜레이 후 표시 (사용자가 결과를 먼저 볼 수 있도록)
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (!mounted) return;
-    
+
     final shouldShow = await PwaInstallPrompt.shouldShowPrompt();
     if (shouldShow && mounted) {
       setState(() => _showPwaBanner = true);
@@ -54,7 +54,7 @@ class _ResultPageState extends State<ResultPage> {
   Future<void> _showPwaInstallDialog() async {
     if (_pwaPromptShown) return;
     _pwaPromptShown = true;
-    
+
     await PwaInstallPrompt.showAsDialog(context);
   }
 
@@ -176,8 +176,7 @@ class _ResultPageState extends State<ResultPage> {
                             setState(() => _showPwaBanner = false);
                           },
                         ),
-                      if (kIsWeb && _showPwaBanner)
-                        const SizedBox(height: 16),
+                      if (kIsWeb && _showPwaBanner) const SizedBox(height: 16),
 
                       // 다시 분석하기
                       _buildResetButton(context),
@@ -194,6 +193,8 @@ class _ResultPageState extends State<ResultPage> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final primary = AppColors.primaryOf(context);
+
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       body: SafeArea(
@@ -207,7 +208,7 @@ class _ResultPageState extends State<ResultPage> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(25),
+                    color: primary.withAlpha(25),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
@@ -239,7 +240,7 @@ class _ResultPageState extends State<ResultPage> {
                       context.go('/input');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: primary,
                       foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -264,6 +265,8 @@ class _ResultPageState extends State<ResultPage> {
   }
 
   SliverAppBar _buildAppBar(BuildContext context, DestinySuccess state) {
+    final primary = AppColors.primaryOf(context);
+
     return SliverAppBar(
       expandedHeight: 140,
       floating: false,
@@ -308,10 +311,7 @@ class _ResultPageState extends State<ResultPage> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                AppColors.primary.withAlpha(20),
-                AppColors.backgroundOf(context),
-              ],
+              colors: [primary.withAlpha(20), AppColors.backgroundOf(context)],
             ),
           ),
         ),
@@ -321,16 +321,42 @@ class _ResultPageState extends State<ResultPage> {
 
   // 천간/지지 변환 맵
   static const _stemToHanja = {
-    '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊',
-    '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸',
+    '갑': '甲',
+    '을': '乙',
+    '병': '丙',
+    '정': '丁',
+    '무': '戊',
+    '기': '己',
+    '경': '庚',
+    '신': '辛',
+    '임': '壬',
+    '계': '癸',
   };
   static const _branchToHanja = {
-    '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳',
-    '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥',
+    '자': '子',
+    '축': '丑',
+    '인': '寅',
+    '묘': '卯',
+    '진': '辰',
+    '사': '巳',
+    '오': '午',
+    '미': '未',
+    '신': '申',
+    '유': '酉',
+    '술': '戌',
+    '해': '亥',
   };
   static const _stemToElement = {
-    '갑': '목', '을': '목', '병': '화', '정': '화', '무': '토',
-    '기': '토', '경': '금', '신': '금', '임': '수', '계': '수',
+    '갑': '목',
+    '을': '목',
+    '병': '화',
+    '정': '화',
+    '무': '토',
+    '기': '토',
+    '경': '금',
+    '신': '금',
+    '임': '수',
+    '계': '수',
   };
 
   static const Map<String, String> _branchToElement = {
@@ -364,20 +390,27 @@ class _ResultPageState extends State<ResultPage> {
     '수': '물',
   };
 
-  Color _getElementColor(String stem) {
+  Color _getElementColor(BuildContext context, String stem) {
     final element = _stemToElement[stem] ?? '토';
     switch (element) {
-      case '목': return AppColors.wood;
-      case '화': return AppColors.fire;
-      case '토': return AppColors.earth;
-      case '금': return AppColors.metalAccent;
-      case '수': return AppColors.water;
-      default: return AppColors.primary;
+      case '목':
+        return AppColors.woodOf(context);
+      case '화':
+        return AppColors.fireOf(context);
+      case '토':
+        return AppColors.earthOf(context);
+      case '금':
+        return AppColors.metalOf(context);
+      case '수':
+        return AppColors.waterOf(context);
+      default:
+        return AppColors.primaryOf(context);
     }
   }
 
   Widget _buildSajuDetailSection(SajuChart chart) {
     final pillars = _buildSajuPillars(chart);
+    final primary = AppColors.primaryOf(context);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -386,7 +419,11 @@ class _ResultPageState extends State<ResultPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowOf(context, lightOpacity: 13 / 255, darkOpacity: 0.10),
+            color: AppColors.shadowOf(
+              context,
+              lightOpacity: 13 / 255,
+              darkOpacity: 0.10,
+            ),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -402,11 +439,14 @@ class _ResultPageState extends State<ResultPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(25),
+                  color: primary.withAlpha(25),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(
-                  child: Text('命', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    '命',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -440,7 +480,10 @@ class _ResultPageState extends State<ResultPage> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _getElementColor(chart.dayPillar.heavenlyStem).withAlpha(20),
+              color: _getElementColor(
+                context,
+                chart.dayPillar.heavenlyStem,
+              ).withAlpha(20),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -448,7 +491,10 @@ class _ResultPageState extends State<ResultPage> {
                 Icon(
                   Icons.auto_awesome_rounded,
                   size: 16,
-                  color: _getElementColor(chart.dayPillar.heavenlyStem),
+                  color: _getElementColor(
+                    context,
+                    chart.dayPillar.heavenlyStem,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -489,7 +535,10 @@ class _ResultPageState extends State<ResultPage> {
         earthlyBranchReading: pillar.earthlyBranch,
         earthlyBranchElement: _elementToHanja[branchElement] ?? '土',
         earthlyBranchElementKr: _elementToKoreanWord[branchElement] ?? '흙',
-        twelveState: _getTwelveState(dayMaster: dayMaster, branch: pillar.earthlyBranch),
+        twelveState: _getTwelveState(
+          dayMaster: dayMaster,
+          branch: pillar.earthlyBranch,
+        ),
       );
     }
 
@@ -498,22 +547,27 @@ class _ResultPageState extends State<ResultPage> {
       build(
         pillarName: '시주',
         pillar: chart.hourPillar,
-        tenGod: _getTenGodForStem(dayMaster: dayMaster, targetStem: chart.hourPillar.heavenlyStem),
+        tenGod: _getTenGodForStem(
+          dayMaster: dayMaster,
+          targetStem: chart.hourPillar.heavenlyStem,
+        ),
       ),
-      build(
-        pillarName: '일주',
-        pillar: chart.dayPillar,
-        tenGod: '일원',
-      ),
+      build(pillarName: '일주', pillar: chart.dayPillar, tenGod: '일원'),
       build(
         pillarName: '월주',
         pillar: chart.monthPillar,
-        tenGod: _getTenGodForStem(dayMaster: dayMaster, targetStem: chart.monthPillar.heavenlyStem),
+        tenGod: _getTenGodForStem(
+          dayMaster: dayMaster,
+          targetStem: chart.monthPillar.heavenlyStem,
+        ),
       ),
       build(
         pillarName: '년주',
         pillar: chart.yearPillar,
-        tenGod: _getTenGodForStem(dayMaster: dayMaster, targetStem: chart.yearPillar.heavenlyStem),
+        tenGod: _getTenGodForStem(
+          dayMaster: dayMaster,
+          targetStem: chart.yearPillar.heavenlyStem,
+        ),
       ),
     ];
   }
@@ -527,7 +581,10 @@ class _ResultPageState extends State<ResultPage> {
     final targetElement = _stemToElement[targetStem];
     final targetPolarity = _stemPolarity[targetStem];
 
-    if (myElement == null || myPolarity == null || targetElement == null || targetPolarity == null) {
+    if (myElement == null ||
+        myPolarity == null ||
+        targetElement == null ||
+        targetPolarity == null) {
       return '비견';
     }
 
@@ -567,13 +624,12 @@ class _ResultPageState extends State<ResultPage> {
     }
   }
 
-  String _getTwelveState({
-    required String dayMaster,
-    required String branch,
-  }) {
+  String _getTwelveState({required String dayMaster, required String branch}) {
     final startBranch = _twelveStateStartBranchByDayStem[dayMaster];
     final isYang = _stemPolarity[dayMaster];
-    final startIndex = startBranch == null ? -1 : _branchesOrder.indexOf(startBranch);
+    final startIndex = startBranch == null
+        ? -1
+        : _branchesOrder.indexOf(startBranch);
     final targetIndex = _branchesOrder.indexOf(branch);
 
     if (startIndex < 0 || targetIndex < 0 || isYang == null) return '양';
@@ -589,6 +645,10 @@ class _ResultPageState extends State<ResultPage> {
   Widget _buildComprehensiveAnalysis(DestinySuccess state) {
     final gap = state.gapAnalysis;
     final tenGods = state.tenGods;
+    final primary = AppColors.primaryOf(context);
+    final wood = AppColors.woodOf(context);
+    final fire = AppColors.fireOf(context);
+
     final sajuComprehensive = AnalysisTextBuilder.buildSajuComprehensiveText(
       chart: state.sajuChart,
       tenGods: tenGods,
@@ -598,15 +658,12 @@ class _ResultPageState extends State<ResultPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withAlpha(15),
-            AppColors.wood.withAlpha(10),
-          ],
+          colors: [primary.withAlpha(15), wood.withAlpha(10)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withAlpha(30)),
+        border: Border.all(color: primary.withAlpha(30)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -618,7 +675,7 @@ class _ResultPageState extends State<ResultPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(25),
+                  color: primary.withAlpha(25),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(
@@ -659,7 +716,7 @@ class _ResultPageState extends State<ResultPage> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.stars_rounded, size: 18, color: AppColors.primary),
+                    Icon(Icons.stars_rounded, size: 18, color: primary),
                     const SizedBox(width: 8),
                     Text(
                       '사주 종합 요약',
@@ -694,7 +751,7 @@ class _ResultPageState extends State<ResultPage> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.compare_arrows, size: 18, color: AppColors.primary),
+                    Icon(Icons.compare_arrows, size: 18, color: primary),
                     const SizedBox(width: 8),
                     Text(
                       'MBTI Gap 분석',
@@ -704,15 +761,21 @@ class _ResultPageState extends State<ResultPage> {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: _getGapColor(gap.gapScore).withAlpha(20),
+                        color: _getGapColor(
+                          context,
+                          gap.gapScore,
+                        ).withAlpha(20),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '${gap.gapScore.toInt()}% 괴리',
                         style: AppTypography.labelSmall.copyWith(
-                          color: _getGapColor(gap.gapScore),
+                          color: _getGapColor(context, gap.gapScore),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -723,13 +786,21 @@ class _ResultPageState extends State<ResultPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildMbtiCompare('사주 추론', gap.sajuBasedMbti, AppColors.primary),
+                      child: _buildMbtiCompare(
+                        '사주 추론',
+                        gap.sajuBasedMbti,
+                        primary,
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward, size: 16, color: AppColors.grey400),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 16,
+                      color: AppColors.grey400Of(context),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildMbtiCompare('현재 MBTI', gap.actualMbti, AppColors.wood),
+                      child: _buildMbtiCompare('현재 MBTI', gap.actualMbti, wood),
                     ),
                   ],
                 ),
@@ -758,7 +829,7 @@ class _ResultPageState extends State<ResultPage> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.pie_chart_outline, size: 18, color: AppColors.fire),
+                    Icon(Icons.pie_chart_outline, size: 18, color: fire),
                     const SizedBox(width: 8),
                     Text(
                       '십성 분포',
@@ -770,7 +841,7 @@ class _ResultPageState extends State<ResultPage> {
                     Text(
                       '주요: ${tenGods.dominantGod}',
                       style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.fire,
+                        color: fire,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -781,23 +852,32 @@ class _ResultPageState extends State<ResultPage> {
                   spacing: 8,
                   runSpacing: 8,
                   children: () {
-                    final entries = tenGods.distribution.entries
-                        .where((e) => e.value > 0)
-                        .toList()
-                      ..sort((a, b) => b.value.compareTo(a.value));
-                    return entries.take(5).map((entry) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withAlpha(15),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        '${entry.key} ${entry.value}',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    )).toList();
+                    final entries =
+                        tenGods.distribution.entries
+                            .where((e) => e.value > 0)
+                            .toList()
+                          ..sort((a, b) => b.value.compareTo(a.value));
+                    return entries
+                        .take(5)
+                        .map(
+                          (entry) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primary.withAlpha(15),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              '${entry.key} ${entry.value}',
+                              style: AppTypography.labelSmall.copyWith(
+                                color: primary,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList();
                   }(),
                 ),
               ],
@@ -810,22 +890,28 @@ class _ResultPageState extends State<ResultPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.fortuneGood.withAlpha(15),
+                color: AppColors.fortuneGoodOf(context).withAlpha(15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.fortuneGood.withAlpha(30)),
+                border: Border.all(
+                  color: AppColors.fortuneGoodOf(context).withAlpha(30),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.lightbulb, size: 18, color: AppColors.fortuneGood),
+                      Icon(
+                        Icons.lightbulb,
+                        size: 18,
+                        color: AppColors.fortuneGoodOf(context),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '숨겨진 잠재력',
                         style: AppTypography.labelLarge.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.fortuneGood,
+                          color: AppColors.fortuneGoodOf(context),
                         ),
                       ),
                     ],
@@ -874,11 +960,11 @@ class _ResultPageState extends State<ResultPage> {
     );
   }
 
-  Color _getGapColor(double score) {
-    if (score >= 75) return AppColors.fire;
-    if (score >= 50) return AppColors.warning;
-    if (score >= 25) return AppColors.primary;
-    return AppColors.fortuneGood;
+  Color _getGapColor(BuildContext context, double score) {
+    if (score >= 75) return AppColors.fireOf(context);
+    if (score >= 50) return AppColors.warningOf(context);
+    if (score >= 25) return AppColors.primaryOf(context);
+    return AppColors.fortuneGoodOf(context);
   }
 
   String _getDayMasterDescription(String stem) {

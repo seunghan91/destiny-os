@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
@@ -87,6 +89,10 @@ class Fortune2026Page extends StatelessWidget {
 
                       // 화기 적합도
                       _buildFireCompatibilityCard(context, fortune, fireScore),
+                      const SizedBox(height: 16),
+
+                      // 운세 이어서 질의하기 버튼 (게이지 섹션 하단)
+                      _buildConsultationCta(context),
                       const SizedBox(height: 24),
 
                       // 월별 운세 차트
@@ -99,6 +105,10 @@ class Fortune2026Page extends StatelessWidget {
 
                       // 주의사항
                       _buildCautionCard(fortune),
+                      const SizedBox(height: 16),
+
+                      // 운세 이어서 질의하기 버튼 (주의사항 하단)
+                      _buildConsultationCta(context),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -594,6 +604,100 @@ class Fortune2026Page extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 운세 이어서 질의하기 CTA 버튼
+  Widget _buildConsultationCta(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        context.push('/consultation');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary.withValues(alpha: 0.15),
+              AppColors.fire.withValues(alpha: 0.15),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // 아이콘
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.primary, AppColors.fire],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text('🔮', style: TextStyle(fontSize: 24)),
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // 텍스트
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '운세 이어서 질의하기',
+                    style: AppTypography.titleSmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '나의 운세를 바탕으로 맞춤 상담받기',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondaryOf(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // 화살표
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: AppColors.primary,
+                size: 14,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

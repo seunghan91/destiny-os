@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
-import '../../../../core/services/pwa/pwa_service.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../../shared/widgets/saju_chart_widget.dart';
 import '../../domain/services/analysis_text_builder.dart';
@@ -146,6 +146,10 @@ class _ResultPageState extends State<ResultPage> {
 
                       // 히어로 카드 - 2026 운세
                       ResultHeroCard(data: state),
+                      const SizedBox(height: 16),
+
+                      // 오늘의 운세 버튼
+                      _buildDailyFortuneButton(context),
                       const SizedBox(height: 24),
 
                       // 사주팔자 상세 표시
@@ -1074,6 +1078,79 @@ class _ResultPageState extends State<ResultPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDailyFortuneButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/daily-fortune');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary.withAlpha(30),
+              AppColors.fire.withAlpha(30),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primary.withAlpha(80),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withAlpha(40),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text('📅', style: TextStyle(fontSize: 24)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '오늘의 운세',
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimaryOf(context),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '매일 새로운 운세를 확인하세요',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondaryOf(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.primary,
+              size: 18,
+            ),
+          ],
+        ),
+      ).animate().fadeIn(duration: 600.ms).slideX(
+            begin: 0.1,
+            end: 0,
+            duration: 600.ms,
+            curve: Curves.easeOut,
+          ),
     );
   }
 

@@ -19,7 +19,8 @@ class ConsultationPage extends StatefulWidget {
   State<ConsultationPage> createState() => _ConsultationPageState();
 }
 
-class _ConsultationPageState extends State<ConsultationPage> with WidgetsBindingObserver {
+class _ConsultationPageState extends State<ConsultationPage>
+    with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
@@ -77,7 +78,8 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       _autoSaveSession();
     }
   }
@@ -93,7 +95,8 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
     _messages.add(
       ChatMessage(
         id: 'welcome',
-        content: '안녕하세요! 저는 사주와 MBTI 기반 AI 상담사입니다. 🔮\n\n'
+        content:
+            '안녕하세요! 저는 사주와 MBTI 기반 AI 상담사입니다. 🔮\n\n'
             '당신의 운명을 분석하고 맞춤형 조언을 드릴게요.\n'
             '먼저 상담 유형을 선택해주세요.',
         isUser: false,
@@ -113,9 +116,9 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
   /// 대화 히스토리에 저장
   Future<void> _saveToHistory() async {
     if (_selectedType == null || _messages.length <= 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('저장할 대화가 없습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('저장할 대화가 없습니다.')));
       return;
     }
 
@@ -141,9 +144,8 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ConversationHistorySheet(
-        onSelectConversation: _loadConversation,
-      ),
+      builder: (context) =>
+          _ConversationHistorySheet(onSelectConversation: _loadConversation),
     );
   }
 
@@ -417,9 +419,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
           children: [
             Text(
               ConsultationPaymentService.getPurchaseMessage(),
-              style: AppTypography.bodyMedium.copyWith(
-                height: 1.6,
-              ),
+              style: AppTypography.bodyMedium.copyWith(height: 1.6),
             ),
             const SizedBox(height: 20),
             Container(
@@ -427,9 +427,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
               decoration: BoxDecoration(
                 color: AppColors.fortuneGood.withAlpha(15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.fortuneGood.withAlpha(30),
-                ),
+                border: Border.all(color: AppColors.fortuneGood.withAlpha(30)),
               ),
               child: Row(
                 children: [
@@ -451,7 +449,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
                           ),
                         ),
                         Text(
-                          '1,000원',
+                          '5,000원',
                           style: AppTypography.headlineSmall.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -499,39 +497,39 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
-      final success = await ConsultationPaymentService.purchaseConsultationCredits();
+      final success =
+          await ConsultationPaymentService.purchaseConsultationCredits();
 
-      if (mounted) {
-        Navigator.pop(context); // 로딩 다이얼로그 닫기
+      if (!mounted) return;
 
-        if (success) {
-          // 크레딧 새로고침
-          await _loadCredits();
+      Navigator.pop(context); // 로딩 다이얼로그 닫기
 
-          // 성공 메시지
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('결제가 완료되었습니다! 크레딧 5회가 충전되었어요.'),
-              backgroundColor: AppColors.fortuneGood,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        } else {
-          // 실패 메시지
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('결제에 실패했습니다. 다시 시도해주세요.'),
-              backgroundColor: AppColors.fire,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+      if (success) {
+        // 크레딧 새로고침
+        await _loadCredits();
+        if (!mounted) return;
+
+        // 성공 메시지
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('결제가 완료되었습니다! 크레딧 5회가 충전되었어요.'),
+            backgroundColor: AppColors.fortuneGood,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        // 실패 메시지
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('결제에 실패했습니다. 다시 시도해주세요.'),
+            backgroundColor: AppColors.fire,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -558,16 +556,46 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
     if (destinyState is DestinySuccess) {
       final chart = destinyState.sajuChart;
       final tenGods = destinyState.tenGods;
-      
-      sajuInfo = '일주: ${chart.dayPillar.fullPillar}(${chart.dayPillar.hanjaRepresentation}), '
+
+      sajuInfo =
+          '일주: ${chart.dayPillar.fullPillar}(${chart.dayPillar.hanjaRepresentation}), '
           '일간: ${chart.dayMaster}, '
           '월지: ${chart.monthPillar.earthlyBranch}, '
           '강한 십성: ${tenGods.dominantGod}, '
           '부족한 오행: ${chart.complementaryElement}';
-          
+
       mbtiType = destinyState.mbtiType.type;
       fortuneScore = destinyState.fortune2026.overallScore.toInt();
     }
+
+    final history = _messages
+        .where(
+          (m) =>
+              m.id != 'welcome' &&
+              !m.content.startsWith('💡') &&
+              m.status != MessageStatus.error,
+        )
+        .toList();
+
+    if (history.isNotEmpty &&
+        history.last.isUser &&
+        history.last.content.trim() == userMessage.trim()) {
+      history.removeLast();
+    }
+
+    const maxHistoryCount = 16;
+    final trimmedHistory = history.length > maxHistoryCount
+        ? history.sublist(history.length - maxHistoryCount)
+        : history;
+
+    final conversationMessages = trimmedHistory
+        .map(
+          (m) => <String, String>{
+            'role': m.isUser ? 'user' : 'assistant',
+            'content': m.content,
+          },
+        )
+        .toList();
 
     try {
       final response = await _aiService.generateResponse(
@@ -576,6 +604,9 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
         sajuInfo: sajuInfo,
         mbtiType: mbtiType,
         fortuneScore: fortuneScore,
+        conversationMessages: conversationMessages.isEmpty
+            ? null
+            : conversationMessages,
       );
 
       if (mounted) {
@@ -706,7 +737,10 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
-              itemCount: _messages.length + (_isTyping ? 1 : 0) + (_selectedType == null ? 1 : 0),
+              itemCount:
+                  _messages.length +
+                  (_isTyping ? 1 : 0) +
+                  (_selectedType == null ? 1 : 0),
               itemBuilder: (context, index) {
                 // 상담 유형 선택 UI
                 if (_selectedType == null && index == _messages.length) {
@@ -714,7 +748,9 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
                 }
 
                 // 타이핑 인디케이터
-                if (_isTyping && index == _messages.length + (_selectedType == null ? 1 : 0)) {
+                if (_isTyping &&
+                    index ==
+                        _messages.length + (_selectedType == null ? 1 : 0)) {
                   return _buildTypingIndicator();
                 }
 
@@ -754,7 +790,9 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -780,8 +818,9 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment:
-            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!message.isUser) ...[
@@ -807,7 +846,11 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
+                    color: AppColors.shadowOf(
+                      context,
+                      lightOpacity: 0.05,
+                      darkOpacity: 0.12,
+                    ),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),
@@ -849,11 +892,7 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDot(0),
-                _buildDot(1),
-                _buildDot(2),
-              ],
+              children: [_buildDot(0), _buildDot(1), _buildDot(2)],
             ),
           ),
         ],
@@ -871,7 +910,9 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
           width: 8,
           height: 8,
           decoration: BoxDecoration(
-            color: AppColors.textTertiaryOf(context).withValues(alpha: 0.3 + (value * 0.7)),
+            color: AppColors.textTertiaryOf(
+              context,
+            ).withValues(alpha: 0.3 + (value * 0.7)),
             shape: BoxShape.circle,
           ),
         );
@@ -921,7 +962,11 @@ class _ConsultationPageState extends State<ConsultationPage> with WidgetsBinding
         color: AppColors.surfaceOf(context),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowOf(context, lightOpacity: 0.05, darkOpacity: 0.12),
+            color: AppColors.shadowOf(
+              context,
+              lightOpacity: 0.05,
+              darkOpacity: 0.12,
+            ),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -1100,14 +1145,14 @@ class _ElementInfo {
 
 /// 대화 기록 히스토리 시트
 class _ConversationHistorySheet extends StatefulWidget {
-  final Future<void> Function(String id, ConsultationType type) onSelectConversation;
+  final Future<void> Function(String id, ConsultationType type)
+  onSelectConversation;
 
-  const _ConversationHistorySheet({
-    required this.onSelectConversation,
-  });
+  const _ConversationHistorySheet({required this.onSelectConversation});
 
   @override
-  State<_ConversationHistorySheet> createState() => _ConversationHistorySheetState();
+  State<_ConversationHistorySheet> createState() =>
+      _ConversationHistorySheetState();
 }
 
 class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
@@ -1121,7 +1166,8 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
   }
 
   Future<void> _loadConversations() async {
-    final conversations = await ConsultationStorageService.getAllConversations();
+    final conversations =
+        await ConsultationStorageService.getAllConversations();
     if (mounted) {
       setState(() {
         _conversations = conversations;
@@ -1201,16 +1247,16 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _conversations.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: _conversations.length,
-                        separatorBuilder: (_, i) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final conversation = _conversations[index];
-                          return _buildConversationTile(conversation);
-                        },
-                      ),
+                ? _buildEmptyState()
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _conversations.length,
+                    separatorBuilder: (_, i) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final conversation = _conversations[index];
+                      return _buildConversationTile(conversation);
+                    },
+                  ),
           ),
         ],
       ),
@@ -1279,9 +1325,7 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
           conversation.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.bodyMedium.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w500),
         ),
         subtitle: Row(
           children: [
@@ -1306,10 +1350,8 @@ class _ConversationHistorySheetState extends State<_ConversationHistorySheet> {
             color: AppColors.textTertiaryOf(context),
           ),
         ),
-        onTap: () => widget.onSelectConversation(
-          conversation.id,
-          conversation.type,
-        ),
+        onTap: () =>
+            widget.onSelectConversation(conversation.id, conversation.type),
       ),
     );
   }

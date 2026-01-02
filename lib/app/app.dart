@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../core/di/injection.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_notifier.dart';
+import '../features/daily_fortune/presentation/bloc/daily_fortune_bloc.dart';
 import '../features/saju/presentation/bloc/destiny_bloc.dart';
 import 'router_deferred.dart';
 
@@ -40,7 +42,8 @@ class _DestinyAppState extends State<DestinyApp> {
         builder: (context, _) {
           return MultiBlocProvider(
             providers: [
-              BlocProvider<DestinyBloc>(create: (context) => DestinyBloc()),
+              BlocProvider<DestinyBloc>(create: (context) => getIt<DestinyBloc>()),
+              BlocProvider<DailyFortuneBloc>(create: (context) => getIt<DailyFortuneBloc>()),
             ],
             child: MaterialApp.router(
               title: '2026 신년운세 (MBTI 운세)',

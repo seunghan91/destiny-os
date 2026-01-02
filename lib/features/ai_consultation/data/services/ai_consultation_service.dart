@@ -21,6 +21,7 @@ class AIConsultationService {
     String? sajuInfo,
     String? mbtiType,
     int? fortuneScore,
+    List<Map<String, String>>? conversationMessages,
     AITaskType taskType = AITaskType.consultation,
   }) async {
     // 1. BizRouter API 사용 (권장)
@@ -32,6 +33,7 @@ class AIConsultationService {
           sajuInfo: sajuInfo,
           mbtiType: mbtiType,
           fortuneScore: fortuneScore,
+          conversationMessages: conversationMessages,
           taskType: taskType,
         );
       } catch (e) {
@@ -63,6 +65,7 @@ class AIConsultationService {
           sajuInfo: sajuInfo,
           mbtiType: mbtiType,
           fortuneScore: fortuneScore,
+          conversationMessages: conversationMessages,
         );
       } catch (e) {
         debugPrint('OpenAI API failed: $e');
@@ -88,6 +91,7 @@ class AIConsultationService {
     String? sajuInfo,
     String? mbtiType,
     int? fortuneScore,
+    List<Map<String, String>>? conversationMessages,
     required AITaskType taskType,
   }) async {
     final systemPrompt = _buildSystemPrompt(
@@ -99,7 +103,8 @@ class AIConsultationService {
 
     // 태스크 유형에 따라 모델 선택
     final model = taskType == AITaskType.consultation
-        ? EnvConfig.consultationModel // GPT-4o
+        ? EnvConfig
+              .consultationModel // GPT-4o
         : EnvConfig.analysisModel; // Gemini 2.5 Flash
 
     final response = await _dio.post(
@@ -114,6 +119,7 @@ class AIConsultationService {
         'model': model,
         'messages': [
           {'role': 'system', 'content': systemPrompt},
+          ...?conversationMessages,
           {'role': 'user', 'content': userMessage},
         ],
         'max_tokens': 500,
@@ -167,6 +173,7 @@ class AIConsultationService {
     String? sajuInfo,
     String? mbtiType,
     int? fortuneScore,
+    List<Map<String, String>>? conversationMessages,
   }) async {
     final systemPrompt = _buildSystemPrompt(
       consultationType: consultationType,
@@ -187,6 +194,7 @@ class AIConsultationService {
         'model': EnvConfig.openAiModel,
         'messages': [
           {'role': 'system', 'content': systemPrompt},
+          ...?conversationMessages,
           {'role': 'user', 'content': userMessage},
         ],
         'max_tokens': 500,
@@ -209,26 +217,31 @@ class AIConsultationService {
     int? fortuneScore,
   }) {
     String userContext = '';
-    if (sajuInfo != null) userContext += '사주 정보: $sajuInfo\n';
-    if (mbtiType != null) userContext += 'MBTI: $mbtiType\n';
+    if (sajuInfo != null) userContext += '사용자 사주(타고난 성향): $sajuInfo\n';
+    if (mbtiType != null) userContext += '사용자 MBTI(현재/후천적 성향): $mbtiType\n';
     if (fortuneScore != null) userContext += '2026년 운세 점수: $fortuneScore점\n';
 
     return '''
-당신은 사주와 MBTI 기반의 전문 운세 상담사입니다.
-2026년은 병오년(丙午年)으로 화(火) 에너지가 강한 해입니다.
+당신은 사주와 MBTI를 결합하여 분석하는 전문 상담사 'BizRouter GPT'입니다.
+2026년 병오년(丙午年)의 강한 화(火) 에너지를 바탕으로 사용자의 운세를 심층 분석합니다.
+
+[분석 철학]
+1. 사주는 사용자가 타고난 '기질'과 '잠재력'입니다.
+2. MBTI는 사용자가 살아가면서 형성된 '현재의 성향'과 '사회적 페르소나'입니다.
+3. 이 둘의 차이(Gap)를 분석하여, 타고난 기질을 어떻게 현재의 성향과 조화시켜 2026년을 살아가야 할지 조언합니다.
 
 상담 유형: $consultationType
 
+[사용자 데이터]
 $userContext
 
-다음 지침을 따라 상담해주세요:
-1. 사주와 MBTI를 종합적으로 분석하여 조언합니다.
-2. 2026년 병오년의 특성을 고려합니다.
-3. 구체적이고 실용적인 조언을 제공합니다.
-4. 긍정적이면서도 현실적인 톤을 유지합니다.
-5. 한국어로 자연스럽게 답변합니다.
-6. 답변은 300자 이내로 간결하게 합니다.
-7. 마크다운 포맷(**, •)을 활용해 가독성을 높입니다.
+[상담 지침]
+1. **성향 융합 분석**: 타고난 사주 기질과 현재의 MBTI 성향이 일치하는지, 혹은 다른지를 먼저 언급하며 상담을 시작하세요. (예: "타고난 열정적인 기질이 현재의 신중한 MBTI와 만나 균형을 이루고 있군요")
+2. **2026년 병오년 특화**: 2026년의 강한 화(火) 기운이 사용자의 타고난 기질과 현재 성향에 어떤 영향을 줄지 구체적으로 설명하세요.
+3. **심층 조언**: 단순한 운세 풀이를 넘어, 사용자가 2026년에 취해야 할 구체적인 행동 전략(직업, 인간관계, 금전 등)을 제시하세요.
+4. **결제 유도 연계**: 상담 마지막에는 "더 궁금하신 점이 있다면 언제든 물어봐 주세요. 5회권 결제로 더 깊은 상담이 가능합니다."라는 느낌을 자연스럽게 녹여주세요.
+5. **어조**: 친절하고 전문적이며, 사용자의 마음을 읽어주는 공감적인 태도를 유지하세요.
+6. **형식**: 한국어로 답변하며, 마크다운(**, •)을 활용해 가독성을 높이세요. 답변은 400자 이내로 구성합니다.
 ''';
   }
 
@@ -245,23 +258,35 @@ $userContext
     final mbti = mbtiType ?? 'INFJ';
 
     // 키워드 기반 지능형 응답
-    if (lowerQ.contains('이직') || lowerQ.contains('퇴사') || lowerQ.contains('직장')) {
+    if (lowerQ.contains('이직') ||
+        lowerQ.contains('퇴사') ||
+        lowerQ.contains('직장')) {
       return _buildCareerResponse(score, mbti);
     }
 
-    if (lowerQ.contains('연애') || lowerQ.contains('인연') || lowerQ.contains('만남') || lowerQ.contains('결혼')) {
+    if (lowerQ.contains('연애') ||
+        lowerQ.contains('인연') ||
+        lowerQ.contains('만남') ||
+        lowerQ.contains('결혼')) {
       return _buildRelationshipResponse(score, mbti);
     }
 
-    if (lowerQ.contains('투자') || lowerQ.contains('주식') || lowerQ.contains('돈') || lowerQ.contains('재물')) {
+    if (lowerQ.contains('투자') ||
+        lowerQ.contains('주식') ||
+        lowerQ.contains('돈') ||
+        lowerQ.contains('재물')) {
       return _buildFinanceResponse(score, mbti);
     }
 
-    if (lowerQ.contains('건강') || lowerQ.contains('운동') || lowerQ.contains('스트레스')) {
+    if (lowerQ.contains('건강') ||
+        lowerQ.contains('운동') ||
+        lowerQ.contains('스트레스')) {
       return _buildHealthResponse(score, mbti);
     }
 
-    if (lowerQ.contains('2026') || lowerQ.contains('올해') || lowerQ.contains('운세')) {
+    if (lowerQ.contains('2026') ||
+        lowerQ.contains('올해') ||
+        lowerQ.contains('운세')) {
       return _buildYearlyFortuneResponse(score, mbti);
     }
 
@@ -330,7 +355,11 @@ $userContext
   }
 
   String _buildYearlyFortuneResponse(int score, String mbti) {
-    final keyword = score >= 75 ? '도약과 성취' : score >= 60 ? '성장과 준비' : '내실과 정비';
+    final keyword = score >= 75
+        ? '도약과 성취'
+        : score >= 60
+        ? '성장과 준비'
+        : '내실과 정비';
     return '✨ **2026년 종합 운세**\n\n'
         '병오년(丙午年) - 붉은 말의 해\n'
         '종합 점수: **$score점**\n\n'

@@ -4,7 +4,7 @@ import 'credit_service.dart';
 
 /// AI 상담 결제 서비스
 class ConsultationPaymentService {
-  static const int consultationPrice = 1000; // 1,000원
+  static const int consultationPrice = 5000; // 5,000원
   static const int creditsPerPurchase = 5; // 5회 질문 가능
 
   /// 결제 및 크레딧 부여

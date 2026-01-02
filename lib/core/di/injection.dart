@@ -3,6 +3,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/ai_consultation/data/services/supabase_consultation_service.dart';
+import '../../features/daily_fortune/data/datasources/daily_fortune_local_datasource.dart';
+import '../../features/daily_fortune/data/repositories/daily_fortune_repository_impl.dart';
+import '../../features/daily_fortune/data/services/daily_fortune_generator.dart';
+import '../../features/daily_fortune/domain/repositories/daily_fortune_repository.dart';
+import '../../features/daily_fortune/domain/usecases/get_daily_fortune.dart';
+import '../../features/daily_fortune/presentation/bloc/daily_fortune_bloc.dart';
 import '../../features/saju/data/services/saju_calculator.dart';
 import '../../features/saju/presentation/bloc/destiny_bloc.dart';
 import '../services/notifications/firebase_notification_service.dart';
@@ -57,11 +63,45 @@ Future<void> configureDependencies() async {
   // CreditService는 static 메서드만 사용하므로 별도 등록 불필요
 
   // ============================================
+  // Daily Fortune
+  // ============================================
+
+  // DailyFortune Services
+  getIt.registerLazySingleton<DailyFortuneGenerator>(
+    () => const DailyFortuneGenerator(),
+  );
+
+  getIt.registerLazySingleton<DailyFortuneLocalDatasource>(
+    () => DailyFortuneLocalDatasource(getIt<SharedPreferences>()),
+  );
+
+  // DailyFortune Repository
+  getIt.registerLazySingleton<DailyFortuneRepository>(
+    () => DailyFortuneRepositoryImpl(
+      localDatasource: getIt<DailyFortuneLocalDatasource>(),
+      generator: getIt<DailyFortuneGenerator>(),
+    ),
+  );
+
+  // DailyFortune Usecase
+  getIt.registerLazySingleton<GetDailyFortune>(
+    () => GetDailyFortune(getIt<DailyFortuneRepository>()),
+  );
+
+  // ============================================
   // BLoCs
   // ============================================
 
   // DestinyBloc (팩토리 - 매번 새 인스턴스)
   getIt.registerFactory<DestinyBloc>(() => DestinyBloc());
+
+  // DailyFortuneBloc (팩토리 - 매번 새 인스턴스)
+  getIt.registerFactory<DailyFortuneBloc>(
+    () => DailyFortuneBloc(
+      getDailyFortune: getIt<GetDailyFortune>(),
+      destinyBloc: getIt<DestinyBloc>(),
+    ),
+  );
 }
 
 /// 의존성 리셋 (테스트용)

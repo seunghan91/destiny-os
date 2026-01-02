@@ -11,6 +11,7 @@ import '../../features/ai_consultation/presentation/pages/consultation_page.dart
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/share/presentation/pages/share_page.dart';
 import '../../features/admin/presentation/pages/admin_page.dart';
+import '../../features/daily_fortune/presentation/pages/daily_fortune_page.dart';
 
 /// 앱 라우터 설정
 class AppRouter {
@@ -96,6 +97,13 @@ class AppRouter {
         name: Routes.adminName,
         builder: (context, state) => const AdminPage(),
       ),
+
+      // 오늘의 운세
+      GoRoute(
+        path: Routes.dailyFortune,
+        name: Routes.dailyFortuneName,
+        builder: (context, state) => const DailyFortunePage(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
@@ -141,4 +149,7 @@ class Routes {
 
   static const String admin = '/admin';
   static const String adminName = 'admin';
+
+  static const String dailyFortune = '/daily-fortune';
+  static const String dailyFortuneName = 'dailyFortune';
 }

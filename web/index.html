@@ -73,14 +73,48 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9883980748568710"
      crossorigin="anonymous"></script>
 
-  <!-- 카카오톡 인앱 브라우저 → 기본 브라우저 리다이렉트 -->
+  <!-- 인앱 브라우저 (카카오톡, 인스타그램, 페이스북 등) → 기본 브라우저 리다이렉트 -->
   <script>
     (function() {
       'use strict';
 
+      // ============================================================================
+      // 인앱 브라우저 감지 함수들
+      // ============================================================================
+
       // 카카오톡 인앱 브라우저 감지
       function isKakaoInAppBrowser() {
         return /KAKAOTALK/i.test(navigator.userAgent);
+      }
+
+      // 인스타그램 인앱 브라우저 감지
+      function isInstagramInAppBrowser() {
+        return /Instagram/i.test(navigator.userAgent);
+      }
+
+      // 페이스북 인앱 브라우저 감지
+      function isFacebookInAppBrowser() {
+        return /FBAN|FBAV|FB_IAB/i.test(navigator.userAgent);
+      }
+
+      // 네이버 인앱 브라우저 감지
+      function isNaverInAppBrowser() {
+        return /NAVER/i.test(navigator.userAgent);
+      }
+
+      // 모든 인앱 브라우저 통합 감지
+      function isInAppBrowser() {
+        return isKakaoInAppBrowser() || isInstagramInAppBrowser() ||
+               isFacebookInAppBrowser() || isNaverInAppBrowser();
+      }
+
+      // 인앱 브라우저 종류 반환
+      function getInAppBrowserType() {
+        if (isInstagramInAppBrowser()) return 'instagram';
+        if (isFacebookInAppBrowser()) return 'facebook';
+        if (isKakaoInAppBrowser()) return 'kakao';
+        if (isNaverInAppBrowser()) return 'naver';
+        return null;
       }
 
       // iOS 감지
@@ -95,17 +129,19 @@
 
       // 리다이렉트 상태 확인 (무한 루프 방지)
       function hasRedirected() {
-        return sessionStorage.getItem('kakao_redirected') === 'true';
+        return sessionStorage.getItem('inapp_redirected') === 'true';
       }
 
       // 리다이렉트 상태 저장
       function markAsRedirected() {
-        sessionStorage.setItem('kakao_redirected', 'true');
+        sessionStorage.setItem('inapp_redirected', 'true');
       }
 
+      // ============================================================================
       // Android: Chrome으로 리다이렉트
-      function redirectToChrome() {
-        console.log('🔄 카카오톡 인앱 → Chrome 리다이렉트 시작');
+      // ============================================================================
+      function redirectToChrome(browserType) {
+        console.log('🔄 ' + browserType + ' 인앱 → Chrome 리다이렉트 시작');
 
         try {
           const currentUrl = window.location.href;
@@ -122,39 +158,89 @@
           window.location.replace(intentUrl);
         } catch (error) {
           console.error('❌ Chrome 리다이렉트 실패:', error);
-          showAndroidFallbackMessage();
+          showAndroidFallbackMessage(browserType);
         }
       }
 
+      // ============================================================================
       // Android: 리다이렉트 실패 시 안내 메시지
-      function showAndroidFallbackMessage() {
+      // ============================================================================
+      function showAndroidFallbackMessage(browserType) {
         const message = document.createElement('div');
+        message.id = 'inapp-android-message';
         message.style.cssText = `
           position: fixed;
-          top: 20px;
-          left: 20px;
-          right: 20px;
-          background: #ff6b6b;
-          color: white;
-          padding: 15px;
-          border-radius: 8px;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.9);
+          display: flex;
+          align-items: center;
+          justify-content: center;
           z-index: 99999;
-          text-align: center;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          animation: fadeIn 0.3s ease;
         `;
-        message.innerHTML = '⚠️ Chrome 브라우저에서 열어주세요';
-        document.body.appendChild(message);
 
-        setTimeout(() => message.remove(), 5000);
+        const browserName = {
+          'instagram': '인스타그램',
+          'facebook': '페이스북',
+          'kakao': '카카오톡',
+          'naver': '네이버'
+        }[browserType] || '앱';
+
+        message.innerHTML = `
+          <style>
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+          </style>
+          <div style="
+            background: white;
+            padding: 32px 24px;
+            border-radius: 20px;
+            margin: 20px;
+            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 320px;
+          ">
+            <div style="font-size: 56px; margin-bottom: 16px;">🌐</div>
+            <h3 style="margin: 0 0 12px 0; font-size: 20px; color: #1a1a1a; font-weight: 700;">
+              브라우저에서 열어주세요
+            </h3>
+            <p style="margin: 0 0 24px 0; color: #666; font-size: 14px; line-height: 1.6;">
+              ${browserName} 내장 브라우저에서는<br>
+              일부 기능이 제한됩니다.<br><br>
+              <strong style="color: #333;">우측 상단 메뉴(⋮)</strong>에서<br>
+              <strong style="color: #4285f4;">'Chrome으로 열기'</strong>를 선택하세요
+            </p>
+            <button onclick="document.getElementById('inapp-android-message').remove(); sessionStorage.setItem('inapp_redirected', 'true');" style="
+              width: 100%;
+              padding: 14px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              border: none;
+              border-radius: 12px;
+              font-size: 16px;
+              font-weight: 600;
+              cursor: pointer;
+            ">
+              이대로 계속하기
+            </button>
+          </div>
+        `;
+        document.body.appendChild(message);
       }
 
+      // ============================================================================
       // iOS: Safari에서 열기 안내
-      function showIOSGuide() {
-        console.log('📱 iOS 카카오톡 인앱: Safari 안내 표시');
+      // ============================================================================
+      function showIOSGuide(browserType) {
+        console.log('📱 iOS ' + browserType + ' 인앱: Safari 안내 표시');
 
         const guide = document.createElement('div');
-        guide.id = 'kakao-ios-guide';
+        guide.id = 'inapp-ios-guide';
         guide.style.cssText = `
           position: fixed;
           top: 0;
@@ -168,6 +254,16 @@
           animation: fadeIn 0.3s ease;
         `;
 
+        const browserName = {
+          'instagram': '인스타그램',
+          'facebook': '페이스북',
+          'kakao': '카카오톡',
+          'naver': '네이버'
+        }[browserType] || '앱';
+
+        // 인스타그램/페이스북은 우측 상단 메뉴 안내
+        const isMetaApp = browserType === 'instagram' || browserType === 'facebook';
+
         guide.innerHTML = `
           <style>
             @keyframes fadeIn {
@@ -178,11 +274,11 @@
               from { transform: translateY(100%); }
               to { transform: translateY(0); }
             }
-            #kakao-ios-content {
+            #inapp-ios-content {
               animation: slideUp 0.3s ease;
             }
           </style>
-          <div id="kakao-ios-content" style="
+          <div id="inapp-ios-content" style="
             width: 100%;
             background: white;
             padding: 24px;
@@ -193,10 +289,10 @@
             <div style="text-align: center; margin-bottom: 20px;">
               <div style="font-size: 48px; margin-bottom: 12px;">🌟</div>
               <h3 style="margin: 0 0 8px 0; font-size: 20px; color: #1a1a1a; font-weight: 700;">
-                더 나은 환경에서 이용하세요
+                Safari에서 열어주세요
               </h3>
               <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5;">
-                PWA 설치와 알림 기능을 위해<br>Safari 브라우저가 필요합니다
+                ${browserName} 내장 브라우저에서는<br>일부 기능이 제한됩니다
               </p>
             </div>
 
@@ -205,12 +301,17 @@
                 📌 Safari에서 열기
               </p>
               <ol style="margin: 0; padding-left: 20px; color: #6c757d; font-size: 14px; line-height: 1.8;">
+                ${isMetaApp ? `
+                <li>우측 상단의 <strong style="color: #495057;">메뉴(⋯)</strong> 탭</li>
+                <li><strong style="color: #495057;">'Safari에서 열기'</strong> 또는<br><strong style="color: #495057;">'브라우저에서 열기'</strong> 선택</li>
+                ` : `
                 <li>화면 하단의 <strong style="color: #495057;">공유 버튼</strong> (📤) 탭</li>
                 <li><strong style="color: #495057;">'Safari에서 열기'</strong> 선택</li>
+                `}
               </ol>
             </div>
 
-            <button onclick="document.getElementById('kakao-ios-guide').remove(); sessionStorage.setItem('kakao_redirected', 'true');" style="
+            <button onclick="document.getElementById('inapp-ios-guide').remove(); sessionStorage.setItem('inapp_redirected', 'true');" style="
               width: 100%;
               padding: 16px;
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -223,7 +324,7 @@
               box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
               transition: transform 0.2s ease;
             " onmouseover="this.style.transform='scale(0.98)'" onmouseout="this.style.transform='scale(1)'">
-              알겠습니다
+              이대로 계속하기
             </button>
           </div>
         `;
@@ -231,11 +332,15 @@
         document.body.appendChild(guide);
       }
 
+      // ============================================================================
       // 메인 실행 로직
-      function handleKakaoInAppRedirect() {
-        // 카카오톡 인앱 브라우저가 아니면 실행 중단
-        if (!isKakaoInAppBrowser()) {
-          console.log('✅ 카카오톡 인앱 브라우저 아님 - 리다이렉트 불필요');
+      // ============================================================================
+      function handleInAppBrowserRedirect() {
+        const browserType = getInAppBrowserType();
+
+        // 인앱 브라우저가 아니면 실행 중단
+        if (!browserType) {
+          console.log('✅ 인앱 브라우저 아님 - 리다이렉트 불필요');
           return;
         }
 
@@ -245,23 +350,24 @@
           return;
         }
 
-        console.log('🔍 카카오톡 인앱 브라우저 감지됨');
+        console.log('🔍 ' + browserType + ' 인앱 브라우저 감지됨');
+        console.log('📱 User Agent:', navigator.userAgent);
 
         // Android: Intent URI로 Chrome 리다이렉트
         if (isAndroid()) {
-          redirectToChrome();
+          redirectToChrome(browserType);
         }
         // iOS: 사용자 안내 표시
         else if (isIOS()) {
-          showIOSGuide();
+          showIOSGuide(browserType);
         }
       }
 
       // 페이지 로드 완료 시 실행
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', handleKakaoInAppRedirect);
+        document.addEventListener('DOMContentLoaded', handleInAppBrowserRedirect);
       } else {
-        handleKakaoInAppRedirect();
+        handleInAppBrowserRedirect();
       }
     })();
   </script>

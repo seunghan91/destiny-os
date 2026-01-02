@@ -111,8 +111,10 @@ class CompatibilityCalculator {
   /// 두 사주의 궁합 분석
   CompatibilityResult calculateCompatibility(
     SajuChart chart1,
-    SajuChart chart2,
-  ) {
+    SajuChart chart2, {
+    String? myMbti,
+    String? partnerMbti,
+  }) {
     // 일주 분석 (가장 중요)
     final dayPillarAnalysis = _analyzeDayPillars(
       chart1.dayPillar,
@@ -128,13 +130,21 @@ class CompatibilityCalculator {
     // 천간 관계 분석
     final stemRelations = _analyzeStemRelations(chart1, chart2);
 
-    // 종합 점수 계산
-    final overallScore = _calculateOverallScore(
+    // 종합 점수 계산 (사주 기반)
+    final sajuScore = _calculateOverallScore(
       dayPillarAnalysis,
       branchRelations,
       elementBalance,
       stemRelations,
     );
+
+    // MBTI 궁합 (선택 입력)
+    final mbti = _analyzeMbti(myMbti, partnerMbti);
+
+    // 최종 점수(사주 + MBTI 가중 평균)
+    final overallScore = mbti == null
+        ? sajuScore
+        : ((sajuScore * 0.7) + (mbti.score * 0.3)).round().clamp(0, 100);
 
     // 카테고리별 점수
     final categoryScores = _calculateCategoryScores(
@@ -145,6 +155,13 @@ class CompatibilityCalculator {
 
     return CompatibilityResult(
       overallScore: overallScore,
+      sajuScore: sajuScore,
+      mbtiScore: mbti?.score,
+      mbtiRelationshipType: mbti?.relationshipType,
+      mbtiCommunicationStyle: mbti?.communicationStyle,
+      mbtiConflictPattern: mbti?.conflictPattern,
+      mbtiCommonGround: mbti?.commonGround,
+      mbtiDifferences: mbti?.differences,
       loveScore: categoryScores['love']!,
       marriageScore: categoryScores['marriage']!,
       businessScore: categoryScores['business']!,
@@ -158,6 +175,66 @@ class CompatibilityCalculator {
         branchRelations,
         elementBalance,
       ),
+    );
+  }
+
+  _MbtiAnalysisResult? _analyzeMbti(String? my, String? partner) {
+    if (my == null || partner == null) return null;
+    if (my.length != 4 || partner.length != 4) return null;
+
+    final a = my.toUpperCase();
+    final b = partner.toUpperCase();
+
+    int matchCount = 0;
+    final common = <String>[];
+    final diff = <String>[];
+
+    void check(int idx, String label) {
+      if (a[idx] == b[idx]) {
+        matchCount += 1;
+        common.add('$label: ${a[idx]}');
+      } else {
+        diff.add('$label: ${a[idx]} vs ${b[idx]}');
+      }
+    }
+
+    check(0, '에너지');
+    check(1, '인식');
+    check(2, '판단');
+    check(3, '생활');
+
+    // 점수: 유사성 중심 + 일부 차이는 보완으로 해석 (단, 갈등 조합은 감점)
+    var score = (24 + 16 * matchCount).clamp(0, 100); // 0..4 => 24..88
+
+    final tfDiff = a[2] != b[2];
+    final jpDiff = a[3] != b[3];
+    if (tfDiff && jpDiff) {
+      score = (score - 5).clamp(0, 100);
+    }
+
+    final relationshipType = switch (matchCount) {
+      4 => '닮은 결 (안정적)',
+      3 => '대체로 유사 (편안함)',
+      2 => '균형형 (보완/차이 공존)',
+      1 => '차이가 큼 (성장형)',
+      _ => '극과 극 (조율 필요)',
+    };
+
+    final communicationStyle = (a[1] == b[1])
+        ? '대화의 출발점이 비슷해요 (${a[1]} 성향)'
+        : '정보 처리 방식이 달라 오해가 생길 수 있어요 (${a[1]} vs ${b[1]})';
+
+    final conflictPattern = (a[2] == b[2])
+        ? '판단 기준이 비슷해 갈등이 길어지지 않아요 (${a[2]} 성향)'
+        : '갈등 시 접근이 달라 “서로 이해받지 못한다”는 느낌이 생길 수 있어요 (${a[2]} vs ${b[2]})';
+
+    return _MbtiAnalysisResult(
+      score: score,
+      relationshipType: relationshipType,
+      communicationStyle: communicationStyle,
+      conflictPattern: conflictPattern,
+      commonGround: common.isEmpty ? const ['공통점이 아직 드러나지 않았어요'] : common,
+      differences: diff.isEmpty ? const ['큰 차이점이 잘 보이지 않아요'] : diff,
     );
   }
 
@@ -731,6 +808,13 @@ class CompatibilityCalculator {
 /// 궁합 분석 결과
 class CompatibilityResult {
   final int overallScore;
+  final int sajuScore;
+  final int? mbtiScore;
+  final String? mbtiRelationshipType;
+  final String? mbtiCommunicationStyle;
+  final String? mbtiConflictPattern;
+  final List<String>? mbtiCommonGround;
+  final List<String>? mbtiDifferences;
   final int loveScore;
   final int marriageScore;
   final int businessScore;
@@ -743,6 +827,13 @@ class CompatibilityResult {
 
   const CompatibilityResult({
     required this.overallScore,
+    required this.sajuScore,
+    this.mbtiScore,
+    this.mbtiRelationshipType,
+    this.mbtiCommunicationStyle,
+    this.mbtiConflictPattern,
+    this.mbtiCommonGround,
+    this.mbtiDifferences,
     required this.loveScore,
     required this.marriageScore,
     required this.businessScore,
@@ -752,6 +843,24 @@ class CompatibilityResult {
     required this.elementBalance,
     required this.stemRelations,
     required this.insights,
+  });
+}
+
+class _MbtiAnalysisResult {
+  final int score;
+  final String relationshipType;
+  final String communicationStyle;
+  final String conflictPattern;
+  final List<String> commonGround;
+  final List<String> differences;
+
+  const _MbtiAnalysisResult({
+    required this.score,
+    required this.relationshipType,
+    required this.communicationStyle,
+    required this.conflictPattern,
+    required this.commonGround,
+    required this.differences,
   });
 }
 

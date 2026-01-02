@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../core/services/credit/unified_credit_service.dart';
+import '../../../../core/services/auth/credit_service.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
 import '../../domain/entities/chat_message.dart';
-import '../../data/services/credit_service.dart';
 import '../../data/services/ai_consultation_service.dart';
 import '../../data/services/consultation_storage_service.dart';
 import '../../data/services/consultation_payment_service.dart';
@@ -85,7 +87,7 @@ class _ConsultationPageState extends State<ConsultationPage>
   }
 
   Future<void> _loadCredits() async {
-    final credits = await CreditService.getCredits();
+    final credits = await UnifiedCreditService.getCredits();
     setState(() {
       _remainingCredits = credits;
     });
@@ -277,7 +279,7 @@ class _ConsultationPageState extends State<ConsultationPage>
         _messages.add(
           ChatMessage(
             id: 'suggest_${DateTime.now().millisecondsSinceEpoch}',
-            content: '💡 아래 추천 질문을 탭하거나, 궁금한 점을 직접 입력해주세요!',
+            content: '💡 아래 추천 질문을 탭하거나, 질문을 최대한 상세하게 입력해주세요!',
             isUser: false,
             timestamp: DateTime.now(),
           ),
@@ -325,12 +327,18 @@ class _ConsultationPageState extends State<ConsultationPage>
             '• 5~7월 과열 주의기간\n\n'
             '$mbti 성격상 ${_getMbtiHealthAdvice(mbti)}';
       case ConsultationType.general:
-        return '✨ 2026년 종합 운세입니다.\n\n'
+        return '✨ 2026년 종합 운세(요약 + 실행 가이드)입니다.\n\n'
             '**$dayMaster 일간 + $mbti**\n'
             '종합 점수: **$yearScore점**\n\n'
             '${_getGeneralFortune(dayMaster, yearScore)}\n\n'
-            '핵심 키워드: ${yearScore >= 75 ? '도약, 성취, 확장' : '내실, 준비, 신중'}\n'
-            '주의 시기: 11월 (자오충)';
+            '**올해의 방향성**: ${yearScore >= 75 ? '도약/확장' : '내실/준비'}\n'
+            '**핵심 키워드**: ${yearScore >= 75 ? '도약, 성취, 확장' : '내실, 준비, 신중'}\n'
+            '**주의 시기**: 11월 (자오충)\n\n'
+            '**실행 팁(3가지)**\n'
+            '• 일을 벌리기보다 “하나를 끝내는 힘”을 우선순위로 두세요.\n'
+            '• 관계는 속도보다 기준이 중요합니다. 불편한 신호는 초기에 정리하세요.\n'
+            '• 금전은 5~6월 과열 구간을 특히 조심하고, 계획된 소비만 하세요.\n\n'
+            '원하시면 “직업/연애/재물/건강” 중 하나를 골라 더 깊게 이어갈게요.';
     }
   }
 
@@ -384,8 +392,11 @@ class _ConsultationPageState extends State<ConsultationPage>
     _messageController.clear();
     _scrollToBottom();
 
-    // 크레딧 차감
-    final newCredits = await CreditService.useCredit();
+    // 크레딧 차감 (통합 크레딧 서비스 사용)
+    final newCredits = await UnifiedCreditService.useCredit(
+      feature: FeatureType.aiConsultation,
+      description: 'AI 상담 사용',
+    );
     if (newCredits >= 0) {
       setState(() {
         _remainingCredits = newCredits;
@@ -640,7 +651,11 @@ class _ConsultationPageState extends State<ConsultationPage>
         _scrollToBottom();
 
         // 오류 시 크레딧 환불
-        await CreditService.addCredits(1);
+        await UnifiedCreditService.addCredits(
+          1,
+          type: CreditTransactionType.refund,
+          description: 'AI 상담 오류 환불',
+        );
         await _loadCredits();
       }
     }
@@ -654,36 +669,39 @@ class _ConsultationPageState extends State<ConsultationPage>
         title: const Text('AI 운세 상담'),
         actions: [
           // 크레딧 표시
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: _remainingCredits > 0
-                  ? AppColors.primary.withAlpha(25)
-                  : AppColors.error.withAlpha(25),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.stars,
-                  size: 16,
-                  color: _remainingCredits > 0
-                      ? AppColors.primary
-                      : AppColors.error,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '$_remainingCredits',
-                  style: AppTypography.labelMedium.copyWith(
+          Tooltip(
+            message: '질문 1회당 크레딧 1회가 차감됩니다.',
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _remainingCredits > 0
+                    ? AppColors.primary.withAlpha(25)
+                    : AppColors.error.withAlpha(25),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.stars,
+                    size: 16,
                     color: _remainingCredits > 0
                         ? AppColors.primary
                         : AppColors.error,
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Text(
+                    '$_remainingCredits',
+                    style: AppTypography.labelMedium.copyWith(
+                      color: _remainingCredits > 0
+                          ? AppColors.primary
+                          : AppColors.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           // 히스토리 버튼
@@ -856,15 +874,35 @@ class _ConsultationPageState extends State<ConsultationPage>
                   ),
                 ],
               ),
-              child: Text(
-                message.content,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: message.isUser
-                      ? Theme.of(context).colorScheme.onPrimary
-                      : AppColors.textPrimaryOf(context),
-                  height: 1.5,
-                ),
-              ),
+              child: message.isUser
+                  ? Text(
+                      message.content,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        height: 1.5,
+                      ),
+                    )
+                  : MarkdownBody(
+                      data: message.content,
+                      selectable: true,
+                      styleSheet: MarkdownStyleSheet.fromTheme(
+                        Theme.of(context),
+                      ).copyWith(
+                        p: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimaryOf(context),
+                          height: 1.5,
+                        ),
+                        strong: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimaryOf(context),
+                          height: 1.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        listBullet: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimaryOf(context),
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
             ),
           ),
           if (message.isUser) const SizedBox(width: 8),
@@ -978,7 +1016,7 @@ class _ConsultationPageState extends State<ConsultationPage>
             child: TextField(
               controller: _messageController,
               decoration: InputDecoration(
-                hintText: '질문을 입력하세요...',
+                hintText: '질문을 최대한 상세하게 입력해주세요...',
                 hintStyle: AppTypography.bodyMedium.copyWith(
                   color: AppColors.textTertiaryOf(context),
                 ),

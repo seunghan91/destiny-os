@@ -7,9 +7,19 @@ class AppTypography {
 
   static const String fontFamily = 'Pretendard';
 
+  /// 폰트 fallback 순서: Pretendard → 시스템 한글 폰트
+  static const List<String> fontFamilyFallback = [
+    'Pretendard',
+    'Noto Sans KR',
+    'Apple SD Gothic Neo',
+    'Malgun Gothic',
+    'sans-serif',
+  ];
+
   // Display
   static const TextStyle displayLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 32,
     fontWeight: FontWeight.w700,
     height: 1.25,
@@ -19,6 +29,7 @@ class AppTypography {
 
   static const TextStyle displayMedium = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 28,
     fontWeight: FontWeight.w700,
     height: 1.29,
@@ -28,6 +39,7 @@ class AppTypography {
 
   static const TextStyle displaySmall = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 24,
     fontWeight: FontWeight.w700,
     height: 1.33,
@@ -38,6 +50,7 @@ class AppTypography {
   // Headline
   static const TextStyle headlineLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 22,
     fontWeight: FontWeight.w600,
     height: 1.27,
@@ -46,6 +59,7 @@ class AppTypography {
 
   static const TextStyle headlineMedium = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 20,
     fontWeight: FontWeight.w600,
     height: 1.3,
@@ -54,6 +68,7 @@ class AppTypography {
 
   static const TextStyle headlineSmall = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 1.33,
@@ -63,6 +78,7 @@ class AppTypography {
   // Title
   static const TextStyle titleLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 17,
     fontWeight: FontWeight.w600,
     height: 1.41,
@@ -71,6 +87,7 @@ class AppTypography {
 
   static const TextStyle titleMedium = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 16,
     fontWeight: FontWeight.w500,
     height: 1.5,
@@ -79,6 +96,7 @@ class AppTypography {
 
   static const TextStyle titleSmall = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 15,
     fontWeight: FontWeight.w500,
     height: 1.47,
@@ -88,6 +106,7 @@ class AppTypography {
   // Body
   static const TextStyle bodyLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 16,
     fontWeight: FontWeight.w400,
     height: 1.5,
@@ -96,6 +115,7 @@ class AppTypography {
 
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 15,
     fontWeight: FontWeight.w400,
     height: 1.47,
@@ -104,6 +124,7 @@ class AppTypography {
 
   static const TextStyle bodySmall = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 1.43,
@@ -113,6 +134,7 @@ class AppTypography {
   // Label
   static const TextStyle labelLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 15,
     fontWeight: FontWeight.w600,
     height: 1.47,
@@ -121,6 +143,7 @@ class AppTypography {
 
   static const TextStyle labelMedium = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.43,
@@ -129,6 +152,7 @@ class AppTypography {
 
   static const TextStyle labelSmall = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.33,
@@ -138,6 +162,7 @@ class AppTypography {
   // Caption
   static const TextStyle caption = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 12,
     fontWeight: FontWeight.w400,
     height: 1.33,
@@ -147,6 +172,7 @@ class AppTypography {
   // Special styles
   static const TextStyle hanja = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 24,
     fontWeight: FontWeight.w600,
     height: 1.2,
@@ -155,6 +181,7 @@ class AppTypography {
 
   static const TextStyle numberLarge = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 48,
     fontWeight: FontWeight.w700,
     height: 1.1,
@@ -165,6 +192,7 @@ class AppTypography {
   /// 운세 점수 표시용
   static const TextStyle fortuneScore = TextStyle(
     fontFamily: fontFamily,
+    fontFamilyFallback: fontFamilyFallback,
     fontSize: 72,
     fontWeight: FontWeight.w700,
     letterSpacing: -1,

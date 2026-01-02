@@ -17,6 +17,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10+1
+  flutter_markdown: ^0.7.2
 
   # State Management (BLoC)
   flutter_bloc: ^9.1.1
@@ -92,25 +93,25 @@ flutter:
   #   - assets/icons/
   #   - assets/data/
 
-  # Pretendard 폰트 (9개 웨이트) - 임시 비활성화 (폰트 파일 필요)
-  # fonts:
-  #   - family: Pretendard
-  #     fonts:
-  #       - asset: assets/fonts/Pretendard-Thin.ttf
-  #         weight: 100
-  #       - asset: assets/fonts/Pretendard-ExtraLight.ttf
-  #         weight: 200
-  #       - asset: assets/fonts/Pretendard-Light.ttf
-  #         weight: 300
-  #       - asset: assets/fonts/Pretendard-Regular.ttf
-  #         weight: 400
-  #       - asset: assets/fonts/Pretendard-Medium.ttf
-  #         weight: 500
-  #       - asset: assets/fonts/Pretendard-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Pretendard-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/Pretendard-ExtraBold.ttf
-  #         weight: 800
-  #       - asset: assets/fonts/Pretendard-Black.ttf
-  #         weight: 900
+  # Pretendard 폰트 (9개 웨이트)
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Pretendard-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Pretendard-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Pretendard-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Pretendard-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Pretendard-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Pretendard-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Pretendard-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Pretendard-Black.ttf
+          weight: 900

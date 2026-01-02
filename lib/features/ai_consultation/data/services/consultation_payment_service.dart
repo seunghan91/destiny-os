@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../../../core/services/apps_in_toss/apps_in_toss_service.dart';
-import 'credit_service.dart';
+import '../../../../core/services/credit/unified_credit_service.dart';
+import '../../../../core/services/auth/credit_service.dart';
 
 /// AI 상담 결제 서비스
 class ConsultationPaymentService {
@@ -34,8 +35,13 @@ class ConsultationPaymentService {
       if (result.success) {
         debugPrint('✅ 결제 성공: ${result.paymentKey}');
 
-        // 크레딧 부여
-        await CreditService.addCredits(creditsPerPurchase);
+        // 크레딧 부여 (통합 크레딧 서비스 사용)
+        await UnifiedCreditService.addCredits(
+          creditsPerPurchase,
+          type: CreditTransactionType.purchase,
+          description: 'AI 상담 크레딧 5회권 구매',
+          paymentId: result.paymentKey,
+        );
         debugPrint('✅ 크레딧 ${creditsPerPurchase}개 부여 완료');
 
         // 토스트 메시지
@@ -54,7 +60,7 @@ class ConsultationPaymentService {
 
   /// 크레딧 부족 여부 확인
   static Future<bool> needsPayment() async {
-    final hasCredits = await CreditService.hasCredits();
+    final hasCredits = await UnifiedCreditService.hasCredits();
     return !hasCredits;
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +11,7 @@ import '../../../saju/data/services/saju_calculator.dart'
     hide CompatibilityResult;
 import '../../../saju/domain/entities/saju_chart.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
+import '../../../saju/presentation/widgets/mbti_dimension_selector.dart';
 import '../../../saju/presentation/widgets/siju_picker.dart';
 import '../../data/services/compatibility_calculator.dart';
 
@@ -32,12 +34,14 @@ class _CompatibilityPageState extends State<CompatibilityPage>
   // 내 사주 정보 (BLoC에서 가져옴)
   SajuChart? _mySajuChart;
   final String _myName = '나';
+  String? _myMbti;
 
   // 상대방 입력 데이터
   final TextEditingController _partnerNameController = TextEditingController();
   DateTime? _partnerBirthDate;
   int? _partnerSijuIndex;
   Siju? _partnerSiju;
+  String? _partnerMbti;
   String _partnerGender = 'female';
   bool _partnerIsLunar = false;
   bool _isPartnerInputMode = true;
@@ -73,6 +77,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       final state = bloc.state;
       if (state is DestinySuccess) {
         _mySajuChart = state.sajuChart;
+        _myMbti = state.mbtiType.type;
       }
     } catch (_) {
       // BLoC이 없으면 위젯에서 전달된 데이터 사용
@@ -87,7 +92,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     super.dispose();
   }
 
-  bool get _canAnalyze => _partnerBirthDate != null && _partnerSiju != null;
+  bool get _canAnalyze => _partnerBirthDate != null;
 
   void _calculateCompatibility() {
     if (_mySajuChart == null || _partnerSajuChart == null) return;
@@ -96,6 +101,8 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     _compatibilityResult = calculator.calculateCompatibility(
       _mySajuChart!,
       _partnerSajuChart!,
+      myMbti: _myMbti,
+      partnerMbti: _partnerMbti,
     );
   }
 
@@ -185,11 +192,981 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     );
   }
 
+  // ===========================================================================
+  // Partner Input UI (운세 첫 입력 화면과 동일한 스타일/흐름으로 정렬)
+  // ===========================================================================
+
   Widget _buildLoadingView() {
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(title: const Text('궁합 분석')),
       body: const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _buildPartnerInputPage() {
+    final primary = AppColors.primaryOf(context);
+
+    return Scaffold(
+      backgroundColor: AppColors.backgroundOf(context),
+      appBar: AppBar(
+        title: const Text('궁합 분석'),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 안내 헤더
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      primary.withValues(alpha: 0.1),
+                      primary.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Text('💗', style: TextStyle(fontSize: 24)),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '궁합을 확인해보세요',
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimaryOf(context),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '상대방의 생년월일/태어난 시간/MBTI를 입력하면\n두 분의 궁합을 분석해드립니다.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondaryOf(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              _buildPartnerNameSection(),
+              const SizedBox(height: 28),
+
+              _buildPartnerBirthDateSection(),
+              const SizedBox(height: 28),
+
+              _buildPartnerBirthTimeSection(),
+              const SizedBox(height: 28),
+
+              _buildPartnerGenderSection(),
+              const SizedBox(height: 28),
+
+              _buildPartnerMbtiSection(),
+              const SizedBox(height: 36),
+
+              _buildPartnerAnalyzeButton(),
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  '태어난 시간을 모르시면 생략해도 됩니다',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textTertiaryOf(context),
+                  ),
+                ),
+              ),
+              if (_myMbti != null) ...[
+                const SizedBox(height: 10),
+                Center(
+                  child: Text(
+                    '내 MBTI: $_myMbti',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textTertiaryOf(context),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPartnerNameSection() {
+    final primary = AppColors.primaryOf(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('이름', subtitle: '선택 입력'),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceOf(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _partnerNameController.text.isNotEmpty
+                  ? primary.withValues(alpha: 0.3)
+                  : AppColors.borderOf(context),
+              width: _partnerNameController.text.isNotEmpty ? 1.5 : 1,
+            ),
+          ),
+          child: TextField(
+            controller: _partnerNameController,
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              hintText: '상대방 이름을 입력하세요',
+              hintStyle: AppTypography.titleMedium.copyWith(
+                color: AppColors.textTertiaryOf(context),
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(12),
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _partnerNameController.text.isNotEmpty
+                      ? primary.withValues(alpha: 0.1)
+                      : AppColors.surfaceVariantOf(context),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  color: _partnerNameController.text.isNotEmpty
+                      ? primary
+                      : AppColors.textTertiaryOf(context),
+                  size: 24,
+                ),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 20,
+              ),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPartnerBirthDateSection() {
+    final primary = AppColors.primaryOf(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('생년월일', isRequired: true),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _showPartnerDatePicker,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceOf(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _partnerBirthDate != null
+                    ? primary.withValues(alpha: 0.3)
+                    : AppColors.borderOf(context),
+                width: _partnerBirthDate != null ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _partnerBirthDate != null
+                        ? primary.withValues(alpha: 0.1)
+                        : AppColors.surfaceVariantOf(context),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.calendar_month_rounded,
+                    color: _partnerBirthDate != null
+                        ? primary
+                        : AppColors.textTertiaryOf(context),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _partnerBirthDate != null
+                            ? '${_partnerBirthDate!.year}년 ${_partnerBirthDate!.month}월 ${_partnerBirthDate!.day}일'
+                            : '생년월일을 선택하세요',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: _partnerBirthDate != null
+                              ? AppColors.textPrimaryOf(context)
+                              : AppColors.textTertiaryOf(context),
+                          fontWeight: _partnerBirthDate != null
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
+                      if (_partnerBirthDate != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _getZodiacInfo(_partnerBirthDate),
+                          style: AppTypography.bodySmall.copyWith(
+                            color: primary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textTertiaryOf(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_partnerBirthDate != null) ...[
+          const SizedBox(height: 12),
+          _buildPartnerLunarToggle(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPartnerLunarToggle() {
+    final earth = AppColors.earthOf(context);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _partnerIsLunar = !_partnerIsLunar);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _partnerIsLunar
+              ? earth.withValues(alpha: 0.1)
+              : AppColors.surfaceOf(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _partnerIsLunar
+                ? earth.withValues(alpha: 0.3)
+                : AppColors.borderOf(context),
+          ),
+        ),
+        child: Row(
+          children: [
+            const Text('🌙', style: TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(
+              '음력으로 입력',
+              style: AppTypography.bodyMedium.copyWith(
+                color: _partnerIsLunar
+                    ? earth
+                    : AppColors.textSecondaryOf(context),
+                fontWeight:
+                    _partnerIsLunar ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+            const Spacer(),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _partnerIsLunar ? earth : Colors.transparent,
+                border: Border.all(
+                  color:
+                      _partnerIsLunar ? earth : AppColors.grey400Of(context),
+                  width: 2,
+                ),
+              ),
+              child: _partnerIsLunar
+                  ? const Icon(Icons.check, size: 14, color: AppColors.white)
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPartnerBirthTimeSection() {
+    final wood = AppColors.woodOf(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('태어난 시간', subtitle: '모르면 생략 가능'),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _showPartnerTimePicker,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceOf(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _partnerSiju != null
+                    ? wood.withValues(alpha: 0.3)
+                    : AppColors.borderOf(context),
+                width: _partnerSiju != null ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _partnerSiju != null
+                        ? wood.withValues(alpha: 0.1)
+                        : AppColors.surfaceVariantOf(context),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: _partnerSiju != null
+                        ? Text(
+                            _partnerSiju!.emoji,
+                            style: const TextStyle(fontSize: 24),
+                          )
+                        : Icon(
+                            Icons.access_time_rounded,
+                            color: AppColors.textTertiaryOf(context),
+                            size: 24,
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _partnerSiju != null
+                            ? '${_partnerSiju!.name} (${_partnerSiju!.hanja}時)'
+                            : '태어난 시간을 선택하세요',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: _partnerSiju != null
+                              ? AppColors.textPrimaryOf(context)
+                              : AppColors.textTertiaryOf(context),
+                          fontWeight: _partnerSiju != null
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
+                      if (_partnerSiju != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _partnerSiju!.timeRange,
+                          style: AppTypography.bodySmall.copyWith(color: wood),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textTertiaryOf(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPartnerGenderSection() {
+    final primary = AppColors.primaryOf(context);
+    final fire = AppColors.fireOf(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('성별', isRequired: true),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildPartnerGenderButton(
+                value: 'male',
+                label: '남성',
+                icon: Icons.male_rounded,
+                color: primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildPartnerGenderButton(
+                value: 'female',
+                label: '여성',
+                icon: Icons.female_rounded,
+                color: fire,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPartnerGenderButton({
+    required String value,
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    final isSelected = _partnerGender == value;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _partnerGender = value);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? color : AppColors.surfaceOf(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color : AppColors.borderOf(context),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : AppColors.textSecondaryOf(context),
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTypography.labelLarge.copyWith(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : AppColors.textPrimaryOf(context),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPartnerMbtiSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('MBTI', subtitle: '선택 입력'),
+        const SizedBox(height: 8),
+        Text(
+          '상대방 MBTI를 알면 더 구체적인 성향 비교에 도움이 됩니다',
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textTertiaryOf(context),
+          ),
+        ),
+        const SizedBox(height: 16),
+        MbtiDimensionSelector(
+          initialType: _partnerMbti,
+          onTypeSelected: (type) {
+            setState(() => _partnerMbti = type);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPartnerAnalyzeButton() {
+    final primary = AppColors.primaryOf(context);
+
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _canAnalyze ? _analyzeCompatibility : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          disabledBackgroundColor: AppColors.grey300Of(context),
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          disabledForegroundColor: AppColors.textTertiaryOf(context),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+        ),
+        child: _isAnalyzing
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.favorite_rounded, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    '궁합 분석하기',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: _canAnalyze
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : AppColors.textTertiaryOf(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(
+    String title, {
+    bool isRequired = false,
+    String? subtitle,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          title,
+          style: AppTypography.titleMedium.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (isRequired) ...[
+          const SizedBox(width: 4),
+          Text(
+            '*',
+            style: AppTypography.titleMedium.copyWith(
+              color: AppColors.fireOf(context),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        if (subtitle != null) ...[
+          const SizedBox(width: 8),
+          Text(
+            subtitle,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textTertiaryOf(context),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _getZodiacInfo(DateTime? date) {
+    if (date == null) return '';
+    final year = date.year;
+    const animals = [
+      '🐭쥐',
+      '🐮소',
+      '🐯호랑이',
+      '🐰토끼',
+      '🐲용',
+      '🐍뱀',
+      '🐴말',
+      '🐑양',
+      '🐵원숭이',
+      '🐔닭',
+      '🐶개',
+      '🐷돼지',
+    ];
+    return '${animals[(year - 4) % 12]}띠';
+  }
+
+  void _showPartnerTimePicker() {
+    HapticFeedback.selectionClick();
+    SijuPickerBottomSheet.show(
+      context,
+      initialIndex: _partnerSijuIndex,
+      onSelected: (index, siju) {
+        setState(() {
+          _partnerSijuIndex = index;
+          _partnerSiju = siju;
+        });
+      },
+    );
+  }
+
+  void _showPartnerDatePicker() {
+    HapticFeedback.selectionClick();
+    if (kIsWeb || _isDesktopPlatform()) {
+      _showPartnerCustomWebDatePicker();
+    } else {
+      _showPartnerCupertinoDatePicker();
+    }
+  }
+
+  bool _isDesktopPlatform() {
+    final platform = defaultTargetPlatform;
+    return platform == TargetPlatform.windows ||
+        platform == TargetPlatform.macOS ||
+        platform == TargetPlatform.linux;
+  }
+
+  void _showPartnerCupertinoDatePicker() {
+    DateTime tempDate = _partnerBirthDate ?? DateTime(1990, 1, 1);
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => Container(
+        height: 360,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceOf(ctx),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.grey300Of(ctx),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('취소'),
+                    ),
+                    Text(
+                      '생년월일 선택',
+                      style: AppTypography.titleSmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() => _partnerBirthDate = tempDate);
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('확인'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: tempDate,
+                  minimumYear: 1900,
+                  maximumYear: DateTime.now().year,
+                  maximumDate: DateTime.now(),
+                  minimumDate: DateTime(1900, 1, 1),
+                  onDateTimeChanged: (DateTime newDate) {
+                    HapticFeedback.selectionClick();
+                    tempDate = newDate;
+                  },
+                  dateOrder: DatePickerDateOrder.ymd,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPartnerCustomWebDatePicker() {
+    final DateTime initialDate = _partnerBirthDate ?? DateTime(1990, 1, 1);
+    int selectedYear = initialDate.year;
+    int selectedMonth = initialDate.month;
+    int selectedDay = initialDate.day;
+
+    const int minYear = 1900;
+    final DateTime now = DateTime.now();
+    final int currentYear = now.year;
+    final int currentMonth = now.month;
+    final int currentDay = now.day;
+
+    final List<int> years = List.generate(
+      currentYear - minYear + 1,
+      (i) => minYear + i,
+    );
+    final List<int> months = List.generate(12, (i) => i + 1);
+
+    int getDaysInMonth(int year, int month) {
+      return DateTime(year, month + 1, 0).day;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final List<int> days = List.generate(
+              getDaysInMonth(selectedYear, selectedMonth),
+              (i) => i + 1,
+            );
+            if (selectedDay > days.length) {
+              selectedDay = days.length;
+            }
+
+            final primary = Theme.of(context).colorScheme.primary;
+            final surface = Theme.of(context).colorScheme.surface;
+            final surfaceVariant =
+                Theme.of(context).colorScheme.surfaceContainerHighest;
+
+            return AlertDialog(
+              backgroundColor: surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                '생년월일 선택',
+                style: AppTypography.titleLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              content: SizedBox(
+                width: 320,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _buildDropdownField<int>(
+                            label: '연도',
+                            value: selectedYear,
+                            items: years.reversed.toList(),
+                            itemLabel: (year) => '$year년',
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedYear = value!;
+                                if (selectedYear == currentYear &&
+                                    selectedMonth > currentMonth) {
+                                  selectedMonth = currentMonth;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: _buildDropdownField<int>(
+                            label: '월',
+                            value: selectedMonth,
+                            items: months.where((m) {
+                              if (selectedYear == currentYear) {
+                                return m <= currentMonth;
+                              }
+                              return true;
+                            }).toList(),
+                            itemLabel: (month) => '$month월',
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedMonth = value!;
+                                if (selectedYear == currentYear &&
+                                    selectedMonth == currentMonth &&
+                                    selectedDay > currentDay) {
+                                  selectedDay = currentDay;
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: _buildDropdownField<int>(
+                            label: '일',
+                            value: selectedDay,
+                            items: days.where((d) {
+                              if (selectedYear == currentYear &&
+                                  selectedMonth == currentMonth) {
+                                return d <= currentDay;
+                              }
+                              return true;
+                            }).toList(),
+                            itemLabel: (day) => '$day일',
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedDay = value!;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: surfaceVariant,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_today, size: 18, color: primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$selectedYear년 $selectedMonth월 $selectedDay일',
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    '취소',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondaryOf(context),
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final selectedDate = DateTime(
+                      selectedYear,
+                      selectedMonth,
+                      selectedDay,
+                    );
+                    HapticFeedback.mediumImpact();
+                    setState(() => _partnerBirthDate = selectedDate);
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: Text(
+                    '확인',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDropdownField<T>({
+    required String label,
+    required T value,
+    required List<T> items,
+    required String Function(T item) itemLabel,
+    required ValueChanged<T?> onChanged,
+  }) {
+    final surface = Theme.of(context).colorScheme.surface;
+    final border = AppColors.borderOf(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          isExpanded: true,
+          value: value,
+          items: items
+              .map(
+                (item) => DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(
+                    itemLabel(item),
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ),
     );
   }
 
@@ -347,6 +1324,33 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               _buildMiniScore('우정', result.friendshipScore, Icons.people),
             ],
           ),
+          if (result.mbtiScore != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.psychology, color: Colors.white, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    '사주 ${result.sajuScore} · MBTI ${result.mbtiScore} → 최종 ${result.overallScore}',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -513,6 +1517,10 @@ class _CompatibilityPageState extends State<CompatibilityPage>
             result.insights.summary,
             style: AppTypography.bodyMedium.copyWith(height: 1.6),
           ),
+          if (result.mbtiScore != null) ...[
+            const SizedBox(height: 20),
+            _buildMbtiAnalysisCard(result),
+          ],
           const SizedBox(height: 24),
           _buildAnalysisSection(
             title: '두 분의 장점',
@@ -565,6 +1573,155 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMbtiAnalysisCard(CompatibilityResult result) {
+    final partnerName = _partnerNameController.text.isNotEmpty
+        ? _partnerNameController.text
+        : '상대방';
+    final myMbti = _myMbti ?? '미입력';
+    final partnerMbti = _partnerMbti ?? '미입력';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariantOf(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderOf(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.psychology,
+                color: AppColors.primaryOf(context),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'MBTI 궁합',
+                style: AppTypography.titleSmall.copyWith(
+                  color: AppColors.primaryOf(context),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryOf(context).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${result.mbtiScore}점',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.primaryOf(context),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '$_myName($myMbti) · $partnerName($partnerMbti)',
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondaryOf(context),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (result.mbtiRelationshipType != null)
+            Text(
+              '관계 유형: ${result.mbtiRelationshipType}',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textPrimaryOf(context),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          if (result.mbtiCommunicationStyle != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              '소통: ${result.mbtiCommunicationStyle}',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textPrimaryOf(context),
+              ),
+            ),
+          ],
+          if (result.mbtiConflictPattern != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              '갈등: ${result.mbtiConflictPattern}',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textPrimaryOf(context),
+              ),
+            ),
+          ],
+          if ((result.mbtiCommonGround ?? const []).isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              '공통점',
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondaryOf(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            ...?result.mbtiCommonGround?.take(4).map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('• ', style: AppTypography.bodyMedium),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimaryOf(context),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if ((result.mbtiDifferences ?? const []).isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              '차이점',
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondaryOf(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            ...?result.mbtiDifferences?.take(4).map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('• ', style: AppTypography.bodyMedium),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimaryOf(context),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1046,554 +2203,6 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     );
   }
 
-  // ============================================
-  // 상대방 정보 입력 페이지
-  // ============================================
-  Widget _buildPartnerInputPage() {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundOf(context),
-      appBar: AppBar(
-        title: const Text('상대방 정보 입력'),
-        backgroundColor: AppColors.backgroundOf(context),
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 안내 헤더
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primaryOf(context).withValues(alpha: 0.1),
-                      AppColors.primaryLightOf(context).withValues(alpha: 0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryOf(
-                          context,
-                        ).withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text('💗', style: TextStyle(fontSize: 24)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '궁합을 확인해보세요',
-                            style: AppTypography.titleMedium.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimaryOf(context),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '상대방의 생년월일과 태어난 시간을 입력하면\n두 분의 궁합을 분석해드립니다.',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondaryOf(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // 이름 입력
-              _buildSectionTitle('이름 (선택)'),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _partnerNameController,
-                style: AppTypography.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: '상대방 이름',
-                  hintStyle: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textTertiaryOf(context),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.surfaceOf(context),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 생년월일
-              _buildSectionTitle('생년월일'),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => _showBirthDatePicker(context),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceOf(context),
-                    borderRadius: BorderRadius.circular(12),
-                    border: _partnerBirthDate != null
-                        ? Border.all(
-                            color: AppColors.primaryOf(
-                              context,
-                            ).withValues(alpha: 0.5),
-                          )
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        color: _partnerBirthDate != null
-                            ? AppColors.primaryOf(context)
-                            : AppColors.textTertiaryOf(context),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _partnerBirthDate != null
-                              ? '${_partnerBirthDate!.year}년 ${_partnerBirthDate!.month}월 ${_partnerBirthDate!.day}일'
-                              : '생년월일을 선택하세요',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: _partnerBirthDate != null
-                                ? AppColors.textPrimaryOf(context)
-                                : AppColors.textTertiaryOf(context),
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textTertiaryOf(context),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 음력/양력 토글
-              Row(
-                children: [
-                  _buildCalendarTypeChip('양력', !_partnerIsLunar, () {
-                    setState(() => _partnerIsLunar = false);
-                  }),
-                  const SizedBox(width: 8),
-                  _buildCalendarTypeChip('음력', _partnerIsLunar, () {
-                    setState(() => _partnerIsLunar = true);
-                  }),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // 태어난 시간
-              _buildSectionTitle('태어난 시간'),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => _showSijuPicker(context),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceOf(context),
-                    borderRadius: BorderRadius.circular(12),
-                    border: _partnerSiju != null
-                        ? Border.all(
-                            color: AppColors.primaryOf(
-                              context,
-                            ).withValues(alpha: 0.5),
-                          )
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        color: _partnerSiju != null
-                            ? AppColors.primaryOf(context)
-                            : AppColors.textTertiaryOf(context),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _partnerSiju != null
-                              ? '${_partnerSiju!.name} (${_partnerSiju!.timeRange})'
-                              : '태어난 시간을 선택하세요',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: _partnerSiju != null
-                                ? AppColors.textPrimaryOf(context)
-                                : AppColors.textTertiaryOf(context),
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textTertiaryOf(context),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 성별
-              _buildSectionTitle('성별'),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(child: _buildGenderButton('남성', 'male', Icons.male)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildGenderButton('여성', 'female', Icons.female),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40),
-
-              // 분석 버튼
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _canAnalyze ? _analyzeCompatibility : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryOf(context),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.grey300Of(context),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isAnalyzing
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          '궁합 분석하기',
-                          style: AppTypography.labelLarge.copyWith(
-                            color: _canAnalyze
-                                ? Colors.white
-                                : AppColors.textTertiaryOf(context),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: Text(
-                  '* 시간을 모르시면 "시간 모름"을 선택하세요',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textTertiaryOf(context),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: AppTypography.labelMedium.copyWith(
-        color: AppColors.textSecondaryOf(context),
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-
-  Widget _buildCalendarTypeChip(
-    String label,
-    bool isSelected,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryOf(context)
-              : AppColors.surfaceOf(context),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primaryOf(context)
-                : AppColors.borderOf(context),
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.labelSmall.copyWith(
-            color: isSelected
-                ? Colors.white
-                : AppColors.textSecondaryOf(context),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGenderButton(String label, String value, IconData icon) {
-    final isSelected = _partnerGender == value;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _partnerGender = value);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryOf(context).withValues(alpha: 0.1)
-              : AppColors.surfaceOf(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primaryOf(context)
-                : AppColors.borderOf(context),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isSelected
-                  ? AppColors.primaryOf(context)
-                  : AppColors.textSecondaryOf(context),
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: AppTypography.bodyMedium.copyWith(
-                color: isSelected
-                    ? AppColors.primaryOf(context)
-                    : AppColors.textSecondaryOf(context),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showBirthDatePicker(BuildContext context) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (ctx) => Container(
-        height: 300,
-        padding: const EdgeInsets.only(top: 6),
-        margin: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceOf(ctx),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(top: 8, bottom: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.grey300Of(ctx),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('취소'),
-                    ),
-                    Text(
-                      '생년월일 선택',
-                      style: AppTypography.titleSmall.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        Navigator.pop(context);
-                        if (_partnerBirthDate == null) {
-                          setState(
-                            () => _partnerBirthDate = DateTime(1990, 1, 1),
-                          );
-                        }
-                      },
-                      child: const Text('확인'),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.date,
-                  initialDateTime: _partnerBirthDate ?? DateTime(1990, 1, 1),
-                  minimumDate: DateTime(1900, 1, 1), // 100세 시대 대응 (126세 커버)
-                  maximumDate: DateTime.now(),
-                  onDateTimeChanged: (date) {
-                    setState(() => _partnerBirthDate = date);
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showSijuPicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceOf(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12, bottom: 16),
-              decoration: BoxDecoration(
-                color: AppColors.grey300Of(context),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('취소'),
-                  ),
-                  Text(
-                    '태어난 시간',
-                    style: AppTypography.titleSmall.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
-                itemCount: sijuList.length,
-                itemBuilder: (context, index) {
-                  final siju = sijuList[index];
-                  final isSelected = _partnerSijuIndex == index;
-                  return ListTile(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() {
-                        _partnerSijuIndex = index;
-                        _partnerSiju = siju;
-                      });
-                      Navigator.pop(context);
-                    },
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primaryOf(
-                                context,
-                              ).withValues(alpha: 0.1)
-                            : AppColors.surfaceVariantOf(context),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          siju.hanja,
-                          style: AppTypography.titleMedium.copyWith(
-                            color: isSelected
-                                ? AppColors.primaryOf(context)
-                                : AppColors.textSecondaryOf(context),
-                          ),
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      siju.name,
-                      style: AppTypography.bodyMedium.copyWith(
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color: isSelected
-                            ? AppColors.primaryOf(context)
-                            : AppColors.textPrimaryOf(context),
-                      ),
-                    ),
-                    subtitle: Text(
-                      siju.timeRange,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textTertiaryOf(context),
-                      ),
-                    ),
-                    trailing: isSelected
-                        ? Icon(
-                            Icons.check_circle,
-                            color: AppColors.primaryOf(context),
-                          )
-                        : null,
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _analyzeCompatibility() {
     if (!_canAnalyze || _mySajuChart == null) return;
 
@@ -1603,11 +2212,12 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     // 상대방 사주 계산
     try {
       final calculator = SajuCalculator.instance;
+      final birthHour = _partnerSiju?.startHour ?? 12; // 시간 미선택 시 정오
       final birthDateTime = DateTime(
         _partnerBirthDate!.year,
         _partnerBirthDate!.month,
         _partnerBirthDate!.day,
-        _partnerSiju!.startHour,
+        birthHour,
       );
 
       _partnerSajuChart = calculator.calculateSajuChart(

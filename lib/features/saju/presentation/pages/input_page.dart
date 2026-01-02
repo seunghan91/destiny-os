@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../core/services/auth/auth_manager.dart';
 import '../bloc/destiny_bloc.dart';
 import '../../../fortune_2026/data/services/fortune_view_access_service.dart';
 import '../widgets/siju_picker.dart';
@@ -1406,16 +1407,20 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
     }
 
     DateTime birthDateTime = _birthDate!;
+    int birthHour = 12; // 기본값: 정오
     if (_selectedSiju != null) {
-      final hour = (_selectedSiju!.startHour + 1) % 24;
+      birthHour = (_selectedSiju!.startHour + 1) % 24;
       birthDateTime = DateTime(
         _birthDate!.year,
         _birthDate!.month,
         _birthDate!.day,
-        hour,
+        birthHour,
         0,
       );
     }
+
+    // 로그인된 사용자의 경우 사주 정보를 Supabase에 저장
+    _saveSajuInfoIfLoggedIn(birthHour);
 
     context.read<DestinyBloc>().add(
       AnalyzeFortune(
@@ -1427,5 +1432,26 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         useNightSubhour: true,
       ),
     );
+  }
+
+  /// 로그인된 사용자의 사주 정보를 Supabase에 저장
+  Future<void> _saveSajuInfoIfLoggedIn(int birthHour) async {
+    final authManager = AuthManager();
+
+    if (!authManager.isAuthenticated || _birthDate == null) return;
+
+    try {
+      await authManager.saveSajuInfo(
+        birthDate: _birthDate!,
+        birthHour: birthHour,
+        gender: _gender,
+        isLunar: _isLunar,
+        mbti: _selectedMbti,
+      );
+      debugPrint('✅ 사주 정보가 Supabase에 저장되었습니다.');
+    } catch (e) {
+      debugPrint('⚠️ 사주 정보 저장 실패: $e');
+      // 저장 실패해도 분석은 계속 진행
+    }
   }
 }

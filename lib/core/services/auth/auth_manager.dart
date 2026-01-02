@@ -288,6 +288,7 @@ class AuthManager extends ChangeNotifier {
   }
 
   /// 리소스 해제
+  @override
   void dispose() {
     _authSubscription?.cancel();
     super.dispose();

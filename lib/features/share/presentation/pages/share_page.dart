@@ -1195,8 +1195,8 @@ class _SharePageState extends State<SharePage> {
   Future<void> _copyLink() async {
     await FortuneViewAccessService.claimShareBonus();
 
-    // 앱 스토어 링크 (출시 후 실제 링크로 교체)
-    const appLink = 'https://destinyos.app/download';
+    // 앱 링크 (Firebase 호스팅 URL - mbtiunse.com으로 리다이렉트)
+    const appLink = 'https://destiny-os-2026.web.app';
     const shareText =
         '나의 2026년 운세를 확인해보세요! 🔮\n\n'
         '사주팔자와 MBTI를 결합한 새로운 운세 분석\n'

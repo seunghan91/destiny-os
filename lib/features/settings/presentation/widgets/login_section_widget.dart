@@ -1,10 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/services/auth/auth_manager.dart';
 import '../../../../core/services/auth/auth_service.dart';
+import '../../../../core/services/auth/user_profile_service.dart';
+import '../../../../core/services/apps_in_toss/apps_in_toss_service.dart';
+import '../../../../core/services/credit/unified_credit_service.dart';
+import '../../../../core/services/auth/credit_service.dart';
 
 /// 설정 페이지 상단 로그인 섹션 위젯
 class LoginSectionWidget extends StatefulWidget {
@@ -327,7 +332,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
   }
 
   /// 사주 정보 섹션
-  Widget _buildSajuInfoSection(profile) {
+  Widget _buildSajuInfoSection(UserProfile profile) {
     final hasSajuInfo = profile.hasSajuInfo;
 
     return Padding(
@@ -531,52 +536,51 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
     }
   }
 
-  /// 충전하기 다이얼로그 (추후 결제 연동)
+  /// 충전하기 다이얼로그 - 웹에서 실제 결제 연동
   void _showPurchaseDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('사용권 충전'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.stars_rounded, color: Colors.amber),
+            const SizedBox(width: 8),
+            const Text('사용권 충전'),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 5회권 옵션
+            _buildCreditOption(
+              credits: 5,
+              price: 5000,
+              isRecommended: true,
+            ),
+            const SizedBox(height: 12),
+            // 안내 문구
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.grey100,
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.stars_rounded, color: Colors.amber),
-                  const SizedBox(width: 12),
+                  Icon(Icons.info_outline, size: 16, color: AppColors.grey600),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '5회권',
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '₩3,900',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondaryOf(context),
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      kIsWeb
+                          ? '토스페이먼츠로 안전하게 결제됩니다.'
+                          : '결제는 웹에서만 가능합니다.',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.grey600,
+                      ),
                     ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '결제 기능은 준비 중입니다.',
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondaryOf(context),
               ),
             ),
           ],
@@ -584,26 +588,249 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
+            child: Text(
+              '취소',
+              style: TextStyle(color: AppColors.textSecondaryOf(context)),
+            ),
+          ),
+          if (kIsWeb)
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _processPurchase(5, 5000);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('결제하기'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 크레딧 옵션 위젯
+  Widget _buildCreditOption({
+    required int credits,
+    required int price,
+    bool isRecommended = false,
+  }) {
+    final formattedPrice = '₩${price.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    )}';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isRecommended
+            ? AppColors.primary.withValues(alpha: 0.1)
+            : Colors.amber.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isRecommended
+              ? AppColors.primary.withValues(alpha: 0.3)
+              : Colors.amber.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.stars_rounded, color: Colors.amber, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '$credits회권',
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (isRecommended) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '인기',
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Text(
+                  'AI 상담, 대운 분석 등에 사용',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondaryOf(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            formattedPrice,
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// 사주 정보 입력 다이얼로그 (추후 구현)
+  /// 결제 처리
+  Future<void> _processPurchase(int credits, int price) async {
+    if (!kIsWeb) {
+      _showErrorSnackBar('결제는 웹에서만 가능합니다.');
+      return;
+    }
+
+    // 로딩 다이얼로그
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final bridge = AppsInTossBridge();
+      final orderId = 'credit_${DateTime.now().millisecondsSinceEpoch}';
+
+      final paymentRequest = PaymentRequest(
+        orderId: orderId,
+        orderName: '사용권 $credits회권',
+        amount: price,
+      );
+
+      final result = await bridge.requestPayment(paymentRequest);
+
+      if (!mounted) return;
+      Navigator.pop(context); // 로딩 닫기
+
+      if (result.success) {
+        // 크레딧 추가
+        await UnifiedCreditService.addCredits(
+          credits,
+          type: CreditTransactionType.purchase,
+          description: '사용권 $credits회권 구매',
+          paymentId: result.paymentKey,
+        );
+
+        // 크레딧 새로고침
+        await _authManager.refreshCreditBalance();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('결제 완료! $credits회권이 충전되었습니다.'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        _showErrorSnackBar(result.errorMessage ?? '결제에 실패했습니다.');
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // 로딩 닫기
+        _showErrorSnackBar('결제 중 오류가 발생했습니다: $e');
+      }
+    }
+  }
+
+  /// 사주 정보 입력 다이얼로그 - 입력 페이지로 이동
   void _showSajuInputDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('사주 정보 설정'),
-        content: const Text(
-          '메인 화면에서 생년월일과 시간을 입력하면\n자동으로 저장됩니다.',
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.auto_awesome, color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text('사주 정보 설정'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '생년월일과 시간을 입력하면\n사주 정보가 자동으로 저장됩니다.',
+              style: AppTypography.bodyMedium.copyWith(
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '로그인 상태에서 입력한 정보는 자동 저장됩니다.',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
+            child: Text(
+              '나중에',
+              style: TextStyle(color: AppColors.textSecondaryOf(context)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // 사주 입력 페이지로 이동
+              context.go('/input');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('사주 입력하기'),
           ),
         ],
       ),

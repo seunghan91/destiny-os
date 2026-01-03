@@ -410,7 +410,14 @@ class _ResultPageState extends State<ResultPage> {
           icon: const Icon(Icons.share_rounded),
           onPressed: () {
             HapticFeedback.lightImpact();
-            _showShareBottomSheet(context, state);
+            // 공유 UI는 /share 페이지로 일원화 (크레딧 0 공유 보너스 플로우와 동일)
+            context.push(
+              '/share',
+              extra: <String, dynamic>{
+                // SharePage 기본 탭을 "사주 분석"으로 설정
+                'initialCardIndex': 1,
+              },
+            );
           },
         ),
         IconButton(
@@ -1173,71 +1180,6 @@ class _ResultPageState extends State<ResultPage> {
     );
   }
 
-  void _showShareBottomSheet(BuildContext context, DestinySuccess state) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceOf(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              '분석 결과 공유하기',
-              style: AppTypography.titleMedium.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildShareOption(
-                  icon: Icons.image_rounded,
-                  label: '이미지로 저장',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: 이미지 저장 기능
-                  },
-                ),
-                _buildShareOption(
-                  icon: Icons.copy_rounded,
-                  label: '텍스트 복사',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: 텍스트 복사 기능
-                  },
-                ),
-                _buildShareOption(
-                  icon: Icons.share_rounded,
-                  label: '공유하기',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: 공유 기능
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildDailyFortuneButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
@@ -1311,36 +1253,5 @@ class _ResultPageState extends State<ResultPage> {
     );
   }
 
-  Widget _buildShareOption({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariantOf(context),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: AppColors.textPrimaryOf(context)),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondaryOf(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+ 
 }

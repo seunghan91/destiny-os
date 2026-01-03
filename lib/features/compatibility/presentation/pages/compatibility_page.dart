@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -54,6 +55,24 @@ class _CompatibilityPageState extends State<CompatibilityPage>
   // 실제 궁합 분석 결과
   CompatibilityResult? _compatibilityResult;
   SajuChart? _partnerSajuChart;
+
+  String _normalizeGenderForDb(String? rawGender) {
+    final g = (rawGender ?? '').trim().toLowerCase();
+    switch (g) {
+      case 'male':
+      case 'm':
+      case '남':
+      case '남성':
+        return 'male';
+      case 'female':
+      case 'f':
+      case '여':
+      case '여성':
+        return 'female';
+      default:
+        return 'male';
+    }
+  }
 
   @override
   void initState() {
@@ -808,11 +827,15 @@ class _CompatibilityPageState extends State<CompatibilityPage>
   Widget _buildPartnerAnalyzeButton() {
     final primary = AppColors.primaryOf(context);
 
-    return SizedBox(
+    return Container(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: _canAnalyze ? _analyzeCompatibility : null,
+        onPressed: _canAnalyze
+            ? () async {
+                await _analyzeCompatibility();
+              }
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           disabledBackgroundColor: AppColors.grey300Of(context),
@@ -2079,6 +2102,18 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           ),
           const SizedBox(height: 24),
 
+          _buildElementBalanceDeepDive(elements),
+          const SizedBox(height: 20),
+          _buildElementPairDynamics(elements),
+          const SizedBox(height: 20),
+          _buildAnalysisSection(
+            title: '오행 기본 성향',
+            icon: Icons.menu_book_outlined,
+            color: AppColors.primaryOf(context),
+            items: _getElementBasicsItems(),
+          ),
+          const SizedBox(height: 24),
+
           // 오행별 분포
           ...['목', '화', '토', '금', '수'].map((element) {
             final person1 = elements.person1Elements[element] ?? 0;
@@ -2278,6 +2313,176 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       };
     }
     return '';
+  }
+
+  List<String> _getElementBasicsItems() {
+    return const [
+      '목(나무): 성장/확장/유연함. 관계에서 “함께 커지는 힘”을 만들지만, 과하면 상대를 바꾸려는 말이 늘 수 있어요.',
+      '화(불): 열정/표현/활력. 설렘과 추진력을 주지만, 과하면 감정이 뜨거워져 작은 일도 크게 번질 수 있어요.',
+      '토(흙): 안정/신뢰/중재. 관계의 루틴과 약속을 잡아주지만, 과하면 변화가 느리거나 답답하게 느껴질 수 있어요.',
+      '금(쇠): 원칙/경계/결단. 기준을 세워 갈등을 줄이지만, 과하면 말이 차갑게 들리거나 판단이 빠를 수 있어요.',
+      '수(물): 지혜/교감/깊이. 대화의 깊이를 만들지만, 과하면 생각이 많아 추측/오해가 커질 수 있어요.',
+    ];
+  }
+
+  Widget _buildElementBalanceDeepDive(ElementBalance elements) {
+    final score = elements.balanceScore;
+    final grade = _getBalanceScoreGrade(score);
+    final meaning = _getBalanceScoreMeaning(score);
+    final advice = _getBalanceScoreAdvice(elements);
+
+    final items = <String>['현재 ${score}점: $grade', meaning, ...advice];
+
+    return _buildAnalysisSection(
+      title: '균형 점수 해석',
+      icon: Icons.insights,
+      color: AppColors.fortuneGoodOf(context),
+      items: items,
+    );
+  }
+
+  String _getBalanceScoreGrade(int score) {
+    if (score >= 90) return '매우 균형 (안정 + 활력의 리듬이 좋아요)';
+    if (score >= 75) return '좋은 균형 (큰 치우침 없이 무난해요)';
+    if (score >= 60) return '보통 (특정 구간에서 약점이 드러날 수 있어요)';
+    return '불균형 (부족/과다를 의식적으로 조율하는 게 중요해요)';
+  }
+
+  String _getBalanceScoreMeaning(int score) {
+    if (score >= 90) {
+      return '의미: 다섯 기운의 편차가 작아, 관계 운영(감정/현실/규칙/교감/성장)이 한쪽으로 쏠리지 않기 쉬워요.';
+    }
+    if (score >= 75) {
+      return '의미: 기본적으로 균형이 좋아 안정감이 있고, 서로의 차이를 “보완”으로 쓰기 쉬운 편이에요.';
+    }
+    if (score >= 60) {
+      return '의미: 평소엔 괜찮지만 상황(스트레스/돈/미래 계획/감정 기복)에 따라 특정 오행의 약점이 튀어나올 수 있어요.';
+    }
+    return '의미: 부족/과다 오행이 관계의 체감 만족도를 좌우할 수 있어요. “무의식 패턴”을 규칙과 대화로 보정하는 게 핵심이에요.';
+  }
+
+  List<String> _getBalanceScoreAdvice(ElementBalance elements) {
+    final items = <String>[];
+
+    if (elements.complementaryElements.isNotEmpty) {
+      items.add(
+        '포인트: 서로 보완이 되는 오행이 보여요 (${elements.complementaryElements.join(', ')}). 강점이 될 수 있도록 역할/리듬을 의식적으로 분담해 보세요.',
+      );
+    }
+    if (elements.lackingElements.isNotEmpty) {
+      items.add(
+        '주의: 함께 부족한 오행이 있어요 (${elements.lackingElements.join(', ')}). 부족 오행은 “관계에서 자연스럽게 나오기 어려운 에너지”라서 루틴으로 보완하는 게 좋아요.',
+      );
+    }
+    if (elements.excessiveElements.isNotEmpty) {
+      items.add(
+        '주의: 함께 과다한 오행이 있어요 (${elements.excessiveElements.join(', ')}). 과다 오행은 “자주 튀어나오는 습관/말투”가 되기 쉬워서, 감정이 올라올 때 멈춤 규칙이 도움이 돼요.',
+      );
+    }
+
+    if (items.isEmpty) {
+      items.add(
+        '포인트: 큰 부족/과다 없이 비교적 고르게 분포되어 있어요. 다만 사건이 생겼을 때 어떤 오행이 먼저 반응하는지(말/감정/원칙/회피)를 점검해 보세요.',
+      );
+    }
+
+    return items;
+  }
+
+  Widget _buildElementPairDynamics(ElementBalance elements) {
+    final items = <String>[];
+
+    final dominant1 = _getDominantElement(elements.person1Elements);
+    final dominant2 = _getDominantElement(elements.person2Elements);
+    if (dominant1 != null && dominant2 != null) {
+      items.add(_describeDominantPairRelation(dominant1, dominant2));
+    }
+
+    final diffItems = _getElementDiffItems(elements);
+    if (diffItems.isNotEmpty) {
+      items.addAll(diffItems);
+    } else {
+      items.add('오행 분포 차이가 크게 벌어지지 않아, 역할이 한쪽에만 쏠리기보다는 “공동 운영”이 가능한 편이에요.');
+    }
+
+    return _buildAnalysisSection(
+      title: '두 사람 오행 비교',
+      icon: Icons.compare_arrows,
+      color: AppColors.primaryOf(context),
+      items: items,
+    );
+  }
+
+  String? _getDominantElement(Map<String, int> elements) {
+    if (elements.isEmpty) return null;
+    final ordered = ['목', '화', '토', '금', '수'];
+    var best = ordered.first;
+    var bestValue = elements[best] ?? 0;
+    for (final e in ordered) {
+      final v = elements[e] ?? 0;
+      if (v > bestValue) {
+        best = e;
+        bestValue = v;
+      }
+    }
+    if (bestValue <= 0) return null;
+    return best;
+  }
+
+  String _describeDominantPairRelation(String a, String b) {
+    if (a == b) {
+      return '핵심 오행: 두 분 모두 $a 기운이 중심이에요. 결이 비슷해 이해가 빠르지만, 같은 약점도 함께 커질 수 있어요.';
+    }
+
+    const generates = {'목': '화', '화': '토', '토': '금', '금': '수', '수': '목'};
+    const overcomes = {'목': '토', '토': '수', '수': '화', '화': '금', '금': '목'};
+
+    if (generates[a] == b) {
+      return '핵심 오행: $a → $b (상생) 흐름이 보여요. $a의 에너지가 $b를 북돋우는 구조라 함께 있을 때 자연스럽게 “힘을 실어주는 관계”가 되기 쉬워요.';
+    }
+    if (generates[b] == a) {
+      return '핵심 오행: $b → $a (상생) 흐름이 보여요. $b의 에너지가 $a를 북돋우는 구조라 응원/지지가 관계의 핵심이 되기 쉬워요.';
+    }
+    if (overcomes[a] == b) {
+      return '핵심 오행: $a ↘ $b (상극) 성향이 있어요. 방향이 다를 때 “통제/반발”로 느껴질 수 있으니, 결론보다 과정(합의/역할)을 먼저 맞추는 게 좋아요.';
+    }
+    if (overcomes[b] == a) {
+      return '핵심 오행: $b ↘ $a (상극) 성향이 있어요. 중요한 결정은 빠르게 결론내기보다 기준을 문장으로 합의해 두면 갈등이 줄어요.';
+    }
+
+    return '핵심 오행: $a / $b 조합이에요. 상생/상극이 뚜렷하진 않지만, 서로의 리듬이 달라 “맞춰가는 과정”이 관계 만족도를 좌우할 수 있어요.';
+  }
+
+  List<String> _getElementDiffItems(ElementBalance elements) {
+    final items = <String>[];
+    for (final e in ['목', '화', '토', '금', '수']) {
+      final me = elements.person1Elements[e] ?? 0;
+      final you = elements.person2Elements[e] ?? 0;
+      final diff = me - you;
+      if (diff.abs() < 2) continue;
+      if (diff > 0) {
+        items.add(
+          '$e: 내가 상대보다 강해요 (나 $me vs 상대 $you). 관계에서 ${_getElementRoleHint(e, isMeStronger: true)} 역할을 더 맡기 쉬워요.',
+        );
+      } else {
+        items.add(
+          '$e: 상대가 나보다 강해요 (나 $me vs 상대 $you). 관계에서 ${_getElementRoleHint(e, isMeStronger: false)} 역할을 상대가 더 맡기 쉬워요.',
+        );
+      }
+    }
+    return items;
+  }
+
+  String _getElementRoleHint(String element, {required bool isMeStronger}) {
+    final subject = isMeStronger ? '내가' : '상대가';
+    return switch (element) {
+      '목' => '$subject 방향을 잡고 성장/변화를 추진',
+      '화' => '$subject 분위기를 띄우고 표현/활력을 주도',
+      '토' => '$subject 루틴과 안정, 현실 조율을 담당',
+      '금' => '$subject 기준/경계 설정과 결정을 주도',
+      '수' => '$subject 감정의 깊은 대화와 정리를 담당',
+      _ => '$subject 관계의 한 축을 더 강하게 이끎',
+    };
   }
 
   Widget _buildElementCycleInfo() {
@@ -2500,29 +2705,70 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       final bloc = context.read<DestinyBloc>();
       final state = bloc.state;
 
+      final firebaseUser = firebase_auth.FirebaseAuth.instance.currentUser;
+      final firebaseUid = firebaseUser?.uid;
+
       // 1. 먼저 user_results 저장/조회하여 user_result_id 얻기
       String? userResultId;
 
       if (state is DestinySuccess) {
-        // 사용자의 정보로 user_results 저장
-        final userPayload = <String, dynamic>{
-          'birth_date': state.sajuChart.birthDateTime.toUtc().toIso8601String(),
-          'birth_hour': state.sajuChart.birthDateTime.hour,
-          'is_lunar': state.sajuChart.isLunar,
-          'gender': state.sajuChart.gender,
-          'mbti': state.mbtiType.type,
-          'name': null, // 이름은 사용 안 함
-          'use_night_subhour': false, // 야자시 사용 여부는 알 수 없음
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-        };
+        // 로그인 사용자는 firebase_uid 기준으로 기존 user_results를 재사용
+        if (firebaseUid != null) {
+          final existing = await supabase
+              .from('user_results')
+              .select('id')
+              .eq('firebase_uid', firebaseUid)
+              .maybeSingle();
 
-        final userResponse = await supabase
-            .from('user_results')
-            .insert(userPayload)
-            .select('id');
+          if (existing != null && existing['id'] != null) {
+            userResultId = existing['id'] as String;
+          } else {
+            final userPayload = <String, dynamic>{
+              'firebase_uid': firebaseUid,
+              'birth_date': state.sajuChart.birthDateTime
+                  .toUtc()
+                  .toIso8601String(),
+              'birth_hour': state.sajuChart.birthDateTime.hour,
+              'is_lunar': state.sajuChart.isLunar,
+              'gender': _normalizeGenderForDb(state.sajuChart.gender),
+              'mbti': state.mbtiType.type,
+              'name': null,
+              'use_night_subhour': false,
+              'created_at': DateTime.now().toUtc().toIso8601String(),
+            };
 
-        if (userResponse.isNotEmpty) {
-          userResultId = userResponse.first['id'] as String;
+            final userResponse = await supabase
+                .from('user_results')
+                .insert(userPayload)
+                .select('id');
+
+            if (userResponse.isNotEmpty) {
+              userResultId = userResponse.first['id'] as String;
+            }
+          }
+        } else {
+          // 비로그인 사용자는 기존 로직대로 새 row 생성
+          final userPayload = <String, dynamic>{
+            'birth_date': state.sajuChart.birthDateTime
+                .toUtc()
+                .toIso8601String(),
+            'birth_hour': state.sajuChart.birthDateTime.hour,
+            'is_lunar': state.sajuChart.isLunar,
+            'gender': _normalizeGenderForDb(state.sajuChart.gender),
+            'mbti': state.mbtiType.type,
+            'name': null,
+            'use_night_subhour': false,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          };
+
+          final userResponse = await supabase
+              .from('user_results')
+              .insert(userPayload)
+              .select('id');
+
+          if (userResponse.isNotEmpty) {
+            userResultId = userResponse.first['id'] as String;
+          }
         }
       }
 
@@ -2548,7 +2794,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
             : _partnerNameController.text,
         'partner_birth_date': partnerBirthDateTime.toUtc().toIso8601String(),
         'partner_birth_hour': partnerBirthHour,
-        'partner_gender': _partnerGender,
+        'partner_gender': _normalizeGenderForDb(_partnerGender),
         'partner_is_lunar': _partnerIsLunar,
         'partner_mbti': _partnerMbti,
         'overall_score': _compatibilityResult!.overallScore,
@@ -2691,17 +2937,16 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                         showDialog(
                           context: context,
                           barrierDismissible: false,
-                          builder: (context) => const Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          builder: (context) =>
+                              const Center(child: CircularProgressIndicator()),
                         );
 
                         // 공유 텍스트 생성
                         final shareText =
                             ShareService.generateCompatibilityShareText(
-                          partnerName: partnerName,
-                          overallScore: _compatibilityResult!.overallScore,
-                        );
+                              partnerName: partnerName,
+                              overallScore: _compatibilityResult!.overallScore,
+                            );
 
                         // 이미지 캡처 및 공유
                         await ShareService.captureAndShare(
@@ -2753,7 +2998,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     );
   }
 
-  void _analyzeCompatibility() {
+  Future<void> _analyzeCompatibility() async {
     if (!_canAnalyze || _mySajuChart == null) return;
 
     HapticFeedback.mediumImpact();
@@ -2780,7 +3025,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       _calculateCompatibility();
 
       // 결과를 DB에 저장
-      _saveCompatibilityResult();
+      await _saveCompatibilityResult();
 
       setState(() {
         _isPartnerInputMode = false;

@@ -16,6 +16,14 @@ class ConsultationPaymentService {
     }
 
     try {
+      // 결제한 크레딧은 계정에 귀속되므로, 결제 전 로그인(회원가입) 필수
+      if (!UnifiedCreditService.isLoggedIn) {
+        debugPrint('⚠️  로그인 없이 결제를 진행할 수 없습니다.');
+        final bridge = AppsInTossBridge();
+        bridge.showToast('결제한 크레딧을 유지하려면 회원가입/로그인이 필요합니다.');
+        return false;
+      }
+
       final bridge = AppsInTossBridge();
 
       // 주문 ID 생성

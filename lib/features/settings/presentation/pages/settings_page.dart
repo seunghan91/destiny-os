@@ -84,8 +84,8 @@ class _SettingsPageState extends State<SettingsPage> {
           await notificationService.initialize();
 
           // 권한 재확인
-          final recheckEnabled =
-              await notificationService.isNotificationEnabled();
+          final recheckEnabled = await notificationService
+              .isNotificationEnabled();
 
           if (!recheckEnabled) {
             // 권한 거부됨
@@ -225,7 +225,10 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: AppColors.surfaceOf(context),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimaryOf(context)),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.textPrimaryOf(context),
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
@@ -277,9 +280,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
               // 화면 설정 섹션
               _buildSectionHeader('화면'),
-              _buildSettingsCard([
-                _buildThemeSelector(),
-              ]),
+              _buildSettingsCard([_buildThemeSelector()]),
 
               const SizedBox(height: 24),
 
@@ -333,19 +334,29 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildActionTile(
                   title: '서비스 소개',
                   icon: Icons.info_outline,
-                  onTap: () => _openUrl('https://destiny-os-2026.web.app/about'),
+                  onTap: () =>
+                      _openUrl('https://destiny-os-2026.web.app/about'),
                 ),
                 Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildActionTile(
                   title: '개인정보처리방침',
                   icon: Icons.privacy_tip_outlined,
-                  onTap: () => _openUrl('https://destiny-os-2026.web.app/privacy'),
+                  onTap: () =>
+                      _openUrl('https://destiny-os-2026.web.app/privacy'),
                 ),
                 Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildActionTile(
                   title: '이용약관',
                   icon: Icons.description_outlined,
-                  onTap: () => _openUrl('https://destiny-os-2026.web.app/terms'),
+                  onTap: () =>
+                      _openUrl('https://destiny-os-2026.web.app/terms'),
+                ),
+                Divider(height: 1, color: AppColors.borderLightOf(context)),
+                _buildActionTile(
+                  title: '고객센터',
+                  subtitle: '문의 내용을 남겨주세요',
+                  icon: Icons.support_agent_outlined,
+                  onTap: () => context.push('/support'),
                 ),
                 Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildActionTile(
@@ -398,7 +409,11 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowOf(context, lightOpacity: 0.04, darkOpacity: 0.12),
+            color: AppColors.shadowOf(
+              context,
+              lightOpacity: 0.04,
+              darkOpacity: 0.12,
+            ),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -584,13 +599,17 @@ class _SettingsPageState extends State<SettingsPage> {
               Icon(
                 icon,
                 size: 24,
-                color: isSelected ? AppColors.primary : AppColors.textSecondaryOf(context),
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.textSecondaryOf(context),
               ),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: AppTypography.labelSmall.copyWith(
-                  color: isSelected ? AppColors.primary : AppColors.textSecondaryOf(context),
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondaryOf(context),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
@@ -649,9 +668,7 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: const Text('데이터 초기화'),
-        content: const Text(
-          '저장된 모든 사주 정보와 설정이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.',
-        ),
+        content: const Text('저장된 모든 사주 정보와 설정이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.'),
         actions: [
           CupertinoDialogAction(
             child: const Text('취소'),
@@ -682,9 +699,7 @@ class _SettingsPageState extends State<SettingsPage> {
         SnackBar(
           content: const Text('모든 데이터가 초기화되었습니다'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     }
@@ -812,10 +827,7 @@ class _SettingsPageState extends State<SettingsPage> {
       decoration: BoxDecoration(
         color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.borderLightOf(context),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.borderLightOf(context), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1011,29 +1023,31 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
           const SizedBox(height: 12),
-          ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '•  ',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textSecondaryOf(context),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    item,
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '•  ',
                     style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.textSecondaryOf(context),
-                      height: 1.4,
                     ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: Text(
+                      item,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondaryOf(context),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -1052,9 +1066,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1183,12 +1195,13 @@ class _SettingsPageState extends State<SettingsPage> {
   /// PWA 설치 카드
   Widget _buildPwaInstallCard() {
     final pwaService = PwaService();
-    
+
     return FutureBuilder(
       future: pwaService.initialize().then((_) => null),
       builder: (context, snapshot) {
         final isInstalled = pwaService.isInstalled;
-        final isInstallable = pwaService.isInstallable || pwaService.isIosSafari;
+        final isInstallable =
+            pwaService.isInstallable || pwaService.isIosSafari;
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1324,7 +1337,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // 아이콘
             Container(
               width: 72,
@@ -1340,7 +1353,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             Text(
               'iPhone/iPad에 설치하기',
               style: AppTypography.titleLarge.copyWith(
@@ -1348,16 +1361,16 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // 단계별 안내
             _buildIosStep(1, '하단의 공유 버튼을 탭하세요', '📤'),
             const SizedBox(height: 12),
             _buildIosStep(2, '"홈 화면에 추가"를 선택하세요', '➕'),
             const SizedBox(height: 12),
             _buildIosStep(3, '추가 버튼을 탭하면 완료!', '✅'),
-            
+
             const SizedBox(height: 24),
-            
+
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -1430,9 +1443,11 @@ class _SettingsPageState extends State<SettingsPage> {
   /// 웹 알림 설정 타일
   Widget _buildWebNotificationTile() {
     final webNotificationService = WebNotificationService();
-    
+
     return FutureBuilder(
-      future: webNotificationService.initialize().then((_) => webNotificationService.isNotificationsEnabled()),
+      future: webNotificationService.initialize().then(
+        (_) => webNotificationService.isNotificationsEnabled(),
+      ),
       builder: (context, snapshot) {
         final isEnabled = snapshot.data ?? false;
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
@@ -1472,14 +1487,18 @@ class _SettingsPageState extends State<SettingsPage> {
                       value: isEnabled,
                       onChanged: (value) async {
                         if (value) {
-                          final result = await webNotificationService.requestPermission();
+                          final result = await webNotificationService
+                              .requestPermission();
                           if (result == NotificationPermissionStatus.granted) {
-                            await webNotificationService.subscribeToTopic(NotificationTopics.dailyFortune);
+                            await webNotificationService.subscribeToTopic(
+                              NotificationTopics.dailyFortune,
+                            );
                             setState(() {});
                             if (mounted) {
                               _showSnackBar('알림이 활성화되었습니다 ✅');
                             }
-                          } else if (result == NotificationPermissionStatus.denied) {
+                          } else if (result ==
+                              NotificationPermissionStatus.denied) {
                             if (mounted) {
                               _showNotificationPermissionDialog();
                             }
@@ -1536,7 +1555,10 @@ class _SettingsPageState extends State<SettingsPage> {
               if (_developerMode) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
@@ -1593,7 +1615,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.analytics, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.analytics,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1652,13 +1678,19 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
-                      widthFactor: (_usageStatus!.usagePercentage / 100).clamp(0, 1),
+                      widthFactor: (_usageStatus!.usagePercentage / 100).clamp(
+                        0,
+                        1,
+                      ),
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: _usageStatus!.usagePercentage >= 80
                                 ? [Colors.red, Colors.orange]
-                                : [const Color(0xFFFFD700), const Color(0xFFDAA520)],
+                                : [
+                                    const Color(0xFFFFD700),
+                                    const Color(0xFFDAA520),
+                                  ],
                           ),
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -1671,12 +1703,17 @@ class _SettingsPageState extends State<SettingsPage> {
                     children: [
                       Text(
                         '${_usageStatus!.totalCount.toStringAsFixed(0)} / ${_usageStatus!.dailyLimit}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         '${_usageStatus!.usagePercentage.toStringAsFixed(1)}%',
                         style: TextStyle(
-                          color: _usageStatus!.usagePercentage >= 80 ? Colors.orange : Colors.white70,
+                          color: _usageStatus!.usagePercentage >= 80
+                              ? Colors.orange
+                              : Colors.white70,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1698,10 +1735,26 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildStatItem('사주', _usageStatus!.sajuCount, Icons.auto_awesome),
-                  _buildStatItem('MBTI', _usageStatus!.mbtiCount, Icons.psychology),
-                  _buildStatItem('궁합', _usageStatus!.compatibilityCount, Icons.favorite),
-                  _buildStatItem('상담', _usageStatus!.consultationCount, Icons.chat),
+                  _buildStatItem(
+                    '사주',
+                    _usageStatus!.sajuCount,
+                    Icons.auto_awesome,
+                  ),
+                  _buildStatItem(
+                    'MBTI',
+                    _usageStatus!.mbtiCount,
+                    Icons.psychology,
+                  ),
+                  _buildStatItem(
+                    '궁합',
+                    _usageStatus!.compatibilityCount,
+                    Icons.favorite,
+                  ),
+                  _buildStatItem(
+                    '상담',
+                    _usageStatus!.consultationCount,
+                    Icons.chat,
+                  ),
                 ],
               ),
             ),
@@ -1715,7 +1768,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -1724,7 +1779,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     Expanded(
                       child: Text(
                         _usageStatus!.alerts.first.message,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -1751,8 +1809,12 @@ class _SettingsPageState extends State<SettingsPage> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      icon: Icon(_usageStatus!.isPaused ? Icons.play_arrow : Icons.pause),
-                      label: Text(_usageStatus!.isPaused ? '서비스 재개' : '서비스 일시 중단'),
+                      icon: Icon(
+                        _usageStatus!.isPaused ? Icons.play_arrow : Icons.pause,
+                      ),
+                      label: Text(
+                        _usageStatus!.isPaused ? '서비스 재개' : '서비스 일시 중단',
+                      ),
                     ),
                   ),
                 ],

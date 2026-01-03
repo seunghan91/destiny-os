@@ -9,6 +9,7 @@ import '../../features/daewoon/presentation/pages/daewoon_page.dart';
 import '../../features/compatibility/presentation/pages/compatibility_page.dart';
 import '../../features/ai_consultation/presentation/pages/consultation_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/support/presentation/pages/support_page.dart';
 import '../../features/share/presentation/pages/share_page.dart';
 import '../../features/admin/presentation/pages/admin_page.dart';
 import '../../features/daily_fortune/presentation/pages/daily_fortune_page.dart';
@@ -84,6 +85,13 @@ class AppRouter {
         builder: (context, state) => const SettingsPage(),
       ),
 
+      // 고객센터
+      GoRoute(
+        path: Routes.support,
+        name: Routes.supportName,
+        builder: (context, state) => const SupportPage(),
+      ),
+
       // 공유
       GoRoute(
         path: Routes.share,
@@ -105,11 +113,8 @@ class AppRouter {
         builder: (context, state) => const DailyFortunePage(),
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      body: Center(
-        child: Text('페이지를 찾을 수 없습니다: ${state.uri}'),
-      ),
-    ),
+    errorBuilder: (context, state) =>
+        Scaffold(body: Center(child: Text('페이지를 찾을 수 없습니다: ${state.uri}'))),
   );
 }
 
@@ -143,6 +148,9 @@ class Routes {
 
   static const String settings = '/settings';
   static const String settingsName = 'settings';
+
+  static const String support = '/support';
+  static const String supportName = 'support';
 
   static const String share = '/share';
   static const String shareName = 'share';

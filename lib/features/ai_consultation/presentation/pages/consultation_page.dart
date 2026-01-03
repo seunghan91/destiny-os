@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
@@ -411,6 +413,30 @@ class _ConsultationPageState extends State<ConsultationPage>
     _showPaymentDialog();
   }
 
+  /// 베타 테스트용: 결제 없이 다시하기 (크레딧 1회 임시 지급 + 대화 초기화)
+  Future<void> _handleBetaRetry() async {
+    // 웹에서만 노출/동작하도록 제한 (스토어 심사/정책 리스크 최소화)
+    if (!kIsWeb) return;
+
+    await UnifiedCreditService.addCredits(
+      1,
+      type: CreditTransactionType.bonus,
+      description: '베타 테스트: 다시하기(임시 크레딧 1회)',
+    );
+
+    await _loadCredits();
+    if (!mounted) return;
+
+    _startNewConversation();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('베타 테스트: 크레딧 1회가 임시로 지급되었습니다.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   /// 결제 다이얼로그 표시
   void _showPaymentDialog() {
     showDialog(
@@ -471,6 +497,37 @@ class _ConsultationPageState extends State<ConsultationPage>
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceOf(context),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderOf(context)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: AppColors.textSecondaryOf(context),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '중요 안내: 결제한 크레딧(사용권)은 “회원(로그인) 계정”에만 유지됩니다.\n'
+                      '비로그인(게스트) 상태에서 결제/사용한 크레딧은 브라우저/앱 데이터 삭제, 기기 변경, 재설치, 캐시 초기화 등으로 소실될 수 있으며, 이 경우 복구/이전이 불가합니다.\n'
+                      '회원가입(로그인)을 하지 않아 발생한 크레딧 소실/이용 불가 등 문제에 대해 서비스 제공자는 책임을 지지 않습니다.',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textSecondaryOf(context),
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
         actions: [
@@ -481,22 +538,58 @@ class _ConsultationPageState extends State<ConsultationPage>
               style: TextStyle(color: AppColors.textSecondaryOf(context)),
             ),
           ),
-          ElevatedButton.icon(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _handlePayment();
-            },
-            icon: const Icon(Icons.payment_rounded, size: 20),
-            label: const Text('결제하기'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          if (kIsWeb)
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _handleBetaRetry();
+              },
+              child: Text(
+                '베타테스트니까 그냥 다시하기',
+                style: TextStyle(color: AppColors.textSecondaryOf(context)),
               ),
             ),
-          ),
+          if (!UnifiedCreditService.isLoggedIn)
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                // 설정 > 계정 섹션에서 바로 로그인 가능
+                this.context.push('/settings');
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(
+                    content: Text('결제한 크레딧을 유지하려면 회원가입/로그인이 필요합니다.'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.person_outline, size: 20),
+              label: const Text('회원가입/로그인 후 결제하기'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            )
+          else
+            ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _handlePayment();
+              },
+              icon: const Icon(Icons.payment_rounded, size: 20),
+              label: const Text('결제하기'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -23,7 +23,6 @@ class _AdminPageState extends State<AdminPage> {
   String? _error;
 
   // ✅ FIX 9: Pagination 추가
-  static const int _pageSize = 50;
   int _currentOffset = 0;
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
@@ -37,6 +36,25 @@ class _AdminPageState extends State<AdminPage> {
 
   // Drawer 메뉴 선택 상태
   int _selectedMenuIndex = 0; // 0: 사용자 목록, 1: 고객센터 문의
+
+  // 검색 및 필터 상태
+  final TextEditingController _searchController = TextEditingController();
+  String? _selectedMbti; // null = All
+  String? _selectedGender; // null = All
+  String? _selectedCalendarType; // null = All
+  int _pageSize = 50; // 기본값 50, 사용자가 변경 가능
+
+  // 정렬 상태
+  String _sortField = 'created_at'; // 기본 정렬: 조회 시간
+  bool _sortAscending = false; // 기본: 최신순 (내림차순)
+
+  // MBTI 옵션
+  static const List<String> _mbtiTypes = [
+    'INTJ', 'INTP', 'ENTJ', 'ENTP',
+    'INFJ', 'INFP', 'ENFJ', 'ENFP',
+    'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
+    'ISTP', 'ISFP', 'ESTP', 'ESFP',
+  ];
 
   @override
   void initState() {
@@ -60,6 +78,7 @@ class _AdminPageState extends State<AdminPage> {
     _scrollController.dispose();
     _passwordController.dispose();
     _passwordFocus.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -87,10 +106,32 @@ class _AdminPageState extends State<AdminPage> {
     });
 
     try {
-      final newData = await _supabase!
-          .from('user_results')
-          .select()
-          .order('created_at', ascending: false)
+      var query = _supabase!.from('user_results').select();
+
+      // 검색 필터 적용
+      final searchText = _searchController.text.trim();
+      if (searchText.isNotEmpty) {
+        query = query.or('name.ilike.%$searchText%,mbti.ilike.%$searchText%');
+      }
+
+      // MBTI 필터
+      if (_selectedMbti != null) {
+        query = query.eq('mbti', _selectedMbti!);
+      }
+
+      // 성별 필터
+      if (_selectedGender != null) {
+        query = query.eq('gender', _selectedGender!);
+      }
+
+      // 음력/양력 필터
+      if (_selectedCalendarType != null) {
+        final isLunar = _selectedCalendarType == 'lunar';
+        query = query.eq('is_lunar', isLunar);
+      }
+
+      final newData = await query
+          .order(_sortField, ascending: _sortAscending)
           .range(
             _currentOffset + _pageSize,
             _currentOffset + _pageSize * 2 - 1,
@@ -153,10 +194,32 @@ class _AdminPageState extends State<AdminPage> {
     });
 
     try {
-      final data = await _supabase!
-          .from('user_results')
-          .select()
-          .order('created_at', ascending: false)
+      var query = _supabase!.from('user_results').select();
+
+      // 검색 필터 적용
+      final searchText = _searchController.text.trim();
+      if (searchText.isNotEmpty) {
+        query = query.or('name.ilike.%$searchText%,mbti.ilike.%$searchText%');
+      }
+
+      // MBTI 필터
+      if (_selectedMbti != null) {
+        query = query.eq('mbti', _selectedMbti!);
+      }
+
+      // 성별 필터
+      if (_selectedGender != null) {
+        query = query.eq('gender', _selectedGender!);
+      }
+
+      // 음력/양력 필터
+      if (_selectedCalendarType != null) {
+        final isLunar = _selectedCalendarType == 'lunar';
+        query = query.eq('is_lunar', isLunar);
+      }
+
+      final data = await query
+          .order(_sortField, ascending: _sortAscending)
           .limit(_pageSize);
 
       setState(() {
@@ -171,6 +234,28 @@ class _AdminPageState extends State<AdminPage> {
         _error = e.toString();
       });
     }
+  }
+
+  // 필터 초기화
+  void _clearFilters() {
+    setState(() {
+      _searchController.clear();
+      _selectedMbti = null;
+      _selectedGender = null;
+      _selectedCalendarType = null;
+      _sortField = 'created_at';
+      _sortAscending = false;
+    });
+    _fetchUsers();
+  }
+
+  // 검색 디바운싱 (300ms 지연)
+  void _onSearchChanged(String value) {
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (_searchController.text == value) {
+        _fetchUsers();
+      }
+    });
   }
 
   /// 사용자의 궁합 분석 결과 조회
@@ -616,21 +701,267 @@ class _AdminPageState extends State<AdminPage> {
     );
   }
 
-  Widget _buildUserListScreen() {
-    return _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : _error != null
-            ? _buildErrorWidget()
-            : (_users.isEmpty
-                ? Center(
-                    child: Text(
-                      '조회할 데이터가 없습니다',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textSecondaryOf(context),
+  Widget _buildFilterBar() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      color: AppColors.surfaceOf(context),
+      child: Column(
+        children: [
+          // 검색 바
+          TextField(
+            controller: _searchController,
+            onChanged: _onSearchChanged,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimaryOf(context),
+            ),
+            decoration: InputDecoration(
+              hintText: '이름 또는 MBTI로 검색',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _fetchUsers();
+                      },
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // 필터 및 페이지 크기 선택
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.start,
+            children: [
+              // MBTI 필터
+              SizedBox(
+                width: 120,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedMbti,
+                  decoration: InputDecoration(
+                    labelText: 'MBTI',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('전체')),
+                    ..._mbtiTypes.map(
+                      (mbti) => DropdownMenuItem(
+                        value: mbti,
+                        child: Text(mbti),
                       ),
                     ),
-                  )
-                : ListView.separated(
+                  ],
+                  onChanged: (value) {
+                    setState(() => _selectedMbti = value);
+                    _fetchUsers();
+                  },
+                ),
+              ),
+              // 성별 필터
+              SizedBox(
+                width: 100,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedGender,
+                  decoration: InputDecoration(
+                    labelText: '성별',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('전체')),
+                    DropdownMenuItem(value: 'male', child: Text('남')),
+                    DropdownMenuItem(value: 'female', child: Text('여')),
+                  ],
+                  onChanged: (value) {
+                    setState(() => _selectedGender = value);
+                    _fetchUsers();
+                  },
+                ),
+              ),
+              // 음력/양력 필터
+              SizedBox(
+                width: 100,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedCalendarType,
+                  decoration: InputDecoration(
+                    labelText: '달력',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('전체')),
+                    DropdownMenuItem(value: 'solar', child: Text('양력')),
+                    DropdownMenuItem(value: 'lunar', child: Text('음력')),
+                  ],
+                  onChanged: (value) {
+                    setState(() => _selectedCalendarType = value);
+                    _fetchUsers();
+                  },
+                ),
+              ),
+              // 페이지 크기 선택
+              SizedBox(
+                width: 110,
+                child: DropdownButtonFormField<int>(
+                  value: _pageSize,
+                  decoration: InputDecoration(
+                    labelText: '페이지 크기',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 10, child: Text('10개')),
+                    DropdownMenuItem(value: 50, child: Text('50개')),
+                    DropdownMenuItem(value: 100, child: Text('100개')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _pageSize = value);
+                      _fetchUsers();
+                    }
+                  },
+                ),
+              ),
+              // 정렬 기준 선택
+              SizedBox(
+                width: 120,
+                child: DropdownButtonFormField<String>(
+                  value: _sortField,
+                  decoration: InputDecoration(
+                    labelText: '정렬',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'created_at',
+                      child: Text('조회 시간'),
+                    ),
+                    DropdownMenuItem(value: 'name', child: Text('이름')),
+                    DropdownMenuItem(value: 'mbti', child: Text('MBTI')),
+                    DropdownMenuItem(
+                      value: 'birth_date',
+                      child: Text('생년월일'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _sortField = value);
+                      _fetchUsers();
+                    }
+                  },
+                ),
+              ),
+              // 정렬 방향 토글
+              SizedBox(
+                height: 48,
+                child: IconButton(
+                  icon: Icon(
+                    _sortAscending
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
+                  ),
+                  tooltip: _sortAscending ? '오름차순' : '내림차순',
+                  onPressed: () {
+                    setState(() => _sortAscending = !_sortAscending);
+                    _fetchUsers();
+                  },
+                  style: IconButton.styleFrom(
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              // 필터 초기화 버튼
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _clearFilters,
+                  icon: const Icon(Icons.clear_all, size: 18),
+                  label: const Text('초기화'),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // 현재 결과 수 표시
+          if (_users.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                '${_users.length}개 결과',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondaryOf(context),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserListScreen() {
+    return Column(
+      children: [
+        _buildFilterBar(),
+        Expanded(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? _buildErrorWidget()
+                  : (_users.isEmpty
+                      ? Center(
+                          child: Text(
+                            '조회할 데이터가 없습니다',
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textSecondaryOf(context),
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
                     controller: _scrollController,
                     itemCount: _users.length + (_isLoadingMore ? 1 : 0),
                     separatorBuilder: (context, index) {
@@ -755,7 +1086,10 @@ class _AdminPageState extends State<AdminPage> {
                         ),
                       );
                     },
-                  ));
+                  )),
+        ),
+      ],
+    );
   }
 
   Widget _buildSupportTicketsScreen() {

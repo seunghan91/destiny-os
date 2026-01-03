@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/ai_consultation/data/services/supabase_consultation_service.dart';
+import '../../features/support/data/services/supabase_support_service.dart';
 import '../../features/daily_fortune/data/datasources/daily_fortune_local_datasource.dart';
 import '../../features/daily_fortune/data/repositories/daily_fortune_repository_impl.dart';
 import '../../features/daily_fortune/data/services/daily_fortune_generator.dart';
@@ -55,6 +56,10 @@ Future<void> configureDependencies() async {
   if (getIt.isRegistered<SupabaseClient>()) {
     getIt.registerLazySingleton<SupabaseConsultationService>(
       () => SupabaseConsultationService(client: getIt<SupabaseClient>()),
+    );
+
+    getIt.registerLazySingleton<SupabaseSupportService>(
+      () => SupabaseSupportService(client: getIt<SupabaseClient>()),
     );
 
     // 사용량 관리 서비스

@@ -35,6 +35,9 @@ class _AdminPageState extends State<AdminPage> {
   final FocusNode _passwordFocus = FocusNode();
   static const String _adminPassword = '!tmdgks20'; // TODO: 환경변수로 이동
 
+  // Drawer 메뉴 선택 상태
+  int _selectedMenuIndex = 0; // 0: 사용자 목록, 1: 고객센터 문의
+
   @override
   void initState() {
     super.initState();
@@ -88,7 +91,10 @@ class _AdminPageState extends State<AdminPage> {
           .from('user_results')
           .select()
           .order('created_at', ascending: false)
-          .range(_currentOffset + _pageSize, _currentOffset + _pageSize * 2 - 1);
+          .range(
+            _currentOffset + _pageSize,
+            _currentOffset + _pageSize * 2 - 1,
+          );
 
       setState(() {
         if (newData.isEmpty) {
@@ -168,7 +174,10 @@ class _AdminPageState extends State<AdminPage> {
   }
 
   /// 사용자의 궁합 분석 결과 조회
-  Future<void> _showCompatibilityResults(String userResultId, String userName) async {
+  Future<void> _showCompatibilityResults(
+    String userResultId,
+    String userName,
+  ) async {
     try {
       final compatibilities = await _supabase!
           .from('compatibility_results')
@@ -200,7 +209,9 @@ class _AdminPageState extends State<AdminPage> {
               itemCount: compatibilities.length,
               itemBuilder: (context, index) {
                 final compat = compatibilities[index];
-                final createdAt = DateTime.parse(compat['created_at']).toLocal();
+                final createdAt = DateTime.parse(
+                  compat['created_at'],
+                ).toLocal();
                 final partnerName = compat['partner_name'] ?? '상대방';
                 final overallScore = compat['overall_score'] as int;
 
@@ -242,10 +253,7 @@ class _AdminPageState extends State<AdminPage> {
       debugPrint('Error fetching compatibility results: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('궁합 기록 조회 실패: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('궁합 기록 조회 실패: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -253,7 +261,9 @@ class _AdminPageState extends State<AdminPage> {
   /// 궁합 분석 상세 정보 표시
   void _showCompatibilityDetail(Map<String, dynamic> compat) {
     final partnerName = compat['partner_name'] ?? '상대방';
-    final partnerBirthDate = DateTime.parse(compat['partner_birth_date']).toLocal();
+    final partnerBirthDate = DateTime.parse(
+      compat['partner_birth_date'],
+    ).toLocal();
     final partnerMbti = compat['partner_mbti'] ?? '미등록';
     final overallScore = compat['overall_score'] as int;
     final sajuScore = compat['saju_score'] as int;
@@ -269,7 +279,9 @@ class _AdminPageState extends State<AdminPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('생년월일: ${DateFormat('yyyy-MM-dd').format(partnerBirthDate)}'),
+              Text(
+                '생년월일: ${DateFormat('yyyy-MM-dd').format(partnerBirthDate)}',
+              ),
               Text('MBTI: $partnerMbti'),
               const Divider(),
               Text('종합 점수: $overallScore점'),
@@ -280,7 +292,10 @@ class _AdminPageState extends State<AdminPage> {
                 Text('요약: ${insights['summary']}'),
                 const SizedBox(height: 8),
                 if (insights['strengths'] != null) ...[
-                  const Text('강점:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    '강점:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   ...(insights['strengths'] as List).map((s) => Text('• $s')),
                 ],
               ],
@@ -304,6 +319,68 @@ class _AdminPageState extends State<AdminPage> {
     return Colors.red;
   }
 
+  Future<List<Map<String, dynamic>>> _fetchSupportTickets() async {
+    if (_supabase == null) return [];
+    try {
+      final response = await _supabase!
+          .from('support_tickets')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(200);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('Error fetching support tickets: $e');
+      return [];
+    }
+  }
+
+  void _showSupportTicketDetail(Map<String, dynamic> ticket) {
+    final createdAtRaw = ticket['created_at']?.toString();
+    final createdAt = createdAtRaw != null
+        ? DateTime.tryParse(createdAtRaw)?.toLocal()
+        : null;
+
+    final title = ticket['title']?.toString() ?? '';
+    final contact = ticket['contact']?.toString() ?? '';
+    final message = ticket['message']?.toString() ?? '';
+    final status = ticket['status']?.toString() ?? 'open';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title.isNotEmpty ? title : '문의 상세'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('상태: $status'),
+                const SizedBox(height: 8),
+                Text('연락처: $contact'),
+                if (createdAt != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '접수: ${DateFormat('yyyy-MM-dd HH:mm').format(createdAt)}',
+                  ),
+                ],
+                const Divider(),
+                Text(message),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('닫기'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _replayResult(Map<String, dynamic> user) {
     HapticFeedback.mediumImpact();
 
@@ -320,8 +397,8 @@ class _AdminPageState extends State<AdminPage> {
         birthDate.month,
         birthDate.day,
         user['birth_hour'] as int,
-        0,  // 분은 원본 값 유지하거나 0으로 설정
-        0,  // 초는 0
+        0, // 분은 원본 값 유지하거나 0으로 설정
+        0, // 초는 0
       );
     }
 
@@ -336,7 +413,7 @@ class _AdminPageState extends State<AdminPage> {
         mbtiType: user['mbti'],
         gender: user['gender'],
         name: user['name'],
-        useNightSubhour: useNightSubhour,  // ✅ FIX 10: 원본 값 사용
+        useNightSubhour: useNightSubhour, // ✅ FIX 10: 원본 값 사용
       ),
     );
 
@@ -354,11 +431,7 @@ class _AdminPageState extends State<AdminPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(
-                Icons.lock_outline,
-                size: 64,
-                color: AppColors.primary,
-              ),
+              Icon(Icons.lock_outline, size: 64, color: AppColors.primary),
               const SizedBox(height: 24),
               Text(
                 '관리자 인증',
@@ -403,10 +476,7 @@ class _AdminPageState extends State<AdminPage> {
                 ),
                 child: const Text(
                   '확인',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 16),
@@ -432,11 +502,7 @@ class _AdminPageState extends State<AdminPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 48,
-            color: AppColors.error,
-          ),
+          Icon(Icons.error_outline, size: 48, color: AppColors.error),
           const SizedBox(height: 16),
           Text(
             '데이터 로드 실패',
@@ -466,139 +532,376 @@ class _AdminPageState extends State<AdminPage> {
     );
   }
 
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Icon(
+                  Icons.admin_panel_settings,
+                  size: 48,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '관리자 페이지',
+                  style: AppTypography.headlineSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.people_outline),
+            title: const Text('사용자 목록'),
+            selected: _selectedMenuIndex == 0,
+            onTap: () {
+              setState(() => _selectedMenuIndex = 0);
+              Navigator.pop(context); // Drawer 닫기
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.support_agent_outlined),
+            title: const Text('고객센터 문의'),
+            selected: _selectedMenuIndex == 1,
+            onTap: () {
+              setState(() => _selectedMenuIndex = 1);
+              Navigator.pop(context); // Drawer 닫기
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('로그아웃'),
+            onTap: () {
+              setState(() {
+                _isAuthenticated = false;
+                _selectedMenuIndex = 0;
+              });
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
-        title: const Text('관리자 페이지'),
+        title: Text(_selectedMenuIndex == 0 ? '사용자 목록' : '고객센터 문의'),
         backgroundColor: AppColors.backgroundOf(context),
         foregroundColor: AppColors.textPrimaryOf(context),
       ),
+      drawer: _isAuthenticated ? _buildDrawer() : null,
       // ✅ FIX 8: 에러 상태 UI 추가
       // ✅ FIX 9: Pagination - ScrollController 추가, ListView.builder로 변경
       body: !_isAuthenticated
           ? _buildPasswordInput()
-          : _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? _buildErrorWidget()
-              : (_users.isEmpty
-                  ? Center(
-                      child: Text(
-                        '조회할 데이터가 없습니다',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textSecondaryOf(context),
-                        ),
+          : _selectedMenuIndex == 0
+              ? _buildUserListScreen()
+              : _buildSupportTicketsScreen(),
+    );
+  }
+
+  Widget _buildUserListScreen() {
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _error != null
+            ? _buildErrorWidget()
+            : (_users.isEmpty
+                ? Center(
+                    child: Text(
+                      '조회할 데이터가 없습니다',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondaryOf(context),
                       ),
-                    )
-                  : ListView.separated(
-                      controller: _scrollController,
-                      itemCount: _users.length + (_isLoadingMore ? 1 : 0),
-                      separatorBuilder: (context, index) {
-                        // 마지막 로딩 인디케이터 이전에는 divider 표시
-                        if (index == _users.length) return const SizedBox.shrink();
-                        return const Divider(height: 1);
-                      },
-                      itemBuilder: (context, index) {
-                        // 마지막 항목이 로딩 인디케이터면 표시
-                        if (index == _users.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Center(
-                              child: SizedBox(
-                                height: 40,
-                                width: 40,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
+                    ),
+                  )
+                : ListView.separated(
+                    controller: _scrollController,
+                    itemCount: _users.length + (_isLoadingMore ? 1 : 0),
+                    separatorBuilder: (context, index) {
+                      // 마지막 로딩 인디케이터 이전에는 divider 표시
+                      if (index == _users.length)
+                        return const SizedBox.shrink();
+                      return const Divider(height: 1);
+                    },
+                    itemBuilder: (context, index) {
+                      // 마지막 항목이 로딩 인디케이터면 표시
+                      if (index == _users.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(
+                            child: SizedBox(
+                              height: 40,
+                              width: 40,
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                          );
-                        }
-                        final user = _users[index];
-                        final createdAt = DateTime.parse(user['created_at']).toLocal();
-                        // ✅ FIX 3: toLocal() 추가 - UTC 시간을 로컬 타임존으로 변환
-                        final birthDate = DateTime.parse(user['birth_date']).toLocal();
-                        final name = user['name']?.toString() ?? '';
-
-                        // ✅ FIX 4: 성별 값 유효성 검사
-                        final genderDisplay = (user['gender'] == 'male' || user['gender'] == 'M') ? '남' : '여';
-
-                        // ✅ FIX 5: MBTI 유효성 검사 (null 또는 빈 값 처리)
-                        final mbtiDisplay = (user['mbti']?.toString() ?? '').isNotEmpty
-                            ? user['mbti'].toString().toUpperCase()
-                            : '미등록';
-
-                        // 생시 정보
-                        final birthHour = user['birth_hour'] as int?;
-                        final birthTimeDisplay = birthHour != null ? ' ${birthHour}시' : '';
-
-                        // 음력/양력 정보
-                        final isLunar = user['is_lunar'] as bool? ?? false;
-                        final calendarType = isLunar ? '음력' : '양력';
-
-                        return ListTile(
-                          onTap: () => _replayResult(user),
-                          tileColor: AppColors.surfaceOf(context),
-                          title: Row(
-                            children: [
-                              Text(
-                                name.isNotEmpty ? name : '무명',
-                                style: AppTypography.titleMedium.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: name.isNotEmpty
-                                      ? AppColors.textPrimaryOf(context)
-                                      : AppColors.textTertiaryOf(context),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  mbtiDisplay,
-                                  style: AppTypography.caption.copyWith(color: AppColors.primary),
-                                ),
-                              ),
-                            ],
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text(
-                                '생일: ${DateFormat('yyyy-MM-dd').format(birthDate)}$birthTimeDisplay ($calendarType, $genderDisplay)',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: AppColors.textSecondaryOf(context),
-                                ),
-                              ),
-                              Text(
-                                '조회: ${DateFormat('MM/dd HH:mm').format(createdAt)}',
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.textTertiaryOf(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.favorite_border, size: 20),
-                                tooltip: '궁합 분석 조회',
-                                onPressed: () {
-                                  final userId = user['id'] as String;
-                                  _showCompatibilityResults(userId, name.isNotEmpty ? name : '무명');
-                                },
-                              ),
-                              const Icon(Icons.arrow_forward_ios, size: 16),
-                            ],
                           ),
                         );
-                      },
-                    )),
+                      }
+                      final user = _users[index];
+                      final createdAt = DateTime.parse(
+                        user['created_at'],
+                      ).toLocal();
+                      // ✅ FIX 3: toLocal() 추가 - UTC 시간을 로컬 타임존으로 변환
+                      final birthDate = DateTime.parse(
+                        user['birth_date'],
+                      ).toLocal();
+                      final name = user['name']?.toString() ?? '';
+
+                      // ✅ FIX 4: 성별 값 유효성 검사
+                      final genderDisplay =
+                          (user['gender'] == 'male' || user['gender'] == 'M')
+                          ? '남'
+                          : '여';
+
+                      // ✅ FIX 5: MBTI 유효성 검사 (null 또는 빈 값 처리)
+                      final mbtiDisplay =
+                          (user['mbti']?.toString() ?? '').isNotEmpty
+                          ? user['mbti'].toString().toUpperCase()
+                          : '미등록';
+
+                      // 생시 정보
+                      final birthHour = user['birth_hour'] as int?;
+                      final birthTimeDisplay = birthHour != null
+                          ? ' ${birthHour}시'
+                          : '';
+
+                      // 음력/양력 정보
+                      final isLunar = user['is_lunar'] as bool? ?? false;
+                      final calendarType = isLunar ? '음력' : '양력';
+
+                      return ListTile(
+                        onTap: () => _replayResult(user),
+                        tileColor: AppColors.surfaceOf(context),
+                        title: Row(
+                          children: [
+                            Text(
+                              name.isNotEmpty ? name : '무명',
+                              style: AppTypography.titleMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: name.isNotEmpty
+                                    ? AppColors.textPrimaryOf(context)
+                                    : AppColors.textTertiaryOf(context),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                mbtiDisplay,
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              '생일: ${DateFormat('yyyy-MM-dd').format(birthDate)}$birthTimeDisplay ($calendarType, $genderDisplay)',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textSecondaryOf(context),
+                              ),
+                            ),
+                            Text(
+                              '조회: ${DateFormat('MM/dd HH:mm').format(createdAt)}',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.textTertiaryOf(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.favorite_border, size: 20),
+                              tooltip: '궁합 분석 조회',
+                              onPressed: () {
+                                final userId = user['id'] as String;
+                                _showCompatibilityResults(
+                                  userId,
+                                  name.isNotEmpty ? name : '무명',
+                                );
+                              },
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 16),
+                          ],
+                        ),
+                      );
+                    },
+                  ));
+  }
+
+  Widget _buildSupportTicketsScreen() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _fetchSupportTickets(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final tickets = snapshot.data ?? [];
+        if (tickets.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.support_agent_outlined,
+                  size: 64,
+                  color: AppColors.textTertiaryOf(context),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '문의가 없습니다',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondaryOf(context),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.separated(
+          itemCount: tickets.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final t = tickets[index];
+            final title = t['title']?.toString() ?? '제목 없음';
+            final contact = t['contact']?.toString() ?? '';
+            final message = t['message']?.toString() ?? '';
+            final status = t['status']?.toString() ?? 'open';
+
+            final createdAtRaw = t['created_at']?.toString();
+            final createdAt = createdAtRaw != null
+                ? DateTime.tryParse(createdAtRaw)?.toLocal()
+                : null;
+
+            // 상태 색상
+            Color statusColor;
+            switch (status) {
+              case 'resolved':
+                statusColor = Colors.green;
+                break;
+              case 'closed':
+                statusColor = Colors.grey;
+                break;
+              default:
+                statusColor = Colors.orange;
+            }
+
+            return ListTile(
+              tileColor: AppColors.surfaceOf(context),
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      status,
+                      style: AppTypography.caption.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondaryOf(context),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline,
+                        size: 14,
+                        color: AppColors.textTertiaryOf(context),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        contact,
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textTertiaryOf(context),
+                        ),
+                      ),
+                      if (createdAt != null) ...[
+                        const SizedBox(width: 12),
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: AppColors.textTertiaryOf(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('MM/dd HH:mm').format(createdAt),
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textTertiaryOf(context),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () => _showSupportTicketDetail(t),
+            );
+          },
+        );
+      },
     );
   }
 }

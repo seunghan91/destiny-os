@@ -1,5 +1,4 @@
 import 'dart:ui' as ui;
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -7,11 +6,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../core/utils/web_download_stub.dart'
+    if (dart.library.html) '../../../../core/utils/web_download_web.dart'
+    as web_download;
 import '../../../fortune_2026/data/services/fortune_view_access_service.dart';
 import '../../../compatibility/data/services/compatibility_calculator.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
@@ -48,6 +49,24 @@ class _SharePageState extends State<SharePage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // ResultPage 등에서 extra로 전달한 초기 탭을 반영
+    final extraData = _getExtraData(context);
+    final initialIndex = extraData?['initialCardIndex'];
+    if (initialIndex is int &&
+        initialIndex >= 0 &&
+        initialIndex < _getCardTypes(context).length &&
+        initialIndex != _selectedCardIndex) {
+      // build 중 setState를 피하기 위해 다음 프레임에서 반영
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _selectedCardIndex = initialIndex);
+      });
+    }
+  }
+
   Widget build(BuildContext context) {
     final extraData = _getExtraData(context);
     final isCompatibilityShare = extraData?['type'] == 'compatibility';
@@ -1010,51 +1029,34 @@ class _SharePageState extends State<SharePage> {
         return;
       }
 
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/destiny_kakao_share.png');
-      await file.writeAsBytes(imageBytes);
-
-      // 카카오톡이 설치되어 있는지 확인
-      final kakaoUri = Uri.parse('kakaolink://');
-      final canLaunchKakao = await canLaunchUrl(kakaoUri);
-
-      if (canLaunchKakao) {
-        // 카카오톡 공유 - 시스템 공유 시트를 통해 카카오톡 선택하도록 유도
-        await Share.shareXFiles([
-          XFile(file.path),
-        ], text: '나의 2026년 운세를 확인해보세요! 🐴✨\n#2026신년운세 #2026운세');
-      } else {
-        // 카카오톡이 설치되지 않은 경우
-        _showKakaoNotInstalledDialog();
+      if (kIsWeb) {
+        await _webDownloadAndTryShareText(
+          imageBytes: imageBytes,
+          fileName: 'destiny_kakao_share.png',
+          shareText: '나의 2026년 운세를 확인해보세요! 🐴✨\n#2026신년운세 #2026운세',
+          successMessage: '이미지를 다운로드했습니다. 다운로드된 사진을 카카오톡에 공유해주세요.',
+        );
+        return;
       }
+
+      final xFile = XFile.fromData(
+        imageBytes,
+        mimeType: 'image/png',
+        name: 'destiny_kakao_share.png',
+      );
+
+      // 플랫폼별로 "카카오톡 직접 공유"를 강제하기 어렵기 때문에
+      // 시스템 공유 시트에서 카카오톡 선택을 유도합니다.
+      await Share.shareXFiles([
+        xFile,
+      ], text: '나의 2026년 운세를 확인해보세요! 🐴✨\n#2026신년운세 #2026운세');
+
+      _showSuccess('공유 목록에서 카카오톡을 선택해 공유해주세요.');
     } catch (e) {
       _showError('카카오톡 공유에 실패했습니다');
     } finally {
       setState(() => _isGenerating = false);
     }
-  }
-
-  /// 카카오톡 미설치 안내
-  void _showKakaoNotInstalledDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.chat_bubble, color: Color(0xFFFEE500)),
-            SizedBox(width: 8),
-            Text('카카오톡'),
-          ],
-        ),
-        content: const Text('카카오톡이 설치되어 있지 않습니다.\n다른 공유 방법을 이용해주세요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
   }
 
   /// 인스타그램 스토리로 공유
@@ -1071,90 +1073,31 @@ class _SharePageState extends State<SharePage> {
         return;
       }
 
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/destiny_insta_share.png');
-      await file.writeAsBytes(imageBytes);
-
-      // 인스타그램 앱 확인 (iOS/Android 다름)
-      final instagramUri = Uri.parse('instagram://');
-      final canLaunchInstagram = await canLaunchUrl(instagramUri);
-
-      if (canLaunchInstagram) {
-        if (Platform.isIOS) {
-          // iOS: instagram-stories 스키마 사용
-          await _shareToInstagramStoryIOS(file);
-        } else if (Platform.isAndroid) {
-          // Android: Intent를 통한 공유
-          await _shareToInstagramStoryAndroid(file);
-        }
-      } else {
-        // 인스타그램이 설치되지 않은 경우
-        _showInstagramNotInstalledDialog();
+      if (kIsWeb) {
+        await _webDownloadAndTryShareText(
+          imageBytes: imageBytes,
+          fileName: 'destiny_insta_share.png',
+          shareText: '나의 2026년 운세 🐴✨ #2026신년운세',
+          successMessage: '이미지를 다운로드했습니다. 다운로드된 사진을 인스타그램에 공유해주세요.',
+        );
+        return;
       }
+
+      final xFile = XFile.fromData(
+        imageBytes,
+        mimeType: 'image/png',
+        name: 'destiny_insta_share.png',
+      );
+
+      // 스토리 전용 API(딥링크/인텐트)는 플랫폼/정책/권한 이슈가 많아
+      // 시스템 공유 시트에서 인스타그램 선택을 유도합니다.
+      await Share.shareXFiles([xFile], text: '나의 2026년 운세 🐴✨ #2026신년운세');
+      _showSuccess('공유 목록에서 인스타그램을 선택한 뒤 스토리로 공유해주세요!');
     } catch (e) {
       _showError('인스타그램 공유에 실패했습니다');
     } finally {
       setState(() => _isGenerating = false);
     }
-  }
-
-  /// iOS 인스타그램 스토리 공유
-  Future<void> _shareToInstagramStoryIOS(File imageFile) async {
-    // iOS에서는 시스템 공유 시트를 통해 인스타그램 선택
-    await Share.shareXFiles([
-      XFile(imageFile.path),
-    ], text: '나의 2026년 운세 🐴✨ #2026신년운세');
-    _showSuccess('인스타그램에서 스토리로 공유해주세요!');
-  }
-
-  /// Android 인스타그램 스토리 공유
-  Future<void> _shareToInstagramStoryAndroid(File imageFile) async {
-    // Android에서도 시스템 공유 시트 사용
-    await Share.shareXFiles([
-      XFile(imageFile.path),
-    ], text: '나의 2026년 운세 🐴✨ #2026신년운세');
-    _showSuccess('인스타그램에서 스토리로 공유해주세요!');
-  }
-
-  /// 인스타그램 미설치 안내
-  void _showInstagramNotInstalledDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF833AB4),
-                    Color(0xFFE1306C),
-                    Color(0xFFF56040),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text('인스타그램'),
-          ],
-        ),
-        content: const Text('인스타그램이 설치되어 있지 않습니다.\n다른 공유 방법을 이용해주세요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<Uint8List?> _captureWidget() async {
@@ -1173,6 +1116,31 @@ class _SharePageState extends State<SharePage> {
     }
   }
 
+  Future<void> _webDownloadAndTryShareText({
+    required Uint8List imageBytes,
+    required String fileName,
+    String? shareText,
+    required String successMessage,
+  }) async {
+    final ok = web_download.downloadBytes(
+      imageBytes,
+      fileName: fileName,
+      mimeType: 'image/png',
+    );
+
+    if (shareText != null && shareText.trim().isNotEmpty) {
+      try {
+        await Share.share(shareText);
+      } catch (_) {}
+    }
+
+    if (ok) {
+      _showSuccess(successMessage);
+    } else {
+      _showError('웹에서 저장을 지원하지 않습니다');
+    }
+  }
+
   Future<void> _shareImage() async {
     setState(() => _isGenerating = true);
 
@@ -1185,10 +1153,6 @@ class _SharePageState extends State<SharePage> {
         return;
       }
 
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/destiny_share.png');
-      await file.writeAsBytes(imageBytes);
-
       final extraData = _getExtraData(context);
       final isCompatibilityShare = extraData?['type'] == 'compatibility';
 
@@ -1196,7 +1160,26 @@ class _SharePageState extends State<SharePage> {
           ? '우리 궁합 점수는 몇 점일까? 💗\n궁합 카드 공유해요!\n#궁합 #사주궁합 #MBTI궁합'
           : '나의 2026년 운세를 확인해보세요! 🔮\n#2026신년운세 #2026운세 #사주';
 
-      await Share.shareXFiles([XFile(file.path)], text: text);
+      if (kIsWeb) {
+        await _webDownloadAndTryShareText(
+          imageBytes: imageBytes,
+          fileName: isCompatibilityShare
+              ? 'compatibility_share.png'
+              : 'destiny_share.png',
+          shareText: text,
+          successMessage: '이미지를 다운로드했습니다. 공유할 앱에서 이미지를 선택해 공유해주세요.',
+        );
+        return;
+      }
+
+      final xFile = XFile.fromData(
+        imageBytes,
+        mimeType: 'image/png',
+        name: isCompatibilityShare
+            ? 'compatibility_share.png'
+            : 'destiny_share.png',
+      );
+      await Share.shareXFiles([xFile], text: text);
     } catch (e) {
       _showError('공유에 실패했습니다: $e');
     } finally {
@@ -1216,25 +1199,33 @@ class _SharePageState extends State<SharePage> {
         return;
       }
 
-      final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'destiny_$timestamp.png';
-      final file = File('${tempDir.path}/$fileName');
-      await file.writeAsBytes(imageBytes);
-
       HapticFeedback.mediumImpact();
 
-      // iOS/Android 공유 시트를 통해 "이미지 저장" 옵션 제공
-      // 사용자가 직접 사진 앱에 저장하거나 다른 앱으로 공유 가능
-      final result = await Share.shareXFiles([
-        XFile(file.path, mimeType: 'image/png'),
-      ], subject: '2026 신년운세 운세 카드');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'destiny_$timestamp.png';
 
-      if (result.status == ShareResultStatus.success) {
-        _showSuccess('이미지가 저장되었습니다');
-      } else if (result.status == ShareResultStatus.dismissed) {
-        // 사용자가 취소한 경우 - 조용히 처리
+      if (kIsWeb) {
+        final ok = web_download.downloadBytes(
+          imageBytes,
+          fileName: fileName,
+          mimeType: 'image/png',
+        );
+        if (ok) {
+          _showSuccess('이미지가 다운로드되었습니다');
+        } else {
+          _showError('웹에서 저장을 지원하지 않습니다');
+        }
+        return;
       }
+
+      // 모바일/데스크톱: 시스템 공유 시트에서 "사진 저장/파일 저장" 선택 유도
+      final xFile = XFile.fromData(
+        imageBytes,
+        mimeType: 'image/png',
+        name: fileName,
+      );
+      await Share.shareXFiles([xFile], subject: '2026 신년운세 운세 카드');
+      _showSuccess('공유 목록에서 "사진 저장/파일 저장"을 선택해 저장하세요.');
     } catch (e) {
       _showError('저장에 실패했습니다: $e');
     } finally {

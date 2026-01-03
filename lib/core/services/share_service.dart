@@ -1,10 +1,13 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../utils/web_download_stub.dart'
+    if (dart.library.html) '../utils/web_download_web.dart'
+    as web_download;
 
 /// 공유 서비스
 ///
@@ -23,7 +26,8 @@ class ShareService {
   }) async {
     try {
       // 1. RenderRepaintBoundary 가져오기
-      final boundary = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary =
+          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
 
       if (boundary == null) {
         throw Exception('위젯을 찾을 수 없습니다. RepaintBoundary가 빌드되었는지 확인하세요.');
@@ -39,13 +43,26 @@ class ShareService {
 
       final pngBytes = byteData.buffer.asUint8List();
 
-      // 3. 임시 디렉토리에 파일 저장
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/$fileName.png');
-      await file.writeAsBytes(pngBytes);
+      if (kIsWeb) {
+        web_download.downloadBytes(
+          pngBytes,
+          fileName: '$fileName.png',
+          mimeType: 'image/png',
+        );
+        if (shareText != null && shareText.trim().isNotEmpty) {
+          try {
+            await Share.share(shareText, subject: '운명의 OS 2026 - 궁합 분석');
+          } catch (_) {}
+        }
+        return;
+      }
 
       // 4. 공유
-      final xFile = XFile(file.path);
+      final xFile = XFile.fromData(
+        pngBytes,
+        mimeType: 'image/png',
+        name: '$fileName.png',
+      );
       await Share.shareXFiles(
         [xFile],
         text: shareText,
@@ -56,38 +73,15 @@ class ShareService {
     }
   }
 
-  /// 위젯을 이미지로 캡처만 수행 (파일로 저장)
-  ///
-  /// [key]: RepaintBoundary의 GlobalKey
-  /// [fileName]: 저장할 파일명 (확장자 제외)
-  /// Returns: 저장된 파일 경로
+  /// 위젯 캡처 결과를 "파일 경로"로 돌려주는 API는 웹에서 동작이 일관되지 않아 비권장입니다.
+  /// 필요 시 `shareBytes` 또는 `captureAndShare`를 사용하세요.
   static Future<String> captureToFile({
     required GlobalKey key,
     required String fileName,
   }) async {
-    try {
-      final boundary = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-
-      if (boundary == null) {
-        throw Exception('위젯을 찾을 수 없습니다.');
-      }
-
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
-      if (byteData == null) {
-        throw Exception('이미지 변환에 실패했습니다.');
-      }
-
-      final pngBytes = byteData.buffer.asUint8List();
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/$fileName.png');
-      await file.writeAsBytes(pngBytes);
-
-      return file.path;
-    } catch (e) {
-      throw Exception('이미지 캡처 중 오류가 발생했습니다: $e');
-    }
+    throw UnsupportedError(
+      'captureToFile는 더 이상 지원하지 않습니다. shareBytes/captureAndShare를 사용하세요.',
+    );
   }
 
   /// 바이트 데이터를 공유
@@ -101,16 +95,26 @@ class ShareService {
     String? shareText,
   }) async {
     try {
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/$fileName');
-      await file.writeAsBytes(bytes);
+      if (kIsWeb) {
+        web_download.downloadBytes(
+          bytes,
+          fileName: fileName,
+          mimeType: 'image/png',
+        );
+        if (shareText != null && shareText.trim().isNotEmpty) {
+          try {
+            await Share.share(shareText, subject: '운명의 OS 2026');
+          } catch (_) {}
+        }
+        return;
+      }
 
-      final xFile = XFile(file.path);
-      await Share.shareXFiles(
-        [xFile],
-        text: shareText,
-        subject: '운명의 OS 2026',
+      final xFile = XFile.fromData(
+        bytes,
+        mimeType: 'image/png',
+        name: fileName,
       );
+      await Share.shareXFiles([xFile], text: shareText, subject: '운명의 OS 2026');
     } catch (e) {
       throw Exception('공유 중 오류가 발생했습니다: $e');
     }
@@ -120,15 +124,9 @@ class ShareService {
   ///
   /// [text]: 공유할 텍스트
   /// [subject]: 공유 제목 (이메일 등에서 사용)
-  static Future<void> shareText({
-    required String text,
-    String? subject,
-  }) async {
+  static Future<void> shareText({required String text, String? subject}) async {
     try {
-      await Share.share(
-        text,
-        subject: subject ?? '운명의 OS 2026',
-      );
+      await Share.share(text, subject: subject ?? '운명의 OS 2026');
     } catch (e) {
       throw Exception('공유 중 오류가 발생했습니다: $e');
     }
@@ -145,10 +143,10 @@ class ShareService {
     final emoji = overallScore >= 80
         ? '💕'
         : overallScore >= 60
-            ? '✨'
-            : overallScore >= 40
-                ? '💪'
-                : '🤔';
+        ? '✨'
+        : overallScore >= 40
+        ? '💪'
+        : '🤔';
 
     return '''$emoji 나와 ${partnerName.isNotEmpty ? '${partnerName}님' : '그 사람'}의 궁합은 ${overallScore}점!
 

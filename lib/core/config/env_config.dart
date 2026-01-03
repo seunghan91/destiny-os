@@ -58,10 +58,18 @@ class EnvConfig {
   }
 
   static String get supabaseAnonKey {
-    const compileTimeKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
-    if (compileTimeKey.isNotEmpty) return compileTimeKey;
+    const compileTimeKey = String.fromEnvironment(
+      'SUPABASE_ANON_KEY',
+      defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I',
+    );
+    if (compileTimeKey != 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I') {
+      return compileTimeKey;
+    }
 
-    return dotenv.get('SUPABASE_ANON_KEY', fallback: '');
+    return dotenv.get(
+      'SUPABASE_ANON_KEY',
+      fallback: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I',
+    );
   }
 
   // Edge Function URL

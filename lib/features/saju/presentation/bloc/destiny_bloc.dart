@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/saju_chart.dart';
 import '../../domain/entities/ten_gods.dart';
@@ -302,7 +303,8 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       final gapAnalysis = _performGapAnalysis(sajuBasedMbti, mbtiType);
 
       // DB 저장
-      _saveUserResult(event);
+      // 저장 누락 방지를 위해 await로 보장 (실패 시 내부에서 비치명적으로 처리)
+      await _saveUserResult(event);
 
       debugPrint('🔮 [DestinyBloc] Analysis complete, emitting DestinySuccess');
       emit(
@@ -335,25 +337,29 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
   Future<void> _saveUserResult(AnalyzeFortune event) async {
     try {
       final supabase = Supabase.instance.client;
-      final user = supabase.auth.currentUser;
+      final supabaseUser = supabase.auth.currentUser;
+      final firebaseUser = firebase_auth.FirebaseAuth.instance.currentUser;
+      final firebaseUid = firebaseUser?.uid;
 
-      debugPrint('📝 [DestinyBloc] Saving user result for user: ${user?.id}');
+      debugPrint(
+        '📝 [DestinyBloc] Saving user result - firebaseUid: $firebaseUid, supabaseUid: ${supabaseUser?.id}',
+      );
 
       // user_profiles에서 사용자 프로필 확인 및 업데이트
-      if (user != null) {
+      if (firebaseUid != null) {
         try {
           // user_profiles 테이블에 사주 정보 저장/업데이트
           await supabase.from('user_profiles').upsert({
-            'firebase_uid': user.id,
-            'email': user.email,
-            'birth_date': event.birthDateTime.toIso8601String(),
+            'firebase_uid': firebaseUid,
+            'email': firebaseUser?.email,
+            'birth_date': event.birthDateTime.toUtc().toIso8601String(),
             'birth_hour': event.birthDateTime.hour,
             'is_lunar': event.isLunar,
             'gender': event.gender,
             'mbti': event.mbtiType,
             'display_name': event.name,
-            'updated_at': DateTime.now().toIso8601String(),
-          });
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          }, onConflict: 'firebase_uid');
           debugPrint('✅ [DestinyBloc] User profile updated successfully');
         } catch (profileError) {
           debugPrint('⚠️ [DestinyBloc] Warning: Failed to update user_profiles: $profileError');
@@ -363,17 +369,27 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
 
       // user_results 테이블에 분석 결과 저장
       // ✅ FIX 10: use_night_subhour 저장 추가
-      final response = await supabase.from('user_results').insert({
-        'firebase_uid': user?.id,
-        'birth_date': event.birthDateTime.toIso8601String(),
+      // 주의: DB 스키마에서 firebase_uid가 UNIQUE로 관리될 수 있어,
+      // 로그인 사용자(firebaseUid != null)는 upsert로 "최신 결과"를 보장한다.
+      // (insert만 하면 재분석 시 UNIQUE 충돌로 저장이 누락될 수 있음)
+      final resultPayload = <String, dynamic>{
+        'firebase_uid': firebaseUid,
+        'birth_date': event.birthDateTime.toUtc().toIso8601String(),
         'birth_hour': event.birthDateTime.hour,
         'is_lunar': event.isLunar,
         'gender': event.gender,
         'mbti': event.mbtiType,
         'name': event.name,
         'use_night_subhour': event.useNightSubhour,  // ✅ FIX 10: 야자시 사용 여부 저장
-        'created_at': DateTime.now().toIso8601String(),
-      }).select('id');
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      };
+
+      final response = firebaseUid != null
+          ? await supabase
+              .from('user_results')
+              .upsert(resultPayload, onConflict: 'firebase_uid')
+              .select('id')
+          : await supabase.from('user_results').insert(resultPayload).select('id');
 
       if (response.isNotEmpty) {
         debugPrint('✅ [DestinyBloc] User result saved successfully: ${response.first['id']}');

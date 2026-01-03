@@ -174,6 +174,7 @@ class CompatibilityCalculator {
         dayPillarAnalysis,
         branchRelations,
         elementBalance,
+        mbti,  // MBTI 통합 분석 추가
       ),
     );
   }
@@ -680,72 +681,151 @@ class CompatibilityCalculator {
     return names['${sorted[0]}${sorted[1]}'] ?? '$s1$s2합';
   }
 
-  /// 인사이트 생성
+  /// 인사이트 생성 (사주 + MBTI 통합 분석)
   CompatibilityInsights _generateInsights(
     DayPillarAnalysis dayPillar,
     BranchRelations branches,
     ElementBalance elements,
+    _MbtiAnalysisResult? mbtiResult,
   ) {
     final strengths = <String>[];
     final challenges = <String>[];
     final advice = <String>[];
 
-    // 강점 분석
+    // ========== 사주 기반 강점 분석 ==========
     if (dayPillar.relations.contains('천간합') || dayPillar.relations.contains('육합')) {
-      strengths.add('서로 끌리고 이해하는 깊은 인연');
+      strengths.add('🌟 사주: 서로 끌리고 이해하는 깊은 인연 (${dayPillar.relations.contains('천간합') && dayPillar.relations.contains('육합') ? '천지합' : dayPillar.relations.contains('천간합') ? '천간합' : '육합'})');
     }
     if (branches.combinations.isNotEmpty) {
-      strengths.add('좋은 시너지를 낼 수 있는 조합 (${branches.combinations.join(', ')})');
+      strengths.add('🤝 사주: 좋은 시너지를 낼 수 있는 조합 (${branches.combinations.join(', ')})');
     }
     if (elements.complementaryElements.isNotEmpty) {
-      strengths.add('서로 부족한 부분을 채워주는 보완 관계');
+      final elemDesc = _getElementDescription(elements.complementaryElements);
+      strengths.add('⚖️ 오행: 서로 부족한 부분을 채워주는 보완 관계 ($elemDesc)');
     }
     if (dayPillar.relations.contains('상생')) {
-      strengths.add('상생 관계로 서로에게 힘이 됨');
+      strengths.add('♻️ 오행: 상생 관계로 서로에게 힘이 되고 성장을 돕는 구조');
     }
     if (elements.balanceScore >= 75) {
-      strengths.add('함께 있을 때 오행 균형이 좋아짐');
+      strengths.add('🎯 오행: 함께 있을 때 오행 균형이 좋아져 안정감과 활력이 높아짐');
     }
 
-    // 도전 분석
+    // ========== MBTI 기반 강점 분석 ==========
+    if (mbtiResult != null) {
+      if (mbtiResult.score >= 70) {
+        strengths.add('💝 MBTI: ${mbtiResult.relationshipType} - 성향이 잘 맞아 편안한 관계');
+      }
+      if (mbtiResult.commonGround.isNotEmpty && !mbtiResult.commonGround.first.contains('드러나지')) {
+        strengths.add('🎭 MBTI: 공통 성향으로 서로를 쉽게 이해 (${mbtiResult.commonGround.take(2).join(', ')})');
+      }
+    }
+
+    // ========== 사주-MBTI 통합 강점 ==========
+    if (mbtiResult != null && mbtiResult.score >= 65) {
+      if (branches.clashes.isNotEmpty) {
+        strengths.add('✨ 통합: 사주로는 충이 있지만 MBTI 성향이 잘 맞아 갈등을 완화할 수 있음');
+      }
+      if (dayPillar.score < 70 && mbtiResult.score >= 75) {
+        strengths.add('💪 통합: 타고난 궁합은 보통이지만, 현재 성향이 잘 맞아 노력으로 극복 가능');
+      }
+    }
+
+    // ========== 사주 기반 도전 분석 ==========
     if (branches.clashes.isNotEmpty) {
-      challenges.add('갈등 요소 존재 (${branches.clashes.join(', ')})');
+      final clashDetails = _getClashDetails(branches.clashes);
+      challenges.add('⚠️ 사주: 갈등 요소 존재 (${branches.clashes.join(', ')}) - $clashDetails');
     }
     if (branches.punishments.isNotEmpty) {
-      challenges.add('서로 자극이 될 수 있음 (${branches.punishments.join(', ')})');
+      challenges.add('🔥 사주: 서로 자극이 되어 감정적 마찰 발생 가능 (${branches.punishments.join(', ')})');
     }
     if (branches.harms.isNotEmpty) {
-      challenges.add('오해가 생기기 쉬운 관계 (${branches.harms.join(', ')})');
+      challenges.add('🌫️ 사주: 오해와 섭섭함이 쌓이기 쉬운 관계 (${branches.harms.join(', ')})');
     }
     if (elements.lackingElements.length >= 2) {
-      challenges.add('함께 부족한 오행이 있음 (${elements.lackingElements.join(', ')})');
+      final lackDesc = _getLackingElementsDescription(elements.lackingElements);
+      challenges.add('⚖️ 오행: 함께 부족한 오행 (${elements.lackingElements.join(', ')}) - $lackDesc');
     }
     if (dayPillar.relations.contains('상극')) {
-      challenges.add('의견 충돌이 있을 수 있음');
+      challenges.add('💥 오행: 상극 관계로 의견 충돌과 힘겨루기 발생 가능');
     }
 
-    // 조언
+    // ========== MBTI 기반 도전 분석 ==========
+    if (mbtiResult != null) {
+      if (mbtiResult.score < 60) {
+        challenges.add('🎭 MBTI: ${mbtiResult.relationshipType} - 성향 차이로 인한 조율 필요');
+      }
+      if (mbtiResult.differences.length >= 3 && !mbtiResult.differences.first.contains('보이지 않아요')) {
+        challenges.add('🔄 MBTI: 다수 차원에서 성향이 달라 서로를 이해하는 데 시간 필요');
+      }
+    }
+
+    // ========== 사주-MBTI 통합 도전 ==========
+    if (mbtiResult != null && mbtiResult.score < 55) {
+      if (dayPillar.score < 60) {
+        challenges.add('🌓 통합: 타고난 궁합과 현재 성향 모두 조율이 필요한 관계 - 많은 노력과 이해가 중요');
+      }
+    }
+
+    // ========== 사주 기반 조언 ==========
     if (branches.clashes.isNotEmpty) {
-      advice.add('충돌 시 감정보다 이성적 대화를 우선하세요');
+      advice.add('💬 사주 조언: 충돌 시 감정적 반응보다 하루 시간을 두고 이성적 대화를 우선하세요. 특히 ${_getClashTimingAdvice(branches.clashes)}');
     }
     if (branches.harms.isNotEmpty) {
-      advice.add('서로의 의도를 확인하며 오해를 줄이세요');
+      advice.add('🗣️ 사주 조언: 서로의 의도를 확인하는 습관(복기 대화)으로 오해를 줄이세요. "내가 이해한 게 맞아?"라고 물어보세요');
     }
+    if (branches.punishments.isNotEmpty) {
+      advice.add('🧘 사주 조언: 감정이 격해질 때 물리적 거리 두기(산책, 각자 시간)가 효과적입니다');
+    }
+
+    // ========== 오행 기반 조언 ==========
     if (elements.lackingElements.contains('목')) {
-      advice.add('함께 자연 속 활동을 하면 좋습니다');
+      advice.add('🌳 오행 조언: 함께 자연 속 활동(등산, 캠핑, 공원 산책)을 하면 관계가 부드러워집니다');
     }
     if (elements.lackingElements.contains('화')) {
-      advice.add('열정적인 공동 목표를 세워보세요');
+      advice.add('🔥 오행 조언: 열정적인 공동 목표(여행 계획, 취미 도전)를 세우면 활력이 생깁니다');
     }
     if (elements.lackingElements.contains('토')) {
-      advice.add('안정적인 일상 루틴을 만들어보세요');
+      advice.add('🏡 오행 조언: 안정적인 일상 루틴(같이 밥 먹기, 주말 약속)을 만들면 신뢰가 쌓입니다');
     }
     if (elements.lackingElements.contains('금')) {
-      advice.add('명확한 규칙과 경계를 정해두세요');
+      advice.add('⚖️ 오행 조언: 명확한 규칙과 경계(금전, 시간 약속)를 정해두면 갈등이 줄어듭니다');
     }
     if (elements.lackingElements.contains('수')) {
-      advice.add('깊은 대화와 교감의 시간을 가지세요');
+      advice.add('💧 오행 조언: 깊은 대화와 교감의 시간(속마음 나누기)을 정기적으로 가지세요');
     }
+
+    // ========== MBTI 기반 조언 ==========
+    if (mbtiResult != null) {
+      advice.add('🎭 MBTI 조언: ${mbtiResult.communicationStyle}');
+      advice.add('🔧 갈등 조언: ${mbtiResult.conflictPattern}');
+
+      // MBTI 차원별 구체적 조언
+      if (mbtiResult.differences.isNotEmpty && !mbtiResult.differences.first.contains('보이지 않아요')) {
+        for (final diff in mbtiResult.differences.take(2)) {
+          if (diff.contains('에너지')) {
+            advice.add('⚡ 에너지 차이: 외향-내향 차이가 있다면, 주말은 한 번은 외출/한 번은 집에서 보내는 식으로 번갈아 맞춰주세요');
+          } else if (diff.contains('인식')) {
+            advice.add('👀 인식 차이: 직관-감각 차이가 있다면, 구체적 사실과 큰 그림을 번갈아 설명해주세요');
+          } else if (diff.contains('판단')) {
+            advice.add('🧠 판단 차이: 사고-감정 차이가 있다면, 논리와 감정을 모두 표현하며 대화하세요');
+          } else if (diff.contains('생활')) {
+            advice.add('📅 생활 차이: 계획-즉흥 차이가 있다면, 중요 일정은 미리 공유하되 여유 시간은 자유롭게 두세요');
+          }
+        }
+      }
+    }
+
+    // ========== 통합 조언 ==========
+    if (mbtiResult != null && dayPillar.score >= 70 && mbtiResult.score >= 70) {
+      advice.add('✨ 종합: 타고난 궁합과 현재 성향 모두 좋습니다. 현재의 관계를 믿고 서로 응원하며 발전시켜 나가세요');
+    } else if (mbtiResult != null && dayPillar.score < 60 && mbtiResult.score >= 70) {
+      advice.add('💪 종합: 사주로는 노력이 필요하지만 현재 성향이 잘 맞으므로, 지금의 좋은 관계를 유지하면 사주의 약점을 충분히 극복할 수 있습니다');
+    } else if (mbtiResult != null && dayPillar.score >= 70 && mbtiResult.score < 60) {
+      advice.add('🌱 종합: 타고난 인연은 좋으니, 현재 성향 차이를 이해하고 조율하는 시간을 가지면 깊은 관계로 발전할 것입니다');
+    } else if (mbtiResult == null && dayPillar.score >= 70) {
+      advice.add('🌟 종합: 사주로 보면 좋은 인연입니다. 서로를 이해하고 배려하며 관계를 발전시켜 나가세요');
+    }
+
     if (strengths.isEmpty) {
       advice.add('서로의 차이를 인정하고 배려하는 노력이 필요합니다');
     }
@@ -762,7 +842,7 @@ class CompatibilityCalculator {
     }
 
     // 요약
-    final summary = _generateSummary(dayPillar, branches, elements);
+    final summary = _generateSummary(dayPillar, branches, elements, mbtiResult);
 
     return CompatibilityInsights(
       summary: summary,
@@ -772,31 +852,146 @@ class CompatibilityCalculator {
     );
   }
 
-  /// 요약 생성
+  /// 오행 설명
+  String _getElementDescription(List<String> elements) {
+    final desc = <String>[];
+    for (final e in elements) {
+      switch (e) {
+        case '목': desc.add('성장과 유연성'); break;
+        case '화': desc.add('열정과 활력'); break;
+        case '토': desc.add('안정과 신뢰'); break;
+        case '금': desc.add('원칙과 결단력'); break;
+        case '수': desc.add('지혜와 깊이'); break;
+      }
+    }
+    return desc.join(', ');
+  }
+
+  /// 부족한 오행 설명
+  String _getLackingElementsDescription(List<String> elements) {
+    if (elements.contains('목') && elements.contains('화')) {
+      return '활력과 성장 에너지 부족, 함께 있을 때 지치기 쉬움';
+    }
+    if (elements.contains('토') && elements.contains('금')) {
+      return '안정성과 원칙성 부족, 계획과 실행력 약할 수 있음';
+    }
+    if (elements.contains('수')) {
+      return '깊이 있는 소통 부족, 표면적 관계에 그칠 수 있음';
+    }
+    return '해당 오행 에너지 부족';
+  }
+
+  /// 충 상세 설명
+  String _getClashDetails(List<String> clashes) {
+    if (clashes.any((c) => c.contains('자오'))) {
+      return '정면 대립하기 쉬움';
+    }
+    if (clashes.any((c) => c.contains('묘유'))) {
+      return '가치관 충돌 주의';
+    }
+    if (clashes.any((c) => c.contains('인신'))) {
+      return '방향성 차이 조율 필요';
+    }
+    return '긴장 관계';
+  }
+
+  /// 충 타이밍 조언
+  String _getClashTimingAdvice(List<String> clashes) {
+    final times = <String>[];
+    for (final clash in clashes) {
+      if (clash.contains('자오')) times.add('자시(23-01시)와 오시(11-13시)');
+      if (clash.contains('축미')) times.add('축시(01-03시)와 미시(13-15시)');
+      if (clash.contains('인신')) times.add('인시(03-05시)와 신시(15-17시)');
+      if (clash.contains('묘유')) times.add('묘시(05-07시)와 유시(17-19시)');
+      if (clash.contains('진술')) times.add('진시(07-09시)와 술시(19-21시)');
+      if (clash.contains('사해')) times.add('사시(09-11시)와 해시(21-23시)');
+    }
+    return times.isNotEmpty ? '${times.first} 시간대에는 중요한 대화 피하기' : '감정이 격한 시간대는 피하기';
+  }
+
+  /// 요약 생성 (사주 + MBTI 통합)
   String _generateSummary(
     DayPillarAnalysis dayPillar,
     BranchRelations branches,
     ElementBalance elements,
+    _MbtiAnalysisResult? mbtiResult,
   ) {
-    final score = dayPillar.score;
+    final sajuScore = dayPillar.score;
+    final mbtiScore = mbtiResult?.score;
 
-    if (score >= 85) {
-      return '두 분은 천생연분에 가까운 좋은 인연입니다. '
-          '${dayPillar.description} '
+    // 사주 기본 설명
+    final sajuDesc = dayPillar.description;
+
+    // ========== 사주 + MBTI 통합 요약 ==========
+    if (mbtiResult != null && mbtiScore != null) {
+      // 둘 다 매우 좋음
+      if (sajuScore >= 85 && mbtiScore >= 75) {
+        return '🌟 **완벽한 조화**: 두 분은 타고난 인연(사주)과 현재 성향(MBTI) 모두 천생연분에 가깝습니다. '
+            '$sajuDesc '
+            '서로의 강점을 이해하고 약점을 보완하며, 함께 성장하는 관계가 될 것입니다. '
+            'MBTI로도 ${mbtiResult.relationshipType}으로 자연스럽게 통하는 사이입니다.';
+      }
+
+      // 둘 다 좋음
+      if (sajuScore >= 70 && mbtiScore >= 65) {
+        return '💝 **좋은 궁합**: 두 분은 사주와 MBTI 모두 좋은 궁합입니다. '
+            '$sajuDesc '
+            '타고난 인연도 좋고 현재 성향도 잘 맞아, 자연스럽게 깊은 관계로 발전할 수 있습니다. '
+            '${mbtiResult.relationshipType}으로 편안한 소통이 가능합니다.';
+      }
+
+      // 사주 좋음, MBTI 보통/어려움
+      if (sajuScore >= 70 && mbtiScore < 65) {
+        return '🌱 **인연은 좋지만 조율 필요**: 타고난 인연(사주)은 좋습니다. '
+            '$sajuDesc '
+            '다만 현재 성향(MBTI)은 ${mbtiResult.relationshipType}으로 서로를 이해하는 데 시간과 노력이 필요합니다. '
+            '사주의 좋은 기운을 믿고 현재의 성향 차이를 조율해 나가면, 깊고 안정적인 관계로 발전할 것입니다.';
+      }
+
+      // 사주 보통/어려움, MBTI 좋음
+      if (sajuScore < 70 && mbtiScore >= 70) {
+        return '💪 **현재의 노력이 중요**: 사주로는 ${sajuScore >= 55 ? '평균적' : '노력이 필요한'} 궁합입니다. '
+            '$sajuDesc '
+            '하지만 현재 성향(MBTI)은 ${mbtiResult.relationshipType}으로 서로 잘 맞습니다. '
+            '지금의 좋은 관계를 유지하며 서로를 배려하면, 타고난 약점을 충분히 극복하고 행복한 관계를 만들어갈 수 있습니다.';
+      }
+
+      // 둘 다 보통
+      if (sajuScore >= 55 && sajuScore < 70 && mbtiScore >= 55 && mbtiScore < 70) {
+        return '⚖️ **균형과 노력의 관계**: 두 분은 사주와 MBTI 모두 평균적인 궁합입니다. '
+            '$sajuDesc '
+            '${mbtiResult.relationshipType}으로 특별히 좋지도, 나쁘지도 않습니다. '
+            '서로의 장단점을 이해하고 배려하는 노력을 기울이면, 안정적이고 성숙한 관계로 발전할 수 있습니다.';
+      }
+
+      // 둘 다 어려움
+      if (sajuScore < 55 && mbtiScore < 55) {
+        return '🌓 **많은 노력이 필요**: 두 분은 타고난 인연(사주)과 현재 성향(MBTI) 모두 조율이 필요한 관계입니다. '
+            '$sajuDesc '
+            '${mbtiResult.relationshipType}으로 차이가 큽니다. '
+            '하지만 진심과 노력으로 극복하지 못할 것은 없습니다. 서로의 차이를 인정하고, 많은 대화와 이해의 시간을 가지며, '
+            '구체적인 규칙과 타협점을 만들어 나가면 관계를 발전시킬 수 있습니다.';
+      }
+    }
+
+    // ========== MBTI 정보 없을 때 (사주만) ==========
+    if (sajuScore >= 85) {
+      return '🌟 **천생연분**: 두 분은 사주로 보면 천생연분에 가까운 좋은 인연입니다. '
+          '$sajuDesc '
           '서로를 이해하고 지지하는 관계가 될 수 있습니다.';
     }
-    if (score >= 70) {
-      return '두 분은 좋은 궁합입니다. '
-          '${dayPillar.description} '
+    if (sajuScore >= 70) {
+      return '💝 **좋은 궁합**: 두 분은 사주로 보면 좋은 궁합입니다. '
+          '$sajuDesc '
           '작은 노력으로 더 깊은 관계로 발전할 수 있습니다.';
     }
-    if (score >= 55) {
-      return '두 분은 평균적인 궁합입니다. '
-          '${dayPillar.description} '
+    if (sajuScore >= 55) {
+      return '⚖️ **평균적 궁합**: 두 분은 사주로 보면 평균적인 궁합입니다. '
+          '$sajuDesc '
           '서로의 장단점을 이해하면 좋은 관계가 될 수 있습니다.';
     }
-    return '두 분은 노력이 필요한 궁합입니다. '
-        '${dayPillar.description} '
+    return '🌱 **노력 필요**: 두 분은 사주로 보면 노력이 필요한 궁합입니다. '
+        '$sajuDesc '
         '갈등 요소를 인지하고 대화로 풀어가는 것이 중요합니다.';
   }
 }

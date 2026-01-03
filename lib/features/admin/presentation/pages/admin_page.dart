@@ -167,6 +167,143 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
+  /// 사용자의 궁합 분석 결과 조회
+  Future<void> _showCompatibilityResults(String userResultId, String userName) async {
+    try {
+      final compatibilities = await _supabase!
+          .from('compatibility_results')
+          .select()
+          .eq('user_result_id', userResultId)
+          .order('created_at', ascending: false);
+
+      if (!mounted) return;
+
+      if (compatibilities.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('궁합 분석 기록이 없습니다'),
+            backgroundColor: Colors.grey,
+          ),
+        );
+        return;
+      }
+
+      // 궁합 결과 다이얼로그 표시
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('$userName님의 궁합 분석'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: compatibilities.length,
+              itemBuilder: (context, index) {
+                final compat = compatibilities[index];
+                final createdAt = DateTime.parse(compat['created_at']).toLocal();
+                final partnerName = compat['partner_name'] ?? '상대방';
+                final overallScore = compat['overall_score'] as int;
+
+                return Card(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: _getScoreColor(overallScore),
+                      child: Text(
+                        overallScore.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    title: Text(partnerName),
+                    subtitle: Text(
+                      '분석: ${DateFormat('yyyy-MM-dd HH:mm').format(createdAt)}',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showCompatibilityDetail(compat);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('닫기'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error fetching compatibility results: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('궁합 기록 조회 실패: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// 궁합 분석 상세 정보 표시
+  void _showCompatibilityDetail(Map<String, dynamic> compat) {
+    final partnerName = compat['partner_name'] ?? '상대방';
+    final partnerBirthDate = DateTime.parse(compat['partner_birth_date']).toLocal();
+    final partnerMbti = compat['partner_mbti'] ?? '미등록';
+    final overallScore = compat['overall_score'] as int;
+    final sajuScore = compat['saju_score'] as int;
+    final mbtiScore = compat['mbti_score'] as int?;
+    final insights = compat['insights'] as Map<String, dynamic>?;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$partnerName님과의 궁합'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('생년월일: ${DateFormat('yyyy-MM-dd').format(partnerBirthDate)}'),
+              Text('MBTI: $partnerMbti'),
+              const Divider(),
+              Text('종합 점수: $overallScore점'),
+              Text('사주 점수: $sajuScore점'),
+              if (mbtiScore != null) Text('MBTI 점수: $mbtiScore점'),
+              if (insights != null) ...[
+                const Divider(),
+                Text('요약: ${insights['summary']}'),
+                const SizedBox(height: 8),
+                if (insights['strengths'] != null) ...[
+                  const Text('강점:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ...(insights['strengths'] as List).map((s) => Text('• $s')),
+                ],
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('닫기'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getScoreColor(int score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.blue;
+    if (score >= 40) return Colors.orange;
+    return Colors.red;
+  }
+
   void _replayResult(Map<String, dynamic> user) {
     HapticFeedback.mediumImpact();
 
@@ -445,7 +582,20 @@ class _AdminPageState extends State<AdminPage> {
                               ),
                             ],
                           ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.favorite_border, size: 20),
+                                tooltip: '궁합 분석 조회',
+                                onPressed: () {
+                                  final userId = user['id'] as String;
+                                  _showCompatibilityResults(userId, name.isNotEmpty ? name : '무명');
+                                },
+                              ),
+                              const Icon(Icons.arrow_forward_ios, size: 16),
+                            ],
+                          ),
                         );
                       },
                     )),

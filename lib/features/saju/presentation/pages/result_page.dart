@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../shared/widgets/saju_explanations.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../../shared/widgets/saju_chart_widget.dart';
 import '../../domain/services/analysis_text_builder.dart';
@@ -26,6 +27,135 @@ class ResultPage extends StatefulWidget {
 
 class _ResultPageState extends State<ResultPage> {
   bool _showPwaBanner = false;
+
+  // 십성 분포(정재/비견/...) 탭 설명 패널용 상태
+  String? _selectedTenGodKey;
+  SajuExplanation? _selectedTenGodExplanation;
+
+  void _onTenGodDistributionTap(String god) {
+    HapticFeedback.lightImpact();
+
+    final explanation = SajuExplanations.find(god);
+    if (explanation == null) return;
+
+    // 같은 항목 재탭 시 닫기
+    if (_selectedTenGodKey == god) {
+      setState(() {
+        _selectedTenGodKey = null;
+        _selectedTenGodExplanation = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _selectedTenGodKey = god;
+      _selectedTenGodExplanation = explanation;
+    });
+  }
+
+  void _closeTenGodExplanation() {
+    setState(() {
+      _selectedTenGodKey = null;
+      _selectedTenGodExplanation = null;
+    });
+  }
+
+  Widget _buildTenGodExplanationPanel(SajuExplanation explanation) {
+    final primary = AppColors.primaryOf(context);
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      child: Container(
+        key: ValueKey(explanation.title),
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              primary.withAlpha(20),
+              AppColors.woodOf(context).withAlpha(15),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: primary.withAlpha(50),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 아이콘
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: primary.withAlpha(30),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                explanation.icon,
+                size: 20,
+                color: primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // 텍스트
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    explanation.title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimaryOf(context),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    explanation.shortDesc,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondaryOf(context),
+                      height: 1.4,
+                    ),
+                  ),
+                  if (explanation.detailDesc != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      explanation.detailDesc!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textTertiaryOf(context),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // 닫기 버튼
+            GestureDetector(
+              onTap: _closeTenGodExplanation,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.close,
+                  size: 18,
+                  color: AppColors.textTertiaryOf(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -833,16 +963,33 @@ class _ResultPageState extends State<ResultPage> {
                       ),
                     ),
                     const Spacer(),
-                    Text(
-                      '주요: ${tenGods.dominantGod}',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: fire,
-                        fontWeight: FontWeight.w600,
+                    InkWell(
+                      onTap: () => _onTenGodDistributionTap(tenGods.dominantGod),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        child: Text(
+                          '주요: ${tenGods.dominantGod}',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: fire,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
+
+                // 십성 설명 패널 (상단 사주표와 동일한 방식)
+                if (_selectedTenGodExplanation != null) ...[
+                  _buildTenGodExplanationPanel(_selectedTenGodExplanation!),
+                  const SizedBox(height: 12),
+                ],
+
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -855,22 +1002,41 @@ class _ResultPageState extends State<ResultPage> {
                     return entries
                         .take(5)
                         .map(
-                          (entry) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: primary.withAlpha(15),
+                          (entry) {
+                            final isSelected = _selectedTenGodKey == entry.key;
+                            return InkWell(
+                              onTap: () => _onTenGodDistributionTap(entry.key),
                               borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              '${entry.key} ${entry.value}',
-                              style: AppTypography.labelSmall.copyWith(
-                                color: primary,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? primary.withAlpha(25)
+                                      : primary.withAlpha(15),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: isSelected
+                                      ? Border.all(
+                                          color: primary.withAlpha(140),
+                                          width: 1.5,
+                                        )
+                                      : null,
+                                ),
+                                child: Text(
+                                  '${entry.key} ${entry.value}',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: primary,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         )
                         .toList();
                   }(),

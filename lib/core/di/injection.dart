@@ -112,10 +112,12 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<DestinyBloc>(() => DestinyBloc());
 
   // DailyFortuneBloc (팩토리 - 매번 새 인스턴스)
-  getIt.registerFactory<DailyFortuneBloc>(
-    () => DailyFortuneBloc(
+  // 중요: DailyFortuneBloc은 "현재 화면에서 사용 중인" DestinyBloc 인스턴스를 참조해야 함.
+  // getIt<DestinyBloc>()로 새로 뽑으면 state가 DestinySuccess가 아니어서 오늘의 운세가 동작하지 않을 수 있음.
+  getIt.registerFactoryParam<DailyFortuneBloc, DestinyBloc, void>(
+    (destinyBloc, _) => DailyFortuneBloc(
       getDailyFortune: getIt<GetDailyFortune>(),
-      destinyBloc: getIt<DestinyBloc>(),
+      destinyBloc: destinyBloc,
     ),
   );
 }

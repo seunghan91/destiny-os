@@ -43,7 +43,11 @@ class _DestinyAppState extends State<DestinyApp> {
           return MultiBlocProvider(
             providers: [
               BlocProvider<DestinyBloc>(create: (context) => getIt<DestinyBloc>()),
-              BlocProvider<DailyFortuneBloc>(create: (context) => getIt<DailyFortuneBloc>()),
+              BlocProvider<DailyFortuneBloc>(
+                create: (context) => getIt<DailyFortuneBloc>(
+                  param1: context.read<DestinyBloc>(),
+                ),
+              ),
             ],
             child: MaterialApp.router(
               title: '2026 신년운세 (MBTI 운세)',

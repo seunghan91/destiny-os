@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
@@ -2203,6 +2204,121 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     );
   }
 
+  /// 궁합 분석 결과를 데이터베이스에 저장
+  Future<void> _saveCompatibilityResult() async {
+    if (_compatibilityResult == null) return;
+
+    try {
+      final supabase = Supabase.instance.client;
+      final bloc = context.read<DestinyBloc>();
+      final state = bloc.state;
+
+      // 1. 먼저 user_results 저장/조회하여 user_result_id 얻기
+      String? userResultId;
+
+      if (state is DestinySuccess) {
+        // 사용자의 정보로 user_results 저장
+        final userPayload = <String, dynamic>{
+          'birth_date': state.sajuChart.birthDateTime.toUtc().toIso8601String(),
+          'birth_hour': state.sajuChart.birthDateTime.hour,
+          'is_lunar': state.sajuChart.isLunar,
+          'gender': state.sajuChart.gender,
+          'mbti': state.mbtiType.type,
+          'name': null,  // 이름은 사용 안 함
+          'use_night_subhour': false,  // 야자시 사용 여부는 알 수 없음
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        };
+
+        final userResponse = await supabase
+            .from('user_results')
+            .insert(userPayload)
+            .select('id');
+
+        if (userResponse.isNotEmpty) {
+          userResultId = userResponse.first['id'] as String;
+        }
+      }
+
+      // user_result_id가 없으면 저장하지 않음
+      if (userResultId == null) {
+        debugPrint('⚠️ [CompatibilityPage] No user_result_id, skipping save');
+        return;
+      }
+
+      // 2. 궁합 분석 결과 저장
+      final partnerBirthHour = _partnerSiju?.startHour ?? 12;
+      final partnerBirthDateTime = DateTime(
+        _partnerBirthDate!.year,
+        _partnerBirthDate!.month,
+        _partnerBirthDate!.day,
+        partnerBirthHour,
+      );
+
+      final compatibilityPayload = <String, dynamic>{
+        'user_result_id': userResultId,
+        'partner_name': _partnerNameController.text.isEmpty
+            ? null
+            : _partnerNameController.text,
+        'partner_birth_date': partnerBirthDateTime.toUtc().toIso8601String(),
+        'partner_birth_hour': partnerBirthHour,
+        'partner_gender': _partnerGender,
+        'partner_is_lunar': _partnerIsLunar,
+        'partner_mbti': _partnerMbti,
+        'overall_score': _compatibilityResult!.overallScore,
+        'saju_score': _compatibilityResult!.sajuScore,
+        'mbti_score': _compatibilityResult!.mbtiScore,
+        'love_score': _compatibilityResult!.loveScore,
+        'marriage_score': _compatibilityResult!.marriageScore,
+        'business_score': _compatibilityResult!.businessScore,
+        'friendship_score': _compatibilityResult!.friendshipScore,
+        'mbti_relationship_type': _compatibilityResult!.mbtiRelationshipType,
+        'mbti_communication_style': _compatibilityResult!.mbtiCommunicationStyle,
+        'mbti_conflict_pattern': _compatibilityResult!.mbtiConflictPattern,
+        'mbti_common_ground': _compatibilityResult!.mbtiCommonGround,
+        'mbti_differences': _compatibilityResult!.mbtiDifferences,
+        'day_pillar_analysis': {
+          'score': _compatibilityResult!.dayPillarAnalysis.score,
+          'description': _compatibilityResult!.dayPillarAnalysis.description,
+          'relations': _compatibilityResult!.dayPillarAnalysis.relations,
+        },
+        'branch_relations': {
+          'combinations': _compatibilityResult!.branchRelations.combinations,
+          'clashes': _compatibilityResult!.branchRelations.clashes,
+          'punishments': _compatibilityResult!.branchRelations.punishments,
+          'harms': _compatibilityResult!.branchRelations.harms,
+        },
+        'element_balance': {
+          'person1_elements': _compatibilityResult!.elementBalance.person1Elements,
+          'person2_elements': _compatibilityResult!.elementBalance.person2Elements,
+          'combined_elements': _compatibilityResult!.elementBalance.combinedElements,
+          'lacking_elements': _compatibilityResult!.elementBalance.lackingElements,
+          'excessive_elements': _compatibilityResult!.elementBalance.excessiveElements,
+          'complementary_elements': _compatibilityResult!.elementBalance.complementaryElements,
+          'balance_score': _compatibilityResult!.elementBalance.balanceScore,
+        },
+        'stem_relations': {
+          'combinations': _compatibilityResult!.stemRelations.combinations,
+          'score': _compatibilityResult!.stemRelations.score,
+        },
+        'insights': {
+          'summary': _compatibilityResult!.insights.summary,
+          'strengths': _compatibilityResult!.insights.strengths,
+          'challenges': _compatibilityResult!.insights.challenges,
+          'advice': _compatibilityResult!.insights.advice,
+        },
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      };
+
+      await supabase.from('compatibility_results').insert(compatibilityPayload);
+
+      debugPrint('✅ [CompatibilityPage] Compatibility result saved successfully');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [CompatibilityPage] Error saving compatibility result: $e');
+      debugPrint('❌ [CompatibilityPage] StackTrace: $stackTrace');
+      // 저장 실패는 비치명적 (분석 결과는 이미 UI에 표시됨)
+    }
+  }
+
   void _analyzeCompatibility() {
     if (!_canAnalyze || _mySajuChart == null) return;
 
@@ -2228,6 +2344,9 @@ class _CompatibilityPageState extends State<CompatibilityPage>
 
       // 궁합 계산
       _calculateCompatibility();
+
+      // 결과를 DB에 저장
+      _saveCompatibilityResult();
 
       setState(() {
         _isPartnerInputMode = false;

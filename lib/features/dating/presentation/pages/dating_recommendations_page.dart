@@ -84,8 +84,6 @@ class _DatingRecommendationsPageState extends State<DatingRecommendationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = AppColors.primaryOf(context);
-
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
@@ -448,7 +446,7 @@ class _DatingRecommendationsPageState extends State<DatingRecommendationsPage> {
               _ActionButton(
                 icon: Icons.close_rounded,
                 label: '패스',
-                color: AppColors.grey500Of(context),
+                color: AppColors.grey400Of(context),
                 onPressed: () => _handleAction('pass'),
               ),
 

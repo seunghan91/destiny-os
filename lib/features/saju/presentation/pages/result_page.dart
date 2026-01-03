@@ -81,10 +81,7 @@ class _ResultPageState extends State<ResultPage> {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: primary.withAlpha(50),
-            width: 1,
-          ),
+          border: Border.all(color: primary.withAlpha(50), width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,11 +93,7 @@ class _ResultPageState extends State<ResultPage> {
                 color: primary.withAlpha(30),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                explanation.icon,
-                size: 20,
-                color: primary,
-              ),
+              child: Icon(explanation.icon, size: 20, color: primary),
             ),
             const SizedBox(width: 12),
             // 텍스트
@@ -287,6 +280,10 @@ class _ResultPageState extends State<ResultPage> {
 
                       // AI 상담 CTA
                       const ResultAiCta(),
+                      const SizedBox(height: 24),
+
+                      // MBTI 소개팅 CTA
+                      _buildDatingCta(context, state),
                       const SizedBox(height: 24),
 
                       // PWA 설치 배너 (웹에서만)
@@ -971,7 +968,8 @@ class _ResultPageState extends State<ResultPage> {
                     ),
                     const Spacer(),
                     InkWell(
-                      onTap: () => _onTenGodDistributionTap(tenGods.dominantGod),
+                      onTap: () =>
+                          _onTenGodDistributionTap(tenGods.dominantGod),
                       borderRadius: BorderRadius.circular(10),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -1006,46 +1004,41 @@ class _ResultPageState extends State<ResultPage> {
                             .where((e) => e.value > 0)
                             .toList()
                           ..sort((a, b) => b.value.compareTo(a.value));
-                    return entries
-                        .take(5)
-                        .map(
-                          (entry) {
-                            final isSelected = _selectedTenGodKey == entry.key;
-                            return InkWell(
-                              onTap: () => _onTenGodDistributionTap(entry.key),
-                              borderRadius: BorderRadius.circular(16),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? primary.withAlpha(25)
-                                      : primary.withAlpha(15),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: isSelected
-                                      ? Border.all(
-                                          color: primary.withAlpha(140),
-                                          width: 1.5,
-                                        )
-                                      : null,
-                                ),
-                                child: Text(
-                                  '${entry.key} ${entry.value}',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    color: primary,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        )
-                        .toList();
+                    return entries.take(5).map((entry) {
+                      final isSelected = _selectedTenGodKey == entry.key;
+                      return InkWell(
+                        onTap: () => _onTenGodDistributionTap(entry.key),
+                        borderRadius: BorderRadius.circular(16),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? primary.withAlpha(25)
+                                : primary.withAlpha(15),
+                            borderRadius: BorderRadius.circular(16),
+                            border: isSelected
+                                ? Border.all(
+                                    color: primary.withAlpha(140),
+                                    width: 1.5,
+                                  )
+                                : null,
+                          ),
+                          child: Text(
+                            '${entry.key} ${entry.value}',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: primary,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList();
                   }(),
                 ),
               ],
@@ -1186,72 +1179,166 @@ class _ResultPageState extends State<ResultPage> {
         HapticFeedback.lightImpact();
         context.push('/daily-fortune');
       },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary.withAlpha(30),
-              AppColors.fire.withAlpha(30),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.primary.withAlpha(80),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(40),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Text('📅', style: TextStyle(fontSize: 24)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '오늘의 운세',
-                    style: AppTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimaryOf(context),
-                    ),
+      child:
+          Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary.withAlpha(30),
+                      AppColors.fire.withAlpha(30),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '매일 새로운 운세를 확인하세요',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondaryOf(context),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.primary.withAlpha(80)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(40),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Text('📅', style: TextStyle(fontSize: 24)),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '오늘의 운세',
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimaryOf(context),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '매일 새로운 운세를 확인하세요',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondaryOf(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              )
+              .animate()
+              .fadeIn(duration: 600.ms)
+              .slideX(
+                begin: 0.1,
+                end: 0,
+                duration: 600.ms,
+                curve: Curves.easeOut,
               ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.primary,
-              size: 18,
-            ),
-          ],
-        ),
-      ).animate().fadeIn(duration: 600.ms).slideX(
-            begin: 0.1,
-            end: 0,
-            duration: 600.ms,
-            curve: Curves.easeOut,
-          ),
     );
   }
 
- 
+  /// MBTI 소개팅 CTA 버튼
+  Widget _buildDatingCta(BuildContext context, DestinySuccess state) {
+    return GestureDetector(
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            context.push('/dating');
+          },
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.pink.withAlpha(20),
+                  Colors.purple.withAlpha(15),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.pink.withAlpha(40)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.pink.withAlpha(40),
+                        Colors.purple.withAlpha(30),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text('💕', style: TextStyle(fontSize: 28)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'MBTI 소개팅',
+                            style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimaryOf(context),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.pink,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'NEW',
+                              style: AppTypography.caption.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${state.mbtiType.type} 맞춤 매칭! 하루 3명 추천',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondaryOf(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, color: Colors.pink, size: 18),
+              ],
+            ),
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 600.ms, delay: 200.ms)
+        .slideX(begin: 0.1, end: 0, duration: 600.ms, curve: Curves.easeOut);
+  }
 }

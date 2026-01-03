@@ -13,6 +13,8 @@ import '../features/share/presentation/pages/share_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/tojung/presentation/pages/tojung_premium_page.dart';
 import '../features/physiognomy/presentation/pages/physiognomy_premium_page.dart';
+import '../features/dating/presentation/pages/dating_recommendations_page.dart';
+import '../features/dating/presentation/pages/dating_onboarding_page.dart';
 
 /// 앱 라우터 설정
 final GoRouter appRouter = GoRouter(
@@ -72,6 +74,20 @@ final GoRouter appRouter = GoRouter(
       path: '/physiognomy-premium',
       name: 'physiognomyPremium',
       builder: (context, state) => const PhysiognomyPremiumPage(),
+    ),
+
+    // MBTI 소개팅
+    GoRoute(
+      path: '/dating',
+      name: 'dating',
+      builder: (context, state) => const DatingRecommendationsPage(),
+    ),
+
+    // MBTI 소개팅 온보딩
+    GoRoute(
+      path: '/dating/onboarding',
+      name: 'datingOnboarding',
+      builder: (context, state) => const DatingOnboardingPage(),
     ),
 
     // 궁합 분석

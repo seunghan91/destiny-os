@@ -98,13 +98,25 @@ CREATE TABLE IF NOT EXISTS dating_matches (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user1_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
     user2_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    user1_accepted BOOLEAN NOT NULL DEFAULT FALSE,
+    user2_accepted BOOLEAN NOT NULL DEFAULT FALSE,
+    user1_accepted_at TIMESTAMPTZ,
+    user2_accepted_at TIMESTAMPTZ,
+    accepted_at TIMESTAMPTZ,
+    user1_open_chat_url TEXT,
+    user2_open_chat_url TEXT,
+    user1_open_chat_url_at TIMESTAMPTZ,
+    user2_open_chat_url_at TIMESTAMPTZ,
     
     -- 메타데이터
     created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     
     -- 중복 매치 방지 (user1_id < user2_id로 정규화)
     CONSTRAINT unique_match UNIQUE (user1_id, user2_id),
-    CONSTRAINT ordered_match CHECK (user1_id < user2_id)
+    CONSTRAINT ordered_match CHECK (user1_id < user2_id),
+    CONSTRAINT user1_open_chat_url_format CHECK (user1_open_chat_url IS NULL OR user1_open_chat_url LIKE 'https://open.kakao.com/%'),
+    CONSTRAINT user2_open_chat_url_format CHECK (user2_open_chat_url IS NULL OR user2_open_chat_url LIKE 'https://open.kakao.com/%')
 );
 
 -- =====================================================
@@ -141,6 +153,12 @@ CREATE TRIGGER update_dating_profiles_updated_at
 DROP TRIGGER IF EXISTS update_dating_preferences_updated_at ON dating_preferences;
 CREATE TRIGGER update_dating_preferences_updated_at
     BEFORE UPDATE ON dating_preferences
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_dating_matches_updated_at ON dating_matches;
+CREATE TRIGGER update_dating_matches_updated_at
+    BEFORE UPDATE ON dating_matches
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 

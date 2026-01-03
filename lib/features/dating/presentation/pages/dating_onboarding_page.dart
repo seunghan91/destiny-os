@@ -96,9 +96,6 @@ class _DatingOnboardingPageState extends State<DatingOnboardingPage> {
     // 기존 사주 분석 데이터에서 기본값 가져오기
     final destinyState = context.read<DestinyBloc>().state;
     if (destinyState is DestinySuccess) {
-      final userInfo = destinyState.userInfo;
-      _birthYear = userInfo.birthDate.year;
-      _gender = userInfo.gender;
       _mbti = destinyState.mbtiType.type;
     }
 

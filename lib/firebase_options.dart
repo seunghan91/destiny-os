@@ -91,7 +91,7 @@ class DefaultFirebaseOptions {
     appId: '1:16973939404:web:2cf031a507fd1a861df869',
     messagingSenderId: '16973939404',
     projectId: 'destiny-os-2026',
-    authDomain: 'destiny-os-2026.firebaseapp.com',
+    authDomain: 'destiny-os-2026.web.app', // 실제 도메인으로 변경 (서드파티 쿠키 이슈 방지)
     storageBucket: 'destiny-os-2026.firebasestorage.app',
   );
 

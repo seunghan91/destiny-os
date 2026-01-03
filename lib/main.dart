@@ -15,6 +15,7 @@ import 'core/services/notifications/firebase_notification_service.dart';
 import 'core/services/pwa/pwa_service.dart';
 import 'core/services/pwa/web_notification_service.dart';
 import 'core/services/auth/auth_manager.dart';
+import 'core/services/auth/auth_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -55,6 +56,25 @@ Future<void> _initializeApp() async {
 
     // Firebase Cloud Messaging 초기화
     await FirebaseNotificationService().initialize();
+
+    // 웹: Redirect 로그인 결과 확인 (팝업 차단 시 리다이렉트로 fallback한 경우)
+    if (kIsWeb) {
+      try {
+        final authService = AuthService();
+        final redirectResult = await authService.checkRedirectResult();
+        if (redirectResult != null) {
+          if (redirectResult.success) {
+            debugPrint(
+              '✅ Redirect 로그인 성공: ${redirectResult.user?.email}',
+            );
+          } else {
+            debugPrint('❌ Redirect 로그인 실패: ${redirectResult.errorMessage}');
+          }
+        }
+      } catch (e) {
+        debugPrint('⚠️  Redirect result check failed: $e');
+      }
+    }
   } catch (e) {
     debugPrint('❌ Firebase initialization failed: $e');
     debugPrint('   Run: flutterfire configure');

@@ -44,6 +44,31 @@ class AuthService {
   // 로그인 여부
   bool get isSignedIn => currentUser != null;
 
+  /// Redirect 결과 확인 (웹 전용 - 앱 시작 시 호출)
+  /// Popup이 차단되어 Redirect로 fallback한 경우, 페이지 리로드 후 결과 확인
+  Future<AuthResult?> checkRedirectResult() async {
+    if (!kIsWeb) return null;
+
+    try {
+      final UserCredential? credential = await _auth.getRedirectResult();
+
+      if (credential != null && credential.user != null) {
+        debugPrint(
+          '✅ Redirect Sign-In successful: ${credential.user!.email}',
+        );
+        return AuthResult.success(credential.user!);
+      }
+
+      return null; // Redirect 결과 없음 (정상)
+    } on FirebaseAuthException catch (e) {
+      debugPrint('❌ Redirect result error: ${e.code} - ${e.message}');
+      return AuthResult.failure(_getFirebaseAuthErrorMessage(e.code));
+    } catch (e) {
+      debugPrint('❌ Redirect result error: $e');
+      return null;
+    }
+  }
+
   /// Google 로그인
   Future<AuthResult> signInWithGoogle() async {
     try {
@@ -70,18 +95,35 @@ class AuthService {
     googleProvider.addScope('email');
     googleProvider.addScope('profile');
 
-    final UserCredential userCredential = await _auth.signInWithPopup(
-      googleProvider,
-    );
-
-    if (userCredential.user != null) {
-      debugPrint(
-        '✅ Google Sign-In successful (Web): ${userCredential.user!.email}',
+    try {
+      // 데스크탑: Popup 시도
+      final UserCredential userCredential = await _auth.signInWithPopup(
+        googleProvider,
       );
-      return AuthResult.success(userCredential.user!);
-    }
 
-    return AuthResult.failure('Google 로그인에 실패했습니다.');
+      if (userCredential.user != null) {
+        debugPrint(
+          '✅ Google Sign-In successful (Web/Popup): ${userCredential.user!.email}',
+        );
+        return AuthResult.success(userCredential.user!);
+      }
+
+      return AuthResult.failure('Google 로그인에 실패했습니다.');
+    } on FirebaseAuthException catch (e) {
+      // Popup 실패 시 Redirect로 fallback
+      if (e.code == 'popup-blocked' ||
+          e.code == 'popup-closed-by-user' ||
+          e.code == 'cancelled-popup-request') {
+        debugPrint('⚠️ Popup failed, fallback to redirect: ${e.code}');
+        await _auth.signInWithRedirect(googleProvider);
+        // Redirect는 페이지 리로드되므로 여기서 결과 반환 불가
+        // getRedirectResult()로 결과 확인 필요 (앱 초기화 시)
+        return AuthResult.failure(
+          '로그인 중입니다. 잠시 후 페이지가 새로고침됩니다.',
+        );
+      }
+      rethrow;
+    }
   }
 
   /// Google 로그인 (네이티브)
@@ -145,18 +187,34 @@ class AuthService {
     appleProvider.addScope('email');
     appleProvider.addScope('name');
 
-    final UserCredential userCredential = await _auth.signInWithPopup(
-      appleProvider,
-    );
-
-    if (userCredential.user != null) {
-      debugPrint(
-        '✅ Apple Sign-In successful (Web): ${userCredential.user!.email}',
+    try {
+      // 데스크탑: Popup 시도
+      final UserCredential userCredential = await _auth.signInWithPopup(
+        appleProvider,
       );
-      return AuthResult.success(userCredential.user!);
-    }
 
-    return AuthResult.failure('Apple 로그인에 실패했습니다.');
+      if (userCredential.user != null) {
+        debugPrint(
+          '✅ Apple Sign-In successful (Web/Popup): ${userCredential.user!.email}',
+        );
+        return AuthResult.success(userCredential.user!);
+      }
+
+      return AuthResult.failure('Apple 로그인에 실패했습니다.');
+    } on FirebaseAuthException catch (e) {
+      // Popup 실패 시 Redirect로 fallback
+      if (e.code == 'popup-blocked' ||
+          e.code == 'popup-closed-by-user' ||
+          e.code == 'cancelled-popup-request') {
+        debugPrint('⚠️ Popup failed, fallback to redirect: ${e.code}');
+        await _auth.signInWithRedirect(appleProvider);
+        // Redirect는 페이지 리로드되므로 여기서 결과 반환 불가
+        return AuthResult.failure(
+          '로그인 중입니다. 잠시 후 페이지가 새로고침됩니다.',
+        );
+      }
+      rethrow;
+    }
   }
 
   /// Apple 로그인 (네이티브)

@@ -34,6 +34,9 @@ class UnifiedCreditService {
   /// 로컬 크레딧 조회 (비로그인 사용자용)
   static Future<int> _getLocalCredits() async {
     final prefs = await SharedPreferences.getInstance();
+    // 온보딩을 건너뛰거나(웹 딥링크 등) 초기화 호출이 누락된 경우에도
+    // 최소 무료 크레딧이 보장되도록 여기서 한 번 더 초기화합니다.
+    await initializeCredits();
     await _checkDailyReset(prefs);
     return prefs.getInt(_localCreditsKey) ?? 0;
   }
@@ -68,6 +71,8 @@ class UnifiedCreditService {
   /// 로컬 크레딧 사용 (비로그인 사용자용)
   static Future<int> _useLocalCredit() async {
     final prefs = await SharedPreferences.getInstance();
+    // 안전장치: 초기화가 누락된 상태에서도 크레딧 키를 준비
+    await initializeCredits();
     await _checkDailyReset(prefs);
 
     final currentCredits = prefs.getInt(_localCreditsKey) ?? 0;

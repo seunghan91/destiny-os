@@ -926,7 +926,7 @@ class CompatibilityCalculator {
     if (mbtiResult != null && mbtiScore != null) {
       // 둘 다 매우 좋음
       if (sajuScore >= 85 && mbtiScore >= 75) {
-        return '🌟 **완벽한 조화**: 두 분은 타고난 인연(사주)과 현재 성향(MBTI) 모두 천생연분에 가깝습니다. '
+        return '🌟 완벽한 조화\n\n두 분은 타고난 인연(사주)과 현재 성향(MBTI) 모두 천생연분에 가깝습니다. '
             '$sajuDesc '
             '서로의 강점을 이해하고 약점을 보완하며, 함께 성장하는 관계가 될 것입니다. '
             'MBTI로도 ${mbtiResult.relationshipType}으로 자연스럽게 통하는 사이입니다.';
@@ -934,7 +934,7 @@ class CompatibilityCalculator {
 
       // 둘 다 좋음
       if (sajuScore >= 70 && mbtiScore >= 65) {
-        return '💝 **좋은 궁합**: 두 분은 사주와 MBTI 모두 좋은 궁합입니다. '
+        return '💝 좋은 궁합\n\n두 분은 사주와 MBTI 모두 좋은 궁합입니다. '
             '$sajuDesc '
             '타고난 인연도 좋고 현재 성향도 잘 맞아, 자연스럽게 깊은 관계로 발전할 수 있습니다. '
             '${mbtiResult.relationshipType}으로 편안한 소통이 가능합니다.';
@@ -942,7 +942,7 @@ class CompatibilityCalculator {
 
       // 사주 좋음, MBTI 보통/어려움
       if (sajuScore >= 70 && mbtiScore < 65) {
-        return '🌱 **인연은 좋지만 조율 필요**: 타고난 인연(사주)은 좋습니다. '
+        return '🌱 인연은 좋지만 조율 필요\n\n타고난 인연(사주)은 좋습니다. '
             '$sajuDesc '
             '다만 현재 성향(MBTI)은 ${mbtiResult.relationshipType}으로 서로를 이해하는 데 시간과 노력이 필요합니다. '
             '사주의 좋은 기운을 믿고 현재의 성향 차이를 조율해 나가면, 깊고 안정적인 관계로 발전할 것입니다.';
@@ -950,7 +950,7 @@ class CompatibilityCalculator {
 
       // 사주 보통/어려움, MBTI 좋음
       if (sajuScore < 70 && mbtiScore >= 70) {
-        return '💪 **현재의 노력이 중요**: 사주로는 ${sajuScore >= 55 ? '평균적' : '노력이 필요한'} 궁합입니다. '
+        return '💪 현재의 노력이 중요\n\n사주로는 ${sajuScore >= 55 ? '평균적' : '노력이 필요한'} 궁합입니다. '
             '$sajuDesc '
             '하지만 현재 성향(MBTI)은 ${mbtiResult.relationshipType}으로 서로 잘 맞습니다. '
             '지금의 좋은 관계를 유지하며 서로를 배려하면, 타고난 약점을 충분히 극복하고 행복한 관계를 만들어갈 수 있습니다.';
@@ -958,7 +958,7 @@ class CompatibilityCalculator {
 
       // 둘 다 보통
       if (sajuScore >= 55 && sajuScore < 70 && mbtiScore >= 55 && mbtiScore < 70) {
-        return '⚖️ **균형과 노력의 관계**: 두 분은 사주와 MBTI 모두 평균적인 궁합입니다. '
+        return '⚖️ 균형과 노력의 관계\n\n두 분은 사주와 MBTI 모두 평균적인 궁합입니다. '
             '$sajuDesc '
             '${mbtiResult.relationshipType}으로 특별히 좋지도, 나쁘지도 않습니다. '
             '서로의 장단점을 이해하고 배려하는 노력을 기울이면, 안정적이고 성숙한 관계로 발전할 수 있습니다.';
@@ -966,7 +966,7 @@ class CompatibilityCalculator {
 
       // 둘 다 어려움
       if (sajuScore < 55 && mbtiScore < 55) {
-        return '🌓 **많은 노력이 필요**: 두 분은 타고난 인연(사주)과 현재 성향(MBTI) 모두 조율이 필요한 관계입니다. '
+        return '🌓 많은 노력이 필요\n\n두 분은 타고난 인연(사주)과 현재 성향(MBTI) 모두 조율이 필요한 관계입니다. '
             '$sajuDesc '
             '${mbtiResult.relationshipType}으로 차이가 큽니다. '
             '하지만 진심과 노력으로 극복하지 못할 것은 없습니다. 서로의 차이를 인정하고, 많은 대화와 이해의 시간을 가지며, '
@@ -976,21 +976,21 @@ class CompatibilityCalculator {
 
     // ========== MBTI 정보 없을 때 (사주만) ==========
     if (sajuScore >= 85) {
-      return '🌟 **천생연분**: 두 분은 사주로 보면 천생연분에 가까운 좋은 인연입니다. '
+      return '🌟 천생연분\n\n두 분은 사주로 보면 천생연분에 가까운 좋은 인연입니다. '
           '$sajuDesc '
           '서로를 이해하고 지지하는 관계가 될 수 있습니다.';
     }
     if (sajuScore >= 70) {
-      return '💝 **좋은 궁합**: 두 분은 사주로 보면 좋은 궁합입니다. '
+      return '💝 좋은 궁합\n\n두 분은 사주로 보면 좋은 궁합입니다. '
           '$sajuDesc '
           '작은 노력으로 더 깊은 관계로 발전할 수 있습니다.';
     }
     if (sajuScore >= 55) {
-      return '⚖️ **평균적 궁합**: 두 분은 사주로 보면 평균적인 궁합입니다. '
+      return '⚖️ 평균적 궁합\n\n두 분은 사주로 보면 평균적인 궁합입니다. '
           '$sajuDesc '
           '서로의 장단점을 이해하면 좋은 관계가 될 수 있습니다.';
     }
-    return '🌱 **노력 필요**: 두 분은 사주로 보면 노력이 필요한 궁합입니다. '
+    return '🌱 노력 필요\n\n두 분은 사주로 보면 노력이 필요한 궁합입니다. '
         '$sajuDesc '
         '갈등 요소를 인지하고 대화로 풀어가는 것이 중요합니다.';
   }

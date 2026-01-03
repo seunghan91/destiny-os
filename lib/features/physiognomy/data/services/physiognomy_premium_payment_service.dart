@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/config/env_config.dart';
 import '../../../../core/services/apps_in_toss/apps_in_toss_service.dart';
 import '../../../../core/services/auth/auth_manager.dart';
 import 'physiognomy_premium_access_service.dart';
@@ -18,6 +19,17 @@ class PhysiognomyPremiumPaymentService {
         final bridge = AppsInTossBridge();
         bridge.showToast('결제한 이용권을 유지하려면 로그인(회원가입)이 필요합니다.');
         return false;
+      }
+
+      if (EnvConfig.betaPaymentsFree) {
+        final bridge = AppsInTossBridge();
+        await PhysiognomyPremiumAccessService.addCredits(
+          1,
+          paymentId: 'beta_free',
+          description: '베타테스트 기간 무료 제공 (관상 1회권)',
+        );
+        bridge.showToast('베타테스트 기간 무료로 제공됩니다. 관상 종합분석 1회권이 지급되었어요.');
+        return true;
       }
 
       final bridge = AppsInTossBridge();

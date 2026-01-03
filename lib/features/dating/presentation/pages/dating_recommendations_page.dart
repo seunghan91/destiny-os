@@ -467,6 +467,7 @@ class _DatingRecommendationsPageState extends State<DatingRecommendationsPage> {
   }
 
   void _showMatches() async {
+    final rootContext = context;
     final matches = await DatingService.getMatches();
 
     if (!mounted) return;
@@ -554,6 +555,10 @@ class _DatingRecommendationsPageState extends State<DatingRecommendationsPage> {
                           ),
                         ),
                         trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          rootContext.push('/dating/match/${match.id}');
+                        },
                       );
                     },
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/services/apps_in_toss/apps_in_toss_bridge.dart';
@@ -272,11 +273,7 @@ class _PremiumUpsellModalState extends State<PremiumUpsellModal> {
               ],
             ),
           ),
-          const Icon(
-            Icons.check_circle,
-            color: AppColors.primary,
-            size: 20,
-          ),
+          const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
         ],
       ),
     );
@@ -286,6 +283,25 @@ class _PremiumUpsellModalState extends State<PremiumUpsellModal> {
     setState(() => _isProcessing = true);
 
     try {
+      if (EnvConfig.betaPaymentsFree) {
+        if (mounted) {
+          context.read<DailyFortuneBloc>().add(const ActivatePremiumFeatures());
+        }
+
+        await CreditService.addCredits(5);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('베타테스트 기간 무료로 제공됩니다! 프리미엄 기능이 활성화되었습니다.'),
+              backgroundColor: AppColors.fortuneGood,
+            ),
+          );
+          Navigator.of(context).pop();
+        }
+        return;
+      }
+
       final bridge = AppsInTossBridge();
 
       // 결제 요청
@@ -302,9 +318,7 @@ class _PremiumUpsellModalState extends State<PremiumUpsellModal> {
       if (result.success) {
         // 프리미엄 활성화
         if (mounted) {
-          context.read<DailyFortuneBloc>().add(
-                const ActivatePremiumFeatures(),
-              );
+          context.read<DailyFortuneBloc>().add(const ActivatePremiumFeatures());
         }
 
         // AI 상담 크레딧 추가

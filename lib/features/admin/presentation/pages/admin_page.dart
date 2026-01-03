@@ -18,6 +18,8 @@ class AdminPage extends StatefulWidget {
 class _AdminPageState extends State<AdminPage> {
   SupabaseClient? _supabase;
   List<Map<String, dynamic>> _users = [];
+  List<Map<String, dynamic>> _physiognomyReports = [];
+  List<Map<String, dynamic>> _tojungReports = [];
   bool _isLoading = true;
   // ✅ FIX 6: 에러 상태 추가
   String? _error;

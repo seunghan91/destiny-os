@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../../core/config/env_config.dart';
 import '../../../../core/services/apps_in_toss/apps_in_toss_service.dart';
 import '../../../../core/services/credit/unified_credit_service.dart';
 import '../../../../core/services/auth/credit_service.dart';
@@ -22,6 +23,20 @@ class ConsultationPaymentService {
         final bridge = AppsInTossBridge();
         bridge.showToast('결제한 크레딧을 유지하려면 회원가입/로그인이 필요합니다.');
         return false;
+      }
+
+      if (EnvConfig.betaPaymentsFree) {
+        final bridge = AppsInTossBridge();
+        await UnifiedCreditService.addCredits(
+          creditsPerPurchase,
+          type: CreditTransactionType.bonus,
+          description: '베타테스트 기간 무료 제공 (AI 상담 5회)',
+          paymentId: 'beta_free',
+        );
+        bridge.showToast(
+          '베타테스트 기간 무료로 제공됩니다. 크레딧 $creditsPerPurchase개가 지급되었어요.',
+        );
+        return true;
       }
 
       final bridge = AppsInTossBridge();

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/config/env_config.dart';
 import '../../../../core/services/apps_in_toss/apps_in_toss_service.dart';
 import 'fortune_view_access_service.dart';
 
@@ -13,6 +14,13 @@ class FortuneViewPaymentService {
 
     try {
       final bridge = AppsInTossBridge();
+
+      if (EnvConfig.betaPaymentsFree) {
+        await FortuneViewAccessService.addCredits(1);
+        bridge.showToast('베타테스트 기간 무료로 제공됩니다. 운세 1회 추가 열람이 지급되었어요.');
+        return true;
+      }
+
       final orderId = 'fortune_view_${DateTime.now().millisecondsSinceEpoch}';
 
       final paymentRequest = PaymentRequest(

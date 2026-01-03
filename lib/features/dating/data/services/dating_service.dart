@@ -7,9 +7,15 @@ import '../models/dating_profile.dart';
 class DatingService {
   static final _supabase = Supabase.instance.client;
 
+  static String? _getFirebaseUid() => AuthManager().firebaseUser?.uid;
+
+  /// 현재 유저의 user_profiles ID 조회 (UI에서 필요)
+  static Future<String?> getCurrentUserProfileId() =>
+      _getCurrentUserProfileId();
+
   /// 현재 유저의 user_profiles ID 조회
   static Future<String?> _getCurrentUserProfileId() async {
-    final firebaseUid = AuthManager().firebaseUser?.uid;
+    final firebaseUid = _getFirebaseUid();
     if (firebaseUid == null) return null;
 
     final result = await _supabase
@@ -190,6 +196,65 @@ class DatingService {
     return (result as List<dynamic>)
         .map((e) => DatingMatch.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  /// 매치 상세 조회
+  static Future<DatingMatch?> getMatchById(String matchId) async {
+    final userId = await _getCurrentUserProfileId();
+    if (userId == null) return null;
+
+    final result = await _supabase
+        .from('dating_matches')
+        .select()
+        .eq('id', matchId)
+        .maybeSingle();
+
+    if (result == null) return null;
+
+    final match = DatingMatch.fromJson(result);
+    if (match.user1Id != userId && match.user2Id != userId) return null;
+    return match;
+  }
+
+  /// 매치 승락 (상호 승락 시 accepted_at 설정)
+  static Future<bool> acceptMatch(String matchId) async {
+    final firebaseUid = _getFirebaseUid();
+    if (firebaseUid == null) return false;
+
+    try {
+      final result = await _supabase.rpc(
+        'dating_accept_match',
+        params: {'p_firebase_uid': firebaseUid, 'p_match_id': matchId},
+      );
+
+      return result == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 오픈카카오 URL 등록 (accepted_at 이후 가능)
+  static Future<bool> setOpenChatUrl({
+    required String matchId,
+    required String openChatUrl,
+  }) async {
+    final firebaseUid = _getFirebaseUid();
+    if (firebaseUid == null) return false;
+
+    try {
+      final result = await _supabase.rpc(
+        'dating_set_open_chat_url',
+        params: {
+          'p_firebase_uid': firebaseUid,
+          'p_match_id': matchId,
+          'p_open_chat_url': openChatUrl,
+        },
+      );
+
+      return result == true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// 특정 유저의 프로필 조회 (매치된 상대방 정보 등)

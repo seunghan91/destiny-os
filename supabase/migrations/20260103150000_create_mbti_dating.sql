@@ -228,6 +228,10 @@ CREATE POLICY "Anon can read dating_matches" ON dating_matches
 CREATE POLICY "Anon can insert dating_matches" ON dating_matches
     FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Anon can update dating_matches" ON dating_matches;
+CREATE POLICY "Anon can update dating_matches" ON dating_matches
+    FOR UPDATE USING (true) WITH CHECK (true);
+
 -- =====================================================
 -- 함수: 매치 생성 (양방향 좋아요 시 자동)
 -- =====================================================
@@ -277,6 +281,114 @@ CREATE TRIGGER trigger_check_match
     AFTER INSERT ON dating_likes
     FOR EACH ROW
     EXECUTE FUNCTION check_and_create_match();
+
+CREATE OR REPLACE FUNCTION dating_accept_match(
+    p_firebase_uid TEXT,
+    p_match_id UUID
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_user_id UUID;
+    v_match RECORD;
+BEGIN
+    SELECT id INTO v_user_id
+    FROM user_profiles
+    WHERE firebase_uid = p_firebase_uid;
+
+    IF v_user_id IS NULL THEN
+        RAISE EXCEPTION '사용자를 찾을 수 없습니다.';
+    END IF;
+
+    SELECT * INTO v_match
+    FROM dating_matches
+    WHERE id = p_match_id;
+
+    IF v_match IS NULL THEN
+        RAISE EXCEPTION '매치를 찾을 수 없습니다.';
+    END IF;
+
+    IF v_match.user1_id != v_user_id AND v_match.user2_id != v_user_id THEN
+        RAISE EXCEPTION '권한이 없습니다.';
+    END IF;
+
+    IF v_match.user1_id = v_user_id THEN
+        UPDATE dating_matches
+        SET user1_accepted = TRUE,
+            user1_accepted_at = COALESCE(user1_accepted_at, NOW())
+        WHERE id = p_match_id;
+    ELSE
+        UPDATE dating_matches
+        SET user2_accepted = TRUE,
+            user2_accepted_at = COALESCE(user2_accepted_at, NOW())
+        WHERE id = p_match_id;
+    END IF;
+
+    UPDATE dating_matches
+    SET accepted_at = COALESCE(accepted_at, NOW())
+    WHERE id = p_match_id
+      AND user1_accepted = TRUE
+      AND user2_accepted = TRUE
+      AND accepted_at IS NULL;
+
+    RETURN TRUE;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION dating_set_open_chat_url(
+    p_firebase_uid TEXT,
+    p_match_id UUID,
+    p_open_chat_url TEXT
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_user_id UUID;
+    v_match RECORD;
+BEGIN
+    SELECT id INTO v_user_id
+    FROM user_profiles
+    WHERE firebase_uid = p_firebase_uid;
+
+    IF v_user_id IS NULL THEN
+        RAISE EXCEPTION '사용자를 찾을 수 없습니다.';
+    END IF;
+
+    SELECT * INTO v_match
+    FROM dating_matches
+    WHERE id = p_match_id;
+
+    IF v_match IS NULL THEN
+        RAISE EXCEPTION '매치를 찾을 수 없습니다.';
+    END IF;
+
+    IF v_match.user1_id != v_user_id AND v_match.user2_id != v_user_id THEN
+        RAISE EXCEPTION '권한이 없습니다.';
+    END IF;
+
+    IF v_match.accepted_at IS NULL THEN
+        RAISE EXCEPTION '상호 승락 후에 오픈채팅 링크를 등록할 수 있습니다.';
+    END IF;
+
+    IF v_match.user1_id = v_user_id THEN
+        UPDATE dating_matches
+        SET user1_open_chat_url = p_open_chat_url,
+            user1_open_chat_url_at = NOW()
+        WHERE id = p_match_id;
+    ELSE
+        UPDATE dating_matches
+        SET user2_open_chat_url = p_open_chat_url,
+            user2_open_chat_url_at = NOW()
+        WHERE id = p_match_id;
+    END IF;
+
+    RETURN TRUE;
+END;
+$$;
 
 -- =====================================================
 -- 함수: 오늘의 추천 생성 (온디맨드)

@@ -11,7 +11,10 @@ class EnvConfig {
   // ============================================
   static String get bizRouterApiKey {
     // 1순위: --dart-define
-    const compileTimeKey = String.fromEnvironment('BIZROUTER_API_KEY', defaultValue: '');
+    const compileTimeKey = String.fromEnvironment(
+      'BIZROUTER_API_KEY',
+      defaultValue: '',
+    );
     if (compileTimeKey.isNotEmpty) return compileTimeKey;
 
     // 2순위: .env 파일
@@ -30,7 +33,10 @@ class EnvConfig {
   // OpenAI API 설정 (레거시/폴백용)
   // ============================================
   static String get openAiApiKey {
-    const compileTimeKey = String.fromEnvironment('OPENAI_API_KEY', defaultValue: '');
+    const compileTimeKey = String.fromEnvironment(
+      'OPENAI_API_KEY',
+      defaultValue: '',
+    );
     if (compileTimeKey.isNotEmpty) return compileTimeKey;
 
     return dotenv.get('OPENAI_API_KEY', fallback: '');
@@ -60,15 +66,18 @@ class EnvConfig {
   static String get supabaseAnonKey {
     const compileTimeKey = String.fromEnvironment(
       'SUPABASE_ANON_KEY',
-      defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I',
+      defaultValue:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I',
     );
-    if (compileTimeKey != 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I') {
+    if (compileTimeKey !=
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I') {
       return compileTimeKey;
     }
 
     return dotenv.get(
       'SUPABASE_ANON_KEY',
-      fallback: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I',
+      fallback:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1bm5heHFqeWl0eGpka3JqYWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTI1ODIsImV4cCI6MjA4MjgyODU4Mn0.lecssEWJ1JfneF_O5WPNDvc8Z_OYcAJ4q952Q00PM6I',
     );
   }
 
@@ -85,9 +94,22 @@ class EnvConfig {
   // 개발 모드 설정
   // ============================================
   static bool get useLocalFallback {
-    const compileTime = String.fromEnvironment('USE_LOCAL_FALLBACK', defaultValue: 'true');
+    const compileTime = String.fromEnvironment(
+      'USE_LOCAL_FALLBACK',
+      defaultValue: 'true',
+    );
     if (compileTime != 'true') return compileTime == 'true';
 
     return dotenv.get('USE_LOCAL_FALLBACK', fallback: 'true') == 'true';
+  }
+
+  static bool get betaPaymentsFree {
+    const compileTime = String.fromEnvironment(
+      'BETA_PAYMENTS_FREE',
+      defaultValue: 'true',
+    );
+    if (compileTime != 'true') return compileTime == 'true';
+
+    return dotenv.get('BETA_PAYMENTS_FREE', fallback: 'true') == 'true';
   }
 }

@@ -246,12 +246,30 @@ class DatingMatch {
   final String id;
   final String user1Id;
   final String user2Id;
+  final bool user1Accepted;
+  final bool user2Accepted;
+  final DateTime? user1AcceptedAt;
+  final DateTime? user2AcceptedAt;
+  final DateTime? acceptedAt;
+  final String? user1OpenChatUrl;
+  final String? user2OpenChatUrl;
+  final DateTime? user1OpenChatUrlAt;
+  final DateTime? user2OpenChatUrlAt;
   final DateTime createdAt;
 
   DatingMatch({
     required this.id,
     required this.user1Id,
     required this.user2Id,
+    required this.user1Accepted,
+    required this.user2Accepted,
+    this.user1AcceptedAt,
+    this.user2AcceptedAt,
+    this.acceptedAt,
+    this.user1OpenChatUrl,
+    this.user2OpenChatUrl,
+    this.user1OpenChatUrlAt,
+    this.user2OpenChatUrlAt,
     required this.createdAt,
   });
 
@@ -260,6 +278,25 @@ class DatingMatch {
       id: json['id'] as String,
       user1Id: json['user1_id'] as String,
       user2Id: json['user2_id'] as String,
+      user1Accepted: json['user1_accepted'] as bool? ?? false,
+      user2Accepted: json['user2_accepted'] as bool? ?? false,
+      user1AcceptedAt: json['user1_accepted_at'] != null
+          ? DateTime.parse(json['user1_accepted_at'] as String)
+          : null,
+      user2AcceptedAt: json['user2_accepted_at'] != null
+          ? DateTime.parse(json['user2_accepted_at'] as String)
+          : null,
+      acceptedAt: json['accepted_at'] != null
+          ? DateTime.parse(json['accepted_at'] as String)
+          : null,
+      user1OpenChatUrl: json['user1_open_chat_url'] as String?,
+      user2OpenChatUrl: json['user2_open_chat_url'] as String?,
+      user1OpenChatUrlAt: json['user1_open_chat_url_at'] != null
+          ? DateTime.parse(json['user1_open_chat_url_at'] as String)
+          : null,
+      user2OpenChatUrlAt: json['user2_open_chat_url_at'] != null
+          ? DateTime.parse(json['user2_open_chat_url_at'] as String)
+          : null,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

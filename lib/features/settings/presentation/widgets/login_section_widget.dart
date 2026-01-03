@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/env_config.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/services/auth/auth_manager.dart';
@@ -15,10 +16,7 @@ import '../../../../core/services/auth/credit_service.dart';
 class LoginSectionWidget extends StatefulWidget {
   final VoidCallback? onLoginStateChanged;
 
-  const LoginSectionWidget({
-    super.key,
-    this.onLoginStateChanged,
-  });
+  const LoginSectionWidget({super.key, this.onLoginStateChanged});
 
   @override
   State<LoginSectionWidget> createState() => _LoginSectionWidgetState();
@@ -120,7 +118,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
               ],
             ),
             const SizedBox(height: 20),
-            
+
             // 로그인 버튼들
             if (_isLoading)
               const Center(
@@ -143,7 +141,11 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
                   const SizedBox(height: 10),
                   // Apple 로그인
                   _buildLoginButton(
-                    icon: const Icon(Icons.apple, color: Colors.white, size: 20),
+                    icon: const Icon(
+                      Icons.apple,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                     label: 'Apple로 계속하기',
                     backgroundColor: Colors.black,
                     textColor: Colors.white,
@@ -170,7 +172,11 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowOf(context, lightOpacity: 0.04, darkOpacity: 0.12),
+            color: AppColors.shadowOf(
+              context,
+              lightOpacity: 0.04,
+              darkOpacity: 0.12,
+            ),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -191,11 +197,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
                       ? NetworkImage(user!.photoURL!)
                       : null,
                   child: user?.photoURL == null
-                      ? Icon(
-                          Icons.person,
-                          color: AppColors.primary,
-                          size: 28,
-                        )
+                      ? Icon(Icons.person, color: AppColors.primary, size: 28)
                       : null,
                 ),
                 const SizedBox(width: 14),
@@ -207,7 +209,9 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
                         children: [
                           Flexible(
                             child: Text(
-                              user?.displayName ?? profile?.displayName ?? '사용자',
+                              user?.displayName ??
+                                  profile?.displayName ??
+                                  '사용자',
                               style: AppTypography.bodyLarge.copyWith(
                                 color: AppColors.textPrimaryOf(context),
                                 fontWeight: FontWeight.w600,
@@ -305,7 +309,10 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
                 bottom: Radius.circular(16),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -342,7 +349,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: hasSajuInfo 
+              color: hasSajuInfo
                   ? Colors.green.withValues(alpha: 0.15)
                   : AppColors.grey200,
               borderRadius: BorderRadius.circular(10),
@@ -367,8 +374,8 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
                 Text(
                   hasSajuInfo ? '저장됨' : '미설정',
                   style: AppTypography.bodyMedium.copyWith(
-                    color: hasSajuInfo 
-                        ? Colors.green 
+                    color: hasSajuInfo
+                        ? Colors.green
                         : AppColors.textSecondaryOf(context),
                     fontWeight: FontWeight.w500,
                   ),
@@ -434,9 +441,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.2),
-            ),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -468,11 +473,8 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
               'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
               width: 20,
               height: 20,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.g_mobiledata,
-                color: Colors.red,
-                size: 24,
-              ),
+              errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.g_mobiledata, color: Colors.red, size: 24),
             ),
     );
   }
@@ -483,7 +485,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
 
     try {
       final result = await _authManager.signInWithGoogle();
-      
+
       if (!result.success && mounted) {
         _showErrorSnackBar(result.errorMessage ?? 'Google 로그인에 실패했습니다.');
       }
@@ -500,7 +502,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
 
     try {
       final result = await _authManager.signInWithApple();
-      
+
       if (!result.success && mounted) {
         _showErrorSnackBar(result.errorMessage ?? 'Apple 로그인에 실패했습니다.');
       }
@@ -553,11 +555,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             // 5회권 옵션
-            _buildCreditOption(
-              credits: 5,
-              price: 5000,
-              isRecommended: true,
-            ),
+            _buildCreditOption(credits: 5, price: 5000, isRecommended: true),
             const SizedBox(height: 12),
             // 안내 문구
             Container(
@@ -572,9 +570,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      kIsWeb
-                          ? '토스페이먼츠로 안전하게 결제됩니다.'
-                          : '결제는 웹에서만 가능합니다.',
+                      kIsWeb ? '토스페이먼츠로 안전하게 결제됩니다.' : '결제는 웹에서만 가능합니다.',
                       style: AppTypography.caption.copyWith(
                         color: AppColors.grey600,
                       ),
@@ -619,10 +615,8 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
     required int price,
     bool isRecommended = false,
   }) {
-    final formattedPrice = '₩${price.toString().replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    )}';
+    final formattedPrice =
+        '₩${price.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -645,7 +639,11 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
               color: Colors.amber.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.stars_rounded, color: Colors.amber, size: 24),
+            child: const Icon(
+              Icons.stars_rounded,
+              color: Colors.amber,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -663,7 +661,10 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
                     if (isRecommended) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(4),
@@ -705,6 +706,28 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
   Future<void> _processPurchase(int credits, int price) async {
     if (!kIsWeb) {
       _showErrorSnackBar('결제는 웹에서만 가능합니다.');
+      return;
+    }
+
+    if (EnvConfig.betaPaymentsFree) {
+      await UnifiedCreditService.addCredits(
+        credits,
+        type: CreditTransactionType.bonus,
+        description: '베타테스트 기간 무료 제공 (사용권 ${credits}회)',
+        paymentId: 'beta_free',
+      );
+
+      await _authManager.refreshCreditBalance();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('베타테스트 기간 무료로 제공됩니다. $credits회권이 충전되었습니다.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
 
@@ -780,9 +803,7 @@ class _LoginSectionWidgetState extends State<LoginSectionWidget> {
           children: [
             Text(
               '생년월일과 시간을 입력하면\n사주 정보가 자동으로 저장됩니다.',
-              style: AppTypography.bodyMedium.copyWith(
-                height: 1.5,
-              ),
+              style: AppTypography.bodyMedium.copyWith(height: 1.5),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

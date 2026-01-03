@@ -50,6 +50,14 @@ import '../features/settings/presentation/pages/settings_page.dart'
 // Admin Feature (관리자 페이지)
 import '../features/admin/presentation/pages/admin_page.dart' deferred as admin;
 
+// MBTI Dating (소개팅)
+import '../features/dating/presentation/pages/dating_recommendations_page.dart'
+    deferred as dating_reco;
+import '../features/dating/presentation/pages/dating_onboarding_page.dart'
+    deferred as dating_onboarding;
+import '../features/dating/presentation/pages/dating_match_detail_page.dart'
+    deferred as dating_match;
+
 /// 앱 라우터 설정 (Deferred Loading 최적화)
 ///
 /// 번들 분할 전략:
@@ -106,6 +114,56 @@ final GoRouter appRouterDeferred = GoRouter(
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               return saju.ResultPage();
+            }
+            return const DeferredLoadingIndicator();
+          },
+        );
+      },
+    ),
+
+    // MBTI 소개팅 (Deferred)
+    GoRoute(
+      path: '/dating',
+      name: 'dating',
+      builder: (context, state) {
+        return FutureBuilder(
+          future: dating_reco.loadLibrary(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return dating_reco.DatingRecommendationsPage();
+            }
+            return const DeferredLoadingIndicator();
+          },
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/dating/onboarding',
+      name: 'datingOnboarding',
+      builder: (context, state) {
+        return FutureBuilder(
+          future: dating_onboarding.loadLibrary(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return dating_onboarding.DatingOnboardingPage();
+            }
+            return const DeferredLoadingIndicator();
+          },
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/dating/match/:matchId',
+      name: 'datingMatchDetail',
+      builder: (context, state) {
+        final matchId = state.pathParameters['matchId'] ?? '';
+        return FutureBuilder(
+          future: dating_match.loadLibrary(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return dating_match.DatingMatchDetailPage(matchId: matchId);
             }
             return const DeferredLoadingIndicator();
           },
@@ -317,6 +375,9 @@ class AppRoutes {
   static const String dailyFortune = 'dailyFortune';
   static const String settings = 'settings';
   static const String admin = 'admin';
+  static const String dating = 'dating';
+  static const String datingOnboarding = 'datingOnboarding';
+  static const String datingMatchDetail = 'datingMatchDetail';
 }
 
 /// Deferred Loading 진행 상태 표시 위젯

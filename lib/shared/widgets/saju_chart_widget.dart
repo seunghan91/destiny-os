@@ -337,7 +337,7 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
                     ? null
                     : Border(
                         right: BorderSide(
-                          color: AppColors.grey300,
+                          color: AppColors.grey300Of(context),
                           width: 1,
                         ),
                       ),
@@ -353,8 +353,8 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: isSelected
-                        ? AppColors.primary
-                        : AppColors.textPrimary,
+                        ? AppColors.primaryOf(context)
+                        : AppColors.textPrimaryOf(context),
                   ),
                 ),
               ),
@@ -413,7 +413,7 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.grey100,
+        color: AppColors.surfaceVariantOf(context),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -430,7 +430,7 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
                     ? null
                     : Border(
                         right: BorderSide(
-                          color: AppColors.grey300,
+                          color: AppColors.grey300Of(context),
                           width: 1,
                         ),
                       ),
@@ -446,8 +446,8 @@ class _SajuChartWidgetState extends State<SajuChartWidget>
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: isSelected
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+                        ? AppColors.primaryOf(context)
+                        : AppColors.textSecondaryOf(context),
                   ),
                 ),
               ),

@@ -37,7 +37,12 @@ class AppTheme {
         statusBarIconBrightness: Brightness.dark,
       ),
     ),
-    textTheme: AppTypography.textTheme,
+    textTheme: AppTypography.textTheme
+        .apply(bodyColor: AppColors.textPrimary, displayColor: AppColors.textPrimary)
+        .copyWith(
+          bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+          labelSmall: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+        ),
     fontFamily: AppTypography.fontFamily,
     cardTheme: CardThemeData(
       elevation: 0,
@@ -139,23 +144,12 @@ class AppTheme {
         statusBarIconBrightness: Brightness.light,
       ),
     ),
-    textTheme: TextTheme(
-      displayLarge: AppTypography.displayLarge.copyWith(color: AppColors.textPrimaryDark),
-      displayMedium: AppTypography.displayMedium.copyWith(color: AppColors.textPrimaryDark),
-      displaySmall: AppTypography.displaySmall.copyWith(color: AppColors.textPrimaryDark),
-      headlineLarge: AppTypography.headlineLarge.copyWith(color: AppColors.textPrimaryDark),
-      headlineMedium: AppTypography.headlineMedium.copyWith(color: AppColors.textPrimaryDark),
-      headlineSmall: AppTypography.headlineSmall.copyWith(color: AppColors.textPrimaryDark),
-      titleLarge: AppTypography.titleLarge.copyWith(color: AppColors.textPrimaryDark),
-      titleMedium: AppTypography.titleMedium.copyWith(color: AppColors.textPrimaryDark),
-      titleSmall: AppTypography.titleSmall.copyWith(color: AppColors.textPrimaryDark),
-      bodyLarge: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimaryDark),
-      bodyMedium: AppTypography.bodyMedium.copyWith(color: AppColors.textPrimaryDark),
-      bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryDark),
-      labelLarge: AppTypography.labelLarge.copyWith(color: AppColors.textPrimaryDark),
-      labelMedium: AppTypography.labelMedium.copyWith(color: AppColors.textPrimaryDark),
-      labelSmall: AppTypography.labelSmall.copyWith(color: AppColors.textSecondaryDark),
-    ),
+    textTheme: AppTypography.textTheme
+        .apply(bodyColor: AppColors.textPrimaryDark, displayColor: AppColors.textPrimaryDark)
+        .copyWith(
+          bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.textSecondaryDark),
+          labelSmall: AppTypography.labelSmall.copyWith(color: AppColors.textSecondaryDark),
+        ),
     fontFamily: AppTypography.fontFamily,
     cardTheme: CardThemeData(
       elevation: 0,

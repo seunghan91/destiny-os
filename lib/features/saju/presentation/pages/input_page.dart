@@ -203,7 +203,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             decoration: InputDecoration(
               hintText: '이름을 입력하세요',
               hintStyle: AppTypography.titleMedium.copyWith(
-                color: AppColors.textTertiaryOf(context),
+                color: AppColors.textSecondaryOf(context),
                 fontWeight: FontWeight.w400,
               ),
               prefixIcon: Container(
@@ -430,7 +430,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                         style: AppTypography.titleMedium.copyWith(
                           color: _birthDate != null
                               ? AppColors.textPrimaryOf(context)
-                              : AppColors.textTertiaryOf(context),
+                              : AppColors.textSecondaryOf(context),
                           fontWeight: _birthDate != null
                               ? FontWeight.w600
                               : FontWeight.w400,
@@ -577,7 +577,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                         style: AppTypography.titleMedium.copyWith(
                           color: _selectedSiju != null
                               ? AppColors.textPrimaryOf(context)
-                              : AppColors.textTertiaryOf(context),
+                              : AppColors.textSecondaryOf(context),
                           fontWeight: _selectedSiju != null
                               ? FontWeight.w600
                               : FontWeight.w400,

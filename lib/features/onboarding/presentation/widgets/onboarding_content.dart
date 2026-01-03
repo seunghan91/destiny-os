@@ -50,7 +50,7 @@ class OnboardingContent extends StatelessWidget {
         )),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final content = _buildContent();
+            final content = _buildContent(context);
             
             // 화면이 충분히 크면 중앙 정렬, 작으면 스크롤 가능
             if (constraints.maxHeight >= _minContentHeight) {
@@ -71,7 +71,7 @@ class OnboardingContent extends StatelessWidget {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
@@ -82,12 +82,12 @@ class OnboardingContent extends StatelessWidget {
           const SizedBox(height: 24),
           _buildTitle(),
           const SizedBox(height: 8),
-          _buildSubtitle(),
+          _buildSubtitle(context),
           const SizedBox(height: 16),
-          _buildDescription(),
+          _buildDescription(context),
           if (data.features.isNotEmpty) ...[
             const SizedBox(height: 20),
-            _buildFeatures(),
+            _buildFeatures(context),
           ],
         ],
       ),
@@ -131,29 +131,29 @@ class OnboardingContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSubtitle() {
+  Widget _buildSubtitle(BuildContext context) {
     return Text(
       data.subtitle,
       style: AppTypography.headlineMedium.copyWith(
-        color: AppColors.primary,
+        color: AppColors.primaryOf(context),
         fontWeight: FontWeight.w600,
       ),
       textAlign: TextAlign.center,
     );
   }
 
-  Widget _buildDescription() {
+  Widget _buildDescription(BuildContext context) {
     return Text(
       data.description,
       style: AppTypography.bodyLarge.copyWith(
-        color: AppColors.textSecondary,
+        color: AppColors.textSecondaryOf(context),
         height: 1.6,
       ),
       textAlign: TextAlign.center,
     );
   }
 
-  Widget _buildFeatures() {
+  Widget _buildFeatures(BuildContext context) {
     return Column(
       children: data.features.map((feature) {
         return Padding(
@@ -165,7 +165,7 @@ class OnboardingContent extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: AppColors.primaryOf(context).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -178,7 +178,7 @@ class OnboardingContent extends StatelessWidget {
               Text(
                 feature,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimaryOf(context),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -206,7 +206,7 @@ class OnboardingContentSimple extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final content = _buildContent();
+        final content = _buildContent(context);
         
         // 화면이 충분히 크면 중앙 정렬, 작으면 스크롤 가능
         if (constraints.maxHeight >= _minContentHeight) {
@@ -225,7 +225,7 @@ class OnboardingContentSimple extends StatelessWidget {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
@@ -236,12 +236,12 @@ class OnboardingContentSimple extends StatelessWidget {
           const SizedBox(height: 24),
           _buildTitle(),
           const SizedBox(height: 8),
-          _buildSubtitle(),
+          _buildSubtitle(context),
           const SizedBox(height: 16),
-          _buildDescription(),
+          _buildDescription(context),
           if (data.features.isNotEmpty) ...[
             const SizedBox(height: 20),
-            _buildFeatures(),
+            _buildFeatures(context),
           ],
         ],
       ),
@@ -285,29 +285,29 @@ class OnboardingContentSimple extends StatelessWidget {
     );
   }
 
-  Widget _buildSubtitle() {
+  Widget _buildSubtitle(BuildContext context) {
     return Text(
       data.subtitle,
       style: AppTypography.headlineMedium.copyWith(
-        color: AppColors.primary,
+        color: AppColors.primaryOf(context),
         fontWeight: FontWeight.w600,
       ),
       textAlign: TextAlign.center,
     );
   }
 
-  Widget _buildDescription() {
+  Widget _buildDescription(BuildContext context) {
     return Text(
       data.description,
       style: AppTypography.bodyLarge.copyWith(
-        color: AppColors.textSecondary,
+        color: AppColors.textSecondaryOf(context),
         height: 1.6,
       ),
       textAlign: TextAlign.center,
     );
   }
 
-  Widget _buildFeatures() {
+  Widget _buildFeatures(BuildContext context) {
     return Column(
       children: data.features.map((feature) {
         return Padding(
@@ -319,7 +319,7 @@ class OnboardingContentSimple extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: AppColors.primaryOf(context).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -332,7 +332,7 @@ class OnboardingContentSimple extends StatelessWidget {
               Text(
                 feature,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimaryOf(context),
                   fontWeight: FontWeight.w500,
                 ),
               ),

@@ -75,7 +75,7 @@ class MbtiGridSelector extends StatelessWidget {
               child: Text(
                 entry.key,
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryOf(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -140,11 +140,11 @@ class _MbtiCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? mbti.color : AppColors.surfaceVariant,
+          color: isSelected ? mbti.color : AppColors.surfaceVariantOf(context),
           borderRadius: BorderRadius.circular(12),
           border: isSelected
               ? Border.all(color: mbti.color, width: 2)
-              : Border.all(color: AppColors.border, width: 1),
+              : Border.all(color: AppColors.borderOf(context), width: 1),
           boxShadow: isSelected
               ? [
                   BoxShadow(
@@ -170,7 +170,9 @@ class _MbtiCard extends StatelessWidget {
                   Text(
                     mbti.type,
                     style: AppTypography.titleMedium.copyWith(
-                      color: isSelected ? AppColors.white : AppColors.textPrimary,
+                      color: isSelected
+                          ? AppColors.white
+                          : AppColors.textPrimaryOf(context),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -180,7 +182,7 @@ class _MbtiCard extends StatelessWidget {
                     style: AppTypography.caption.copyWith(
                       color: isSelected
                           ? AppColors.white.withValues(alpha: 0.9)
-                          : AppColors.textSecondary,
+                          : AppColors.textSecondaryOf(context),
                     ),
                   ),
                 ],
@@ -217,7 +219,7 @@ class _CompactMbtiCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? mbti.color : AppColors.surfaceVariant,
+          color: isSelected ? mbti.color : AppColors.surfaceVariantOf(context),
           borderRadius: BorderRadius.circular(10),
           border: isSelected
               ? Border.all(color: mbti.color, width: 2)
@@ -234,7 +236,9 @@ class _CompactMbtiCard extends StatelessWidget {
             Text(
               mbti.type,
               style: AppTypography.labelMedium.copyWith(
-                color: isSelected ? AppColors.white : AppColors.textPrimary,
+                color: isSelected
+                    ? AppColors.white
+                    : AppColors.textPrimaryOf(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -306,9 +310,9 @@ class _MbtiSelectorBottomSheetState extends State<MbtiSelectorBottomSheet> {
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceOf(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
@@ -318,7 +322,7 @@ class _MbtiSelectorBottomSheetState extends State<MbtiSelectorBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.grey300,
+                  color: AppColors.grey300Of(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -334,7 +338,7 @@ class _MbtiSelectorBottomSheetState extends State<MbtiSelectorBottomSheet> {
                       child: Text(
                         '취소',
                         style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.textSecondaryOf(context),
                         ),
                       ),
                     ),
@@ -356,8 +360,8 @@ class _MbtiSelectorBottomSheetState extends State<MbtiSelectorBottomSheet> {
                         '확인',
                         style: AppTypography.bodyLarge.copyWith(
                           color: _selectedType != null
-                              ? AppColors.primary
-                              : AppColors.textTertiary,
+                              ? AppColors.primaryOf(context)
+                              : AppColors.textTertiaryOf(context),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -402,7 +406,7 @@ class _MbtiSelectorBottomSheetState extends State<MbtiSelectorBottomSheet> {
                         child: Text(
                           'MBTI를 모르겠어요',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textTertiary,
+                            color: AppColors.textTertiaryOf(context),
                           ),
                         ),
                       ),
@@ -486,7 +490,7 @@ class _MbtiSelectorBottomSheetState extends State<MbtiSelectorBottomSheet> {
                 Text(
                   _selectedMbti!.description,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryOf(context),
                   ),
                 ),
               ],

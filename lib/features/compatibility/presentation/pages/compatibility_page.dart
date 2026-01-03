@@ -1208,14 +1208,14 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                   ? AppColors.fortuneGood.withValues(alpha: 0.1)
                   : isBad
                   ? AppColors.warning.withValues(alpha: 0.1)
-                  : AppColors.surfaceVariant,
+                  : AppColors.surfaceVariantOf(context),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isGood
                     ? AppColors.fortuneGood.withValues(alpha: 0.3)
                     : isBad
                     ? AppColors.warning.withValues(alpha: 0.3)
-                    : AppColors.border,
+                    : AppColors.borderOf(context),
               ),
             ),
             child: Text(
@@ -1225,7 +1225,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                     ? AppColors.fortuneGood
                     : isBad
                     ? AppColors.warning
-                    : AppColors.textSecondary,
+                    : AppColors.textSecondaryOf(context),
                 fontWeight: FontWeight.w500,
               ),
             ),

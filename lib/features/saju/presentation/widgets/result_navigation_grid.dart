@@ -206,13 +206,13 @@ class ResultNavigationGrid extends StatelessWidget {
                           'MBTI+사주 융합 분석',
                           style: AppTypography.titleMedium.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
+                            color: AppColors.primaryOf(context),
                           ),
                         ),
                         Text(
                           '${mbti.type} (${mbti.koreanName})',
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textSecondaryOf(context),
                           ),
                         ),
                       ],
@@ -223,34 +223,39 @@ class ResultNavigationGrid extends StatelessWidget {
               const SizedBox(height: 24),
 
               // 분석 리포트 섹션
-              _buildSectionTitle('타고난 성향 vs 현재의 나'),
+              _buildSectionTitle(context, '타고난 성향 vs 현재의 나'),
               _buildAnalysisCard(
+                context,
                 title: '기질 분석',
                 content: gap.interpretation,
                 icon: '🧬',
               ),
               const SizedBox(height: 12),
               _buildAnalysisCard(
+                context,
                 title: '2026년 잠재력',
                 content: gap.hiddenPotential,
                 icon: '🔥',
               ),
               const SizedBox(height: 24),
 
-              _buildSectionTitle('2026년 흐름 요약'),
+              _buildSectionTitle(context, '2026년 흐름 요약'),
               _buildAnalysisCard(
+                context,
                 title: fortune.yearTheme,
                 content: fortune.narrative.overall,
                 icon: '🐴',
               ),
               const SizedBox(height: 12),
               _buildAnalysisCard(
+                context,
                 title: '화(火) 기운 적합도',
                 content: fortune.fireCompatibility.summaryMessage,
                 icon: '🔥',
               ),
               const SizedBox(height: 12),
               _buildAnalysisCard(
+                context,
                 title: '좋은 달/주의 달',
                 content:
                     '${bestMonth != null ? '좋은 달: ${bestMonth.monthName} (${bestMonth.theme})' : '좋은 달: -'}\n'
@@ -261,7 +266,7 @@ class ResultNavigationGrid extends StatelessWidget {
               const SizedBox(height: 24),
 
               // 2026년 조언 리스트
-              _buildSectionTitle('2026년 핵심 조언'),
+              _buildSectionTitle(context, '2026년 핵심 조언'),
               ...gap.recommendations
                   .map(
                     (rec) => Padding(
@@ -346,20 +351,21 @@ class ResultNavigationGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
         style: AppTypography.titleSmall.copyWith(
           fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
+          color: AppColors.textPrimaryOf(context),
         ),
       ),
     );
   }
 
-  Widget _buildAnalysisCard({
+  Widget _buildAnalysisCard(
+    BuildContext context, {
     required String title,
     required String content,
     required String icon,
@@ -367,7 +373,7 @@ class ResultNavigationGrid extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: AppColors.surfaceVariantOf(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -389,7 +395,7 @@ class ResultNavigationGrid extends StatelessWidget {
           Text(
             content,
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
               height: 1.5,
             ),
           ),

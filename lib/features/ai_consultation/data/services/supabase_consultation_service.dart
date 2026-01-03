@@ -22,20 +22,35 @@ class SupabaseConsultationService {
     int? fortuneScore,
   }) async {
     try {
+      // Firebase UID 함께 저장 (사용자 추적)
+      final currentUser = _client.auth.currentUser;
+
+      debugPrint('📝 [ConsultationService] Saving consultation: '
+          'type=$type, user_id=$userId, firebase_uid=${currentUser?.id}');
+
       final response = await _client.from(_tableName).insert({
         'user_id': userId,
+        'firebase_uid': currentUser?.id, // Firebase UID 추가 (사용자 식별)
         'saju_info': sajuInfo,
         'mbti_type': mbtiType,
         'consultation_type': type.name,
         'messages': messages.map((m) => _messageToJson(m)).toList(),
         'fortune_score': fortuneScore,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
       }).select('id');
 
-      if (response.isEmpty) return null;
+      if (response.isEmpty) {
+        debugPrint('❌ [ConsultationService] Failed to save consultation: empty response');
+        return null;
+      }
 
-      return response.first['id'] as String;
-    } catch (e) {
-      debugPrint('❌ Failed to save consultation to Supabase: $e');
+      final consultationId = response.first['id'] as String;
+      debugPrint('✅ [ConsultationService] Consultation saved successfully: $consultationId');
+      return consultationId;
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ConsultationService] Failed to save consultation to Supabase: $e');
+      debugPrint('❌ [ConsultationService] StackTrace: $stackTrace');
       return null;
     }
   }

@@ -36,6 +36,9 @@ import '../features/ai_consultation/presentation/pages/consultation_page.dart'
 import '../features/settings/presentation/pages/settings_page.dart'
     deferred as settings;
 
+// Admin Feature (관리자 페이지)
+import '../features/admin/presentation/pages/admin_page.dart' deferred as admin;
+
 /// 앱 라우터 설정 (Deferred Loading 최적화)
 ///
 /// 번들 분할 전략:
@@ -200,6 +203,23 @@ final GoRouter appRouterDeferred = GoRouter(
         );
       },
     ),
+
+    // 어드민 (Deferred - 숨겨진 관리자 페이지)
+    GoRoute(
+      path: '/admin',
+      name: 'admin',
+      builder: (context, state) {
+        return FutureBuilder(
+          future: admin.loadLibrary(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return admin.AdminPage();
+            }
+            return const DeferredLoadingIndicator();
+          },
+        );
+      },
+    ),
   ],
 
   // 에러 페이지
@@ -234,6 +254,7 @@ class AppRoutes {
   static const String consultation = 'consultation';
   static const String share = 'share';
   static const String settings = 'settings';
+  static const String admin = 'admin';
 }
 
 /// Deferred Loading 진행 상태 표시 위젯

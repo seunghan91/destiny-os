@@ -100,15 +100,17 @@ class _SijuCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.surfaceVariant,
+          color: isSelected
+              ? AppColors.primaryOf(context)
+              : AppColors.surfaceVariantOf(context),
           borderRadius: BorderRadius.circular(12),
           border: isSelected
-              ? Border.all(color: AppColors.primary, width: 2)
+              ? Border.all(color: AppColors.primaryOf(context), width: 2)
               : null,
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: AppColors.primaryOf(context).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -128,7 +130,9 @@ class _SijuCard extends StatelessWidget {
               Text(
                 '${siju.name} (${siju.hanja})',
                 style: AppTypography.labelSmall.copyWith(
-                  color: isSelected ? AppColors.white : AppColors.textPrimary,
+                  color: isSelected
+                      ? AppColors.white
+                      : AppColors.textPrimaryOf(context),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   fontSize: 11,
                 ),
@@ -140,7 +144,7 @@ class _SijuCard extends StatelessWidget {
                   fontSize: 9,
                   color: isSelected
                       ? AppColors.white.withValues(alpha: 0.85)
-                      : AppColors.textSecondary,
+                      : AppColors.textSecondaryOf(context),
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -195,9 +199,9 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: Column(
@@ -209,7 +213,7 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.grey300,
+                color: AppColors.grey300Of(context),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -225,7 +229,7 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
                     child: Text(
                       '취소',
                       style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryOf(context),
                       ),
                     ),
                   ),
@@ -241,7 +245,7 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
                       Text(
                         '12시진으로 선택',
                         style: AppTypography.caption.copyWith(
-                          color: AppColors.textTertiary,
+                          color: AppColors.textTertiaryOf(context),
                         ),
                       ),
                     ],
@@ -259,8 +263,8 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
                       '확인',
                       style: AppTypography.bodyLarge.copyWith(
                         color: _selectedIndex != null
-                            ? AppColors.primary
-                            : AppColors.textTertiary,
+                            ? AppColors.primaryOf(context)
+                            : AppColors.textTertiaryOf(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -288,7 +292,7 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
                 margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
+                  color: AppColors.primaryOf(context).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -314,7 +318,7 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
                               Text(
                                 '(${sijuList[_selectedIndex!].hanja}時)',
                                 style: AppTypography.bodyMedium.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.textSecondaryOf(context),
                                 ),
                               ),
                             ],
@@ -323,7 +327,7 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
                           Text(
                             sijuList[_selectedIndex!].timeRange,
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.primary,
+                              color: AppColors.primaryOf(context),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -346,7 +350,7 @@ class _SijuPickerBottomSheetState extends State<SijuPickerBottomSheet> {
                 child: Text(
                   '출생 시간을 모르겠어요',
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textTertiary,
+                    color: AppColors.textTertiaryOf(context),
                   ),
                 ),
               ),

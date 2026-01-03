@@ -1018,7 +1018,7 @@ class _ConsultationPageState extends State<ConsultationPage>
               decoration: InputDecoration(
                 hintText: '질문을 최대한 상세하게 입력해주세요...',
                 hintStyle: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textTertiaryOf(context),
+                  color: AppColors.textSecondaryOf(context),
                 ),
                 filled: true,
                 fillColor: AppColors.backgroundOf(context),

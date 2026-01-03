@@ -334,16 +334,54 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
 
   Future<void> _saveUserResult(AnalyzeFortune event) async {
     try {
-      await Supabase.instance.client.from('user_results').insert({
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+
+      debugPrint('📝 [DestinyBloc] Saving user result for user: ${user?.id}');
+
+      // user_profiles에서 사용자 프로필 확인 및 업데이트
+      if (user != null) {
+        try {
+          // user_profiles 테이블에 사주 정보 저장/업데이트
+          await supabase.from('user_profiles').upsert({
+            'firebase_uid': user.id,
+            'email': user.email,
+            'birth_date': event.birthDateTime.toIso8601String(),
+            'birth_hour': event.birthDateTime.hour,
+            'is_lunar': event.isLunar,
+            'gender': event.gender,
+            'mbti': event.mbtiType,
+            'display_name': event.name,
+            'updated_at': DateTime.now().toIso8601String(),
+          });
+          debugPrint('✅ [DestinyBloc] User profile updated successfully');
+        } catch (profileError) {
+          debugPrint('⚠️ [DestinyBloc] Warning: Failed to update user_profiles: $profileError');
+          // 계속 진행 (user_results는 저장)
+        }
+      }
+
+      // user_results 테이블에 분석 결과 저장
+      // ✅ FIX 10: use_night_subhour 저장 추가
+      final response = await supabase.from('user_results').insert({
+        'firebase_uid': user?.id,
         'birth_date': event.birthDateTime.toIso8601String(),
         'birth_hour': event.birthDateTime.hour,
         'is_lunar': event.isLunar,
         'gender': event.gender,
         'mbti': event.mbtiType,
         'name': event.name,
-      });
-    } catch (e) {
-      debugPrint('Error saving result: $e');
+        'use_night_subhour': event.useNightSubhour,  // ✅ FIX 10: 야자시 사용 여부 저장
+        'created_at': DateTime.now().toIso8601String(),
+      }).select('id');
+
+      if (response.isNotEmpty) {
+        debugPrint('✅ [DestinyBloc] User result saved successfully: ${response.first['id']}');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ [DestinyBloc] Error saving user result: $e');
+      debugPrint('❌ [DestinyBloc] StackTrace: $stackTrace');
+      // 저장 실패는 비치명적 (분석 결과는 이미 UI에 표시됨)
     }
   }
 
@@ -501,8 +539,15 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
       hasNovemberClash: hasNovemberClash,
     );
 
+    // 2026년 운세 저장 (캐시)
     try {
-      await Supabase.instance.client.from('fortune_year_results').insert({
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+
+      debugPrint('📝 [DestinyBloc] Saving fortune narrative for year: $year, fingerprint: $fingerprint');
+
+      final response = await supabase.from('fortune_year_results').insert({
+        'firebase_uid': user?.id,
         'fingerprint': fingerprint,
         'year': year,
         'generator': 'template',
@@ -522,9 +567,16 @@ class DestinyBloc extends Bloc<DestinyEvent, DestinyState> {
         'best': narrative.best,
         'caution': narrative.caution,
         'advice': narrative.advice,
-      });
-    } catch (e) {
-      debugPrint('Error saving fortune narrative cache: $e');
+        'created_at': DateTime.now().toIso8601String(),
+      }).select('id');
+
+      if (response.isNotEmpty) {
+        debugPrint('✅ [DestinyBloc] Fortune narrative saved successfully: ${response.first['id']}');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ [DestinyBloc] Error saving fortune narrative cache: $e');
+      debugPrint('❌ [DestinyBloc] StackTrace: $stackTrace');
+      // 저장 실패는 비치명적 (이미 생성된 운세는 반환)
     }
 
     return narrative;

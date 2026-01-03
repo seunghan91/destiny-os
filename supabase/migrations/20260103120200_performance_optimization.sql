@@ -31,9 +31,29 @@ CREATE INDEX IF NOT EXISTS idx_compatibility_user_result_created_at
   ON compatibility_results(user_result_id, created_at DESC);
 
 -- partner_name 검색 최적화 (부분 일치 검색용)
-CREATE INDEX IF NOT EXISTS idx_compatibility_partner_name
-  ON compatibility_results USING gin(partner_name gin_trgm_ops)
-  WHERE partner_name IS NOT NULL;
+-- pg_trgm 확장 활성화 시도
+DO $$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS pg_trgm;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'pg_trgm extension not available, skipping GIN index';
+END $$;
+
+-- GIN 인덱스 생성 (pg_trgm이 있을 때만)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm') THEN
+    CREATE INDEX IF NOT EXISTS idx_compatibility_partner_name
+      ON compatibility_results USING gin(partner_name gin_trgm_ops)
+      WHERE partner_name IS NOT NULL;
+  ELSE
+    -- 대체: 일반 B-tree 인덱스 (완전 일치 검색용)
+    CREATE INDEX IF NOT EXISTS idx_compatibility_partner_name
+      ON compatibility_results(partner_name)
+      WHERE partner_name IS NOT NULL;
+  END IF;
+END $$;
 
 -- overall_score 범위 검색 최적화 (점수별 필터링용)
 CREATE INDEX IF NOT EXISTS idx_compatibility_overall_score

@@ -28,6 +28,10 @@ import '../features/compatibility/presentation/pages/compatibility_page.dart'
     deferred as compatibility;
 import '../features/share/presentation/pages/share_page.dart' deferred as share;
 
+// Daily Fortune (오늘의 운세)
+import '../features/daily_fortune/presentation/pages/daily_fortune_page.dart'
+    deferred as daily_fortune;
+
 // Advanced Features (AI 상담)
 import '../features/ai_consultation/presentation/pages/consultation_page.dart'
     deferred as consultation;
@@ -187,6 +191,23 @@ final GoRouter appRouterDeferred = GoRouter(
       },
     ),
 
+    // 오늘의 운세 (Deferred)
+    GoRoute(
+      path: '/daily-fortune',
+      name: 'dailyFortune',
+      builder: (context, state) {
+        return FutureBuilder(
+          future: daily_fortune.loadLibrary(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return daily_fortune.DailyFortunePage();
+            }
+            return const DeferredLoadingIndicator();
+          },
+        );
+      },
+    ),
+
     // 설정 (Deferred)
     GoRoute(
       path: '/settings',
@@ -253,6 +274,7 @@ class AppRoutes {
   static const String compatibility = 'compatibility';
   static const String consultation = 'consultation';
   static const String share = 'share';
+  static const String dailyFortune = 'dailyFortune';
   static const String settings = 'settings';
   static const String admin = 'admin';
 }

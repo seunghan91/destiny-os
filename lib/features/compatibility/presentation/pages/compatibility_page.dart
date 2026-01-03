@@ -72,6 +72,103 @@ class _CompatibilityPageState extends State<CompatibilityPage>
     }
   }
 
+  Widget _buildMonthlyCautionCtaCard() {
+    // 2026 월별 운세에서 이번 달(현재 월)의 주의 포인트를 보여주되,
+    // 데이터가 없으면 오늘의 운세로 유도
+    String title = '이번 달 조심할 포인트';
+    String message = '이번 달 운세에서 조심해야 할 포인트를 확인해보세요.';
+    String ctaLabel = '이번 달 운세 보기';
+    String route = '/fortune';
+
+    try {
+      final bloc = context.read<DestinyBloc>();
+      final state = bloc.state;
+      if (state is DestinySuccess) {
+        final now = DateTime.now();
+        final month = now.month;
+        final monthly = state.fortune2026.monthlyFortunes
+            .where((m) => m.month == month)
+            .toList();
+        if (monthly.isNotEmpty) {
+          final m = monthly.first;
+          title = '${month}월 조심 포인트';
+          message = m.hasClash
+              ? '이번 달은 충(沖) 기운이 강할 수 있어요. 중요한 결정/대화는 서두르지 말고 한 번 더 확인하세요.\n\n조언: ${m.advice}'
+              : '이번 달 흐름을 점검하고, 작은 실수/오해가 커지지 않게 관리해보세요.\n\n조언: ${m.advice}';
+          ctaLabel = '월별 운세 자세히 보기';
+          route = '/fortune';
+        } else {
+          // 월별 데이터가 없으면 오늘의 운세로
+          message = '이번 달 흐름을 빠르게 잡으려면 오늘의 운세부터 확인하는 게 좋아요.';
+          ctaLabel = '오늘의 운세 보기';
+          route = '/daily-fortune';
+        }
+      } else {
+        // 분석 전이면 입력으로
+        message = '먼저 사주 분석을 완료하면 이번 달 조심 포인트를 더 정확히 보여드릴 수 있어요.';
+        ctaLabel = '사주 분석하러 가기';
+        route = '/input';
+      }
+    } catch (_) {
+      // 안전 폴백
+      message = '이번 달 운세를 확인해보세요.';
+      ctaLabel = '운세 보기';
+      route = '/fortune';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: AppColors.destinyGradientOf(context),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: AppTypography.titleMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            style: AppTypography.bodySmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: () {
+                context.push(route);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primaryOf(context),
+              ),
+              child: Text(ctaLabel),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _loadMySajuFromBloc() {
     try {
       final bloc = context.read<DestinyBloc>();
@@ -210,9 +307,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
 
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
-      appBar: AppBar(
-        title: const Text('궁합 분석'),
-      ),
+      appBar: AppBar(title: const Text('궁합 분석')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -491,8 +586,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 color: _partnerIsLunar
                     ? earth
                     : AppColors.textSecondaryOf(context),
-                fontWeight:
-                    _partnerIsLunar ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: _partnerIsLunar ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
             const Spacer(),
@@ -504,8 +598,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 shape: BoxShape.circle,
                 color: _partnerIsLunar ? earth : Colors.transparent,
                 border: Border.all(
-                  color:
-                      _partnerIsLunar ? earth : AppColors.grey400Of(context),
+                  color: _partnerIsLunar ? earth : AppColors.grey400Of(context),
                   width: 2,
                 ),
               ),
@@ -880,8 +973,10 @@ class _CompatibilityPageState extends State<CompatibilityPage>
                 ),
               ),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -966,8 +1061,9 @@ class _CompatibilityPageState extends State<CompatibilityPage>
 
             final primary = Theme.of(context).colorScheme.primary;
             final surface = Theme.of(context).colorScheme.surface;
-            final surfaceVariant =
-                Theme.of(context).colorScheme.surfaceContainerHighest;
+            final surfaceVariant = Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest;
 
             return AlertDialog(
               backgroundColor: surface,
@@ -1332,9 +1428,7 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.25),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1353,6 +1447,68 @@ class _CompatibilityPageState extends State<CompatibilityPage>
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryScoresCard(CompatibilityResult result) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariantOf(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderOf(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.bar_chart,
+                color: AppColors.primaryOf(context),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '카테고리별 궁합 점수',
+                style: AppTypography.titleSmall.copyWith(
+                  color: AppColors.primaryOf(context),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildScoreChip(label: '연애', score: result.loveScore),
+              _buildScoreChip(label: '결혼', score: result.marriageScore),
+              _buildScoreChip(label: '사업', score: result.businessScore),
+              _buildScoreChip(label: '우정', score: result.friendshipScore),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreChip({required String label, required int score}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primaryOf(context).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.borderOf(context)),
+      ),
+      child: Text(
+        '$label $score점',
+        style: AppTypography.labelSmall.copyWith(
+          color: AppColors.textPrimaryOf(context),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -1514,6 +1670,8 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildCategoryScoresCard(result),
+          const SizedBox(height: 20),
           Text(
             result.insights.summary,
             style: AppTypography.bodyMedium.copyWith(height: 1.6),
@@ -1531,11 +1689,73 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           ),
           const SizedBox(height: 20),
           _buildAnalysisSection(
+            title: '케미 포인트',
+            icon: Icons.auto_awesome,
+            color: AppColors.primaryOf(context),
+            items: result.insights.chemistryPoints,
+          ),
+          const SizedBox(height: 20),
+          _buildAnalysisSection(
             title: '주의할 점',
             icon: Icons.warning_amber_rounded,
             color: AppColors.warning,
             items: result.insights.challenges,
           ),
+          const SizedBox(height: 20),
+          _buildAnalysisSection(
+            title: '갈등이 생기기 쉬운 포인트',
+            icon: Icons.local_fire_department,
+            color: AppColors.warningOf(context),
+            items: result.insights.conflictTriggers,
+          ),
+          const SizedBox(height: 20),
+          _buildAnalysisSection(
+            title: '소통 가이드',
+            icon: Icons.forum,
+            color: AppColors.primaryOf(context),
+            items: result.insights.communicationGuide,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariantOf(context),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.borderOf(context)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.timeline,
+                      color: AppColors.primaryOf(context),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '장기 전망',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.primaryOf(context),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  result.insights.longTermOutlook,
+                  style: AppTypography.bodyMedium.copyWith(
+                    height: 1.5,
+                    color: AppColors.textPrimaryOf(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildMonthlyCautionCtaCard(),
           const SizedBox(height: 24),
           // 일주 관계 상세
           Container(
@@ -1613,8 +1833,10 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryOf(context).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(999),
@@ -1673,25 +1895,27 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               ),
             ),
             const SizedBox(height: 6),
-            ...?result.mbtiCommonGround?.take(4).map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• ', style: AppTypography.bodyMedium),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimaryOf(context),
+            ...?result.mbtiCommonGround
+                ?.take(4)
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('• ', style: AppTypography.bodyMedium),
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textPrimaryOf(context),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
           ],
           if ((result.mbtiDifferences ?? const []).isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -1703,25 +1927,27 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               ),
             ),
             const SizedBox(height: 6),
-            ...?result.mbtiDifferences?.take(4).map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• ', style: AppTypography.bodyMedium),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimaryOf(context),
+            ...?result.mbtiDifferences
+                ?.take(4)
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('• ', style: AppTypography.bodyMedium),
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textPrimaryOf(context),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
           ],
         ],
       ),
@@ -2016,9 +2242,51 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               minHeight: 8,
             ),
           ),
+          if (isLacking || isExcessive) ...[
+            const SizedBox(height: 8),
+            Text(
+              _getElementBalanceNote(
+                element: element,
+                isLacking: isLacking,
+                isExcessive: isExcessive,
+              ),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondaryOf(context),
+                height: 1.4,
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  String _getElementBalanceNote({
+    required String element,
+    required bool isLacking,
+    required bool isExcessive,
+  }) {
+    if (isLacking) {
+      return switch (element) {
+        '목' => '부족: 관계에 “성장/유연함” 에너지가 약해져 서로를 변화시키려 들면 지치기 쉬워요.',
+        '화' => '부족: 설렘/표현/활력이 줄어들 수 있어 “함께 즐길 목표”를 의식적으로 만들어야 해요.',
+        '토' => '부족: 안정감이 떨어져 약속/루틴이 흔들리기 쉬워요. 작은 합의를 반복하는 게 중요해요.',
+        '금' => '부족: 경계/원칙이 흐려져 서운함이 누적될 수 있어요. 기준(돈/시간/연락)을 명확히 해요.',
+        '수' => '부족: 깊은 교감이 약해질 수 있어요. 정기적으로 속마음 대화를 해보세요.',
+        _ => '부족: 해당 오행의 에너지를 의식적으로 보완해 보세요.',
+      };
+    }
+    if (isExcessive) {
+      return switch (element) {
+        '목' => '과다: 변화/성장 욕구가 커서 서로를 “바꾸려는 대화”가 늘 수 있어요. 속도를 맞추는 합의가 필요해요.',
+        '화' => '과다: 감정/표현이 강해 작은 일도 뜨거워질 수 있어요. 감정이 오를 때 잠깐 쉬는 규칙이 좋아요.',
+        '토' => '과다: 안정/현실이 강해 재미가 줄거나 변화에 둔감해질 수 있어요. 새 자극을 주기적으로 넣어보세요.',
+        '금' => '과다: 규칙/판단이 강해 말이 차갑게 느껴질 수 있어요. 감정을 먼저 인정한 뒤 논리를 얹어보세요.',
+        '수' => '과다: 생각/해석이 많아 오해가 커질 수 있어요. 추측보다 확인 질문을 먼저 해보세요.',
+        _ => '과다: 해당 오행이 너무 강하게 작동하지 않도록 균형을 잡아보세요.',
+      };
+    }
+    return '';
   }
 
   Widget _buildElementCycleInfo() {
@@ -2114,6 +2382,34 @@ class _CompatibilityPageState extends State<CompatibilityPage>
               advice: result.insights.advice[index],
             );
           }),
+          const SizedBox(height: 24),
+          _buildAnalysisSection(
+            title: '추천 활동/루틴',
+            icon: Icons.event_available,
+            color: AppColors.fortuneGoodOf(context),
+            items: result.insights.recommendedActivities,
+          ),
+          const SizedBox(height: 20),
+          _buildAnalysisSection(
+            title: '금기 사항',
+            icon: Icons.block,
+            color: AppColors.errorOf(context),
+            items: result.insights.taboos,
+          ),
+          const SizedBox(height: 20),
+          _buildAnalysisSection(
+            title: '소통 가이드',
+            icon: Icons.forum,
+            color: AppColors.primaryOf(context),
+            items: result.insights.communicationGuide,
+          ),
+          const SizedBox(height: 20),
+          _buildAnalysisSection(
+            title: '대화 주제 추천',
+            icon: Icons.chat_bubble_outline,
+            color: AppColors.primaryOf(context),
+            items: result.insights.conversationTopics,
+          ),
           const SizedBox(height: 32),
           // CTA 카드
           Container(
@@ -2224,8 +2520,8 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           'is_lunar': state.sajuChart.isLunar,
           'gender': state.sajuChart.gender,
           'mbti': state.mbtiType.type,
-          'name': null,  // 이름은 사용 안 함
-          'use_night_subhour': false,  // 야자시 사용 여부는 알 수 없음
+          'name': null, // 이름은 사용 안 함
+          'use_night_subhour': false, // 야자시 사용 여부는 알 수 없음
           'created_at': DateTime.now().toUtc().toIso8601String(),
         };
 
@@ -2272,7 +2568,8 @@ class _CompatibilityPageState extends State<CompatibilityPage>
         'business_score': _compatibilityResult!.businessScore,
         'friendship_score': _compatibilityResult!.friendshipScore,
         'mbti_relationship_type': _compatibilityResult!.mbtiRelationshipType,
-        'mbti_communication_style': _compatibilityResult!.mbtiCommunicationStyle,
+        'mbti_communication_style':
+            _compatibilityResult!.mbtiCommunicationStyle,
         'mbti_conflict_pattern': _compatibilityResult!.mbtiConflictPattern,
         'mbti_common_ground': _compatibilityResult!.mbtiCommonGround,
         'mbti_differences': _compatibilityResult!.mbtiDifferences,
@@ -2288,12 +2585,18 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           'harms': _compatibilityResult!.branchRelations.harms,
         },
         'element_balance': {
-          'person1_elements': _compatibilityResult!.elementBalance.person1Elements,
-          'person2_elements': _compatibilityResult!.elementBalance.person2Elements,
-          'combined_elements': _compatibilityResult!.elementBalance.combinedElements,
-          'lacking_elements': _compatibilityResult!.elementBalance.lackingElements,
-          'excessive_elements': _compatibilityResult!.elementBalance.excessiveElements,
-          'complementary_elements': _compatibilityResult!.elementBalance.complementaryElements,
+          'person1_elements':
+              _compatibilityResult!.elementBalance.person1Elements,
+          'person2_elements':
+              _compatibilityResult!.elementBalance.person2Elements,
+          'combined_elements':
+              _compatibilityResult!.elementBalance.combinedElements,
+          'lacking_elements':
+              _compatibilityResult!.elementBalance.lackingElements,
+          'excessive_elements':
+              _compatibilityResult!.elementBalance.excessiveElements,
+          'complementary_elements':
+              _compatibilityResult!.elementBalance.complementaryElements,
           'balance_score': _compatibilityResult!.elementBalance.balanceScore,
         },
         'stem_relations': {
@@ -2305,13 +2608,25 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           'strengths': _compatibilityResult!.insights.strengths,
           'challenges': _compatibilityResult!.insights.challenges,
           'advice': _compatibilityResult!.insights.advice,
+          'chemistry_points': _compatibilityResult!.insights.chemistryPoints,
+          'conflict_triggers': _compatibilityResult!.insights.conflictTriggers,
+          'communication_guide':
+              _compatibilityResult!.insights.communicationGuide,
+          'long_term_outlook': _compatibilityResult!.insights.longTermOutlook,
+          'recommended_activities':
+              _compatibilityResult!.insights.recommendedActivities,
+          'taboos': _compatibilityResult!.insights.taboos,
+          'conversation_topics':
+              _compatibilityResult!.insights.conversationTopics,
         },
         'created_at': DateTime.now().toUtc().toIso8601String(),
       };
 
       await supabase.from('compatibility_results').insert(compatibilityPayload);
 
-      debugPrint('✅ [CompatibilityPage] Compatibility result saved successfully');
+      debugPrint(
+        '✅ [CompatibilityPage] Compatibility result saved successfully',
+      );
     } catch (e, stackTrace) {
       debugPrint('❌ [CompatibilityPage] Error saving compatibility result: $e');
       debugPrint('❌ [CompatibilityPage] StackTrace: $stackTrace');

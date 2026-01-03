@@ -121,33 +121,42 @@ class _SharePageState extends State<SharePage> {
       return _buildNoDataView();
     }
 
+    final summary = compatibilityResult.insights.summary;
+    final chemistry = compatibilityResult.insights.chemistryPoints
+        .take(3)
+        .toList();
+    final taboos = compatibilityResult.insights.taboos.take(2).toList();
+
     return Container(
       width: 320,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+          colors: [
+            AppColors.primary,
+            AppColors.primary.withValues(alpha: 0.82),
+          ],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
+            color: AppColors.primary.withValues(alpha: 0.28),
+            blurRadius: 18,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '궁합 분석',
+                '궁합 카드',
                 style: AppTypography.labelSmall.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
@@ -155,150 +164,186 @@ class _SharePageState extends State<SharePage> {
               const Text('💗', style: TextStyle(fontSize: 20)),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
 
-          // 이름
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                myName,
-                style: AppTypography.titleMedium.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '&',
-                style: AppTypography.titleMedium.copyWith(
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                partnerName,
-                style: AppTypography.titleMedium.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // 점수
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
+          Text(
+            '$myName · $partnerName',
+            style: AppTypography.titleMedium.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
             ),
-            child: Column(
+          ),
+          const SizedBox(height: 12),
+
+          // 총점
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+            ),
+            child: Row(
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${compatibilityResult.overallScore}',
-                      style: AppTypography.fortuneScore.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        '점',
-                        style: AppTypography.headlineMedium.copyWith(
-                          color: Colors.white.withValues(alpha: 0.8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '총점',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: Colors.white.withValues(alpha: 0.75),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${compatibilityResult.overallScore}',
+                            style: AppTypography.fortuneScore.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10, left: 6),
+                            child: Text(
+                              '점',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: Colors.white.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _getCompatibilityGrade(
+                          compatibilityResult.overallScore,
+                        ),
+                        style: AppTypography.labelMedium.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _getCompatibilityGrade(compatibilityResult.overallScore),
-                  style: AppTypography.labelLarge.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        '케미',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${compatibilityResult.loveScore}',
+                        style: AppTypography.titleLarge.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
 
-          // 세부 점수
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildCompatibilityMiniScore(
-                '연애',
-                compatibilityResult.loveScore,
-                Icons.favorite,
-              ),
-              _buildCompatibilityMiniScore(
-                '결혼',
-                compatibilityResult.marriageScore,
-                Icons.home,
-              ),
-              _buildCompatibilityMiniScore(
-                '사업',
-                compatibilityResult.businessScore,
-                Icons.work,
-              ),
-              _buildCompatibilityMiniScore(
-                '우정',
-                compatibilityResult.friendshipScore,
-                Icons.people,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // 관계 배지 (천간합, 육합, 충 등)
-          if (compatibilityResult.dayPillarAnalysis.relations.isNotEmpty)
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              alignment: WrapAlignment.center,
-              children: compatibilityResult.dayPillarAnalysis.relations
-                  .take(3) // 최대 3개만 표시
-                  .map(
-                    (relation) => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        relation,
-                        style: AppTypography.labelSmall.copyWith(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          if (compatibilityResult.dayPillarAnalysis.relations.isNotEmpty)
-            const SizedBox(height: 16),
-          if (compatibilityResult.dayPillarAnalysis.relations.isEmpty)
-            const SizedBox(height: 8),
-
-          // 푸터
+          // 요약
           Text(
-            '나의 궁합 분석 보러가기 →',
-            style: AppTypography.caption.copyWith(
-              color: Colors.white.withValues(alpha: 0.6),
+            '요약',
+            style: AppTypography.labelMedium.copyWith(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary.replaceAll('\n\n', '\n').split('\n').take(3).join('\n'),
+            style: AppTypography.bodySmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+              height: 1.35,
+            ),
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 14),
+
+          // 케미 3개
+          if (chemistry.isNotEmpty) ...[
+            Text(
+              '케미 포인트 TOP3',
+              style: AppTypography.labelMedium.copyWith(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...chemistry.map(
+              (t) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  '• $t',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // 금기 2개
+          if (taboos.isNotEmpty) ...[
+            Text(
+              '금기 사항 TOP2',
+              style: AppTypography.labelMedium.copyWith(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...taboos.map(
+              (t) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  '• $t',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '나의 궁합 분석 보러가기 →',
+              style: AppTypography.caption.copyWith(
+                color: Colors.white.withValues(alpha: 0.65),
+              ),
             ),
           ),
         ],
@@ -1144,9 +1189,14 @@ class _SharePageState extends State<SharePage> {
       final file = File('${tempDir.path}/destiny_share.png');
       await file.writeAsBytes(imageBytes);
 
-      await Share.shareXFiles([
-        XFile(file.path),
-      ], text: '나의 2026년 운세를 확인해보세요! 🔮\n#2026신년운세 #2026운세 #사주');
+      final extraData = _getExtraData(context);
+      final isCompatibilityShare = extraData?['type'] == 'compatibility';
+
+      final text = isCompatibilityShare
+          ? '우리 궁합 점수는 몇 점일까? 💗\n궁합 카드 공유해요!\n#궁합 #사주궁합 #MBTI궁합'
+          : '나의 2026년 운세를 확인해보세요! 🔮\n#2026신년운세 #2026운세 #사주';
+
+      await Share.shareXFiles([XFile(file.path)], text: text);
     } catch (e) {
       _showError('공유에 실패했습니다: $e');
     } finally {
@@ -1197,13 +1247,21 @@ class _SharePageState extends State<SharePage> {
 
     // 앱 링크 (Firebase 호스팅 URL - mbtiunse.com으로 리다이렉트)
     const appLink = 'https://destiny-os-2026.web.app';
-    const shareText =
-        '나의 2026년 운세를 확인해보세요! 🔮\n\n'
-        '사주팔자와 MBTI를 결합한 새로운 운세 분석\n'
-        '$appLink\n\n'
-        '#2026신년운세 #2026운세 #사주 #MBTI';
 
-    await Clipboard.setData(const ClipboardData(text: shareText));
+    final extraData = _getExtraData(context);
+    final isCompatibilityShare = extraData?['type'] == 'compatibility';
+
+    final shareText = isCompatibilityShare
+        ? '우리 궁합 카드 공유해요 💗\n\n'
+              '사주 + MBTI 기반 궁합 분석\n'
+              '$appLink\n\n'
+              '#궁합 #사주궁합 #MBTI궁합'
+        : '나의 2026년 운세를 확인해보세요! 🔮\n\n'
+              '사주팔자와 MBTI를 결합한 새로운 운세 분석\n'
+              '$appLink\n\n'
+              '#2026신년운세 #2026운세 #사주 #MBTI';
+
+    await Clipboard.setData(ClipboardData(text: shareText));
     HapticFeedback.lightImpact();
 
     if (mounted) {

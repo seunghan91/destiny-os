@@ -29,29 +29,6 @@ class ResultNavigationGrid extends StatelessWidget {
                 .animate()
                 .fadeIn(duration: 300.ms, delay: 100.ms)
                 .slideX(begin: -0.1, end: 0, duration: 300.ms),
-            const SizedBox(width: 10),
-            InkWell(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _showPhysiognomyPremiumBottomSheet(context);
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(18),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary.withAlpha(55)),
-                ),
-                child: Text(
-                  '[관상 분석]',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -64,13 +41,8 @@ class ResultNavigationGrid extends StatelessWidget {
                   _NavigationCard(
                         icon: '📊',
                         title: '대운 흐름',
-                        badgeLabel: '[심층 토정비결]',
                         subtitle: '10년 단위 운세',
                         color: AppColors.water,
-                        onBadgeTap: () {
-                          HapticFeedback.lightImpact();
-                          context.push('/tojung-premium');
-                        },
                         onTap: () {
                           HapticFeedback.lightImpact();
                           context.push('/daewoon');
@@ -78,6 +50,64 @@ class ResultNavigationGrid extends StatelessWidget {
                       )
                       .animate()
                       .fadeIn(duration: 400.ms, delay: 200.ms)
+                      .slideY(
+                        begin: 0.2,
+                        end: 0,
+                        duration: 400.ms,
+                        curve: Curves.easeOutCubic,
+                      )
+                      .scale(
+                        begin: const Offset(0.9, 0.9),
+                        end: const Offset(1, 1),
+                        duration: 400.ms,
+                      ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child:
+                  _NavigationCard(
+                        icon: '🧑‍🦰',
+                        title: '관상 분석',
+                        subtitle: '정면 사진으로 종합 리포트',
+                        color: AppColors.primary,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _showPhysiognomyPremiumBottomSheet(context);
+                        },
+                      )
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 300.ms)
+                      .slideY(
+                        begin: 0.2,
+                        end: 0,
+                        duration: 400.ms,
+                        curve: Curves.easeOutCubic,
+                      )
+                      .scale(
+                        begin: const Offset(0.9, 0.9),
+                        end: const Offset(1, 1),
+                        duration: 400.ms,
+                      ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child:
+                  _NavigationCard(
+                        icon: '🎴',
+                        title: '심층 토정비결',
+                        subtitle: '2026 종합 리포트',
+                        color: AppColors.primary,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          context.push('/tojung-premium');
+                        },
+                      )
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 400.ms)
                       .slideY(
                         begin: 0.2,
                         end: 0,
@@ -104,7 +134,7 @@ class ResultNavigationGrid extends StatelessWidget {
                         },
                       )
                       .animate()
-                      .fadeIn(duration: 400.ms, delay: 300.ms)
+                      .fadeIn(duration: 400.ms, delay: 500.ms)
                       .slideY(
                         begin: 0.2,
                         end: 0,
@@ -135,7 +165,7 @@ class ResultNavigationGrid extends StatelessWidget {
                         },
                       )
                       .animate()
-                      .fadeIn(duration: 400.ms, delay: 400.ms)
+                      .fadeIn(duration: 400.ms, delay: 600.ms)
                       .slideY(
                         begin: 0.2,
                         end: 0,
@@ -162,7 +192,7 @@ class ResultNavigationGrid extends StatelessWidget {
                         },
                       )
                       .animate()
-                      .fadeIn(duration: 400.ms, delay: 500.ms)
+                      .fadeIn(duration: 400.ms, delay: 700.ms)
                       .slideY(
                         begin: 0.2,
                         end: 0,
@@ -273,9 +303,7 @@ class ResultNavigationGrid extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('관상 분석은 준비 중입니다.')),
-                    );
+                    context.push('/physiognomy-premium');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryOf(context),
@@ -562,8 +590,6 @@ class _NavigationCard extends StatelessWidget {
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
-  final String? badgeLabel;
-  final VoidCallback? onBadgeTap;
 
   const _NavigationCard({
     required this.icon,
@@ -571,109 +597,56 @@ class _NavigationCard extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.onTap,
-    this.badgeLabel,
-    this.onBadgeTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return GestureDetector(
-          onTapUp: (details) {
-            final canUseBadge = badgeLabel != null && onBadgeTap != null;
-            if (canUseBadge) {
-              const badgeTapWidth = 120.0;
-              const badgeTapTop = 48.0;
-              const badgeTapBottom = 92.0;
-
-              final isInBadgeZone =
-                  details.localPosition.dx >=
-                      (constraints.maxWidth - badgeTapWidth) &&
-                  details.localPosition.dy >= badgeTapTop &&
-                  details.localPosition.dy <= badgeTapBottom;
-
-              if (isInBadgeZone) {
-                onBadgeTap?.call();
-                return;
-              }
-            }
-
-            onTap();
-          },
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceOf(context),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(13),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceOf(context),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(13),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: color.withAlpha(25),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(icon, style: const TextStyle(fontSize: 22)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppTypography.titleSmall.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    if (badgeLabel != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withAlpha(18),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: AppColors.primary.withAlpha(55),
-                          ),
-                        ),
-                        child: Text(
-                          badgeLabel!,
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textTertiaryOf(context),
-                  ),
-                ),
-              ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withAlpha(25),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(icon, style: const TextStyle(fontSize: 22)),
+              ),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: AppTypography.titleSmall.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textTertiaryOf(context),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

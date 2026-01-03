@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 
 import 'auth_service.dart';
@@ -9,11 +11,7 @@ import 'credit_service.dart';
 import 'user_profile_service.dart';
 
 /// 인증 상태
-enum AuthStatus {
-  initial,
-  authenticated,
-  unauthenticated,
-}
+enum AuthStatus { initial, authenticated, unauthenticated }
 
 /// 통합 인증 관리자
 /// Firebase Auth + Supabase 프로필/크레딧 연동
@@ -21,6 +19,8 @@ class AuthManager extends ChangeNotifier {
   static final AuthManager _instance = AuthManager._internal();
   factory AuthManager() => _instance;
   AuthManager._internal();
+
+  static const String guestSajuDraftKey = 'guest_saju_profile_draft_v1';
 
   final AuthService _authService = AuthService();
   UserProfileService? _profileService;
@@ -59,11 +59,15 @@ class AuthManager extends ChangeNotifier {
       _profileService = UserProfileService(client: supabase);
       _creditService = CreditService(client: supabase);
     } catch (e) {
-      debugPrint('⚠️  Supabase not initialized - AuthManager running in limited mode');
+      debugPrint(
+        '⚠️  Supabase not initialized - AuthManager running in limited mode',
+      );
     }
 
     // Firebase Auth 상태 구독
-    _authSubscription = _authService.authStateChanges.listen(_onAuthStateChanged);
+    _authSubscription = _authService.authStateChanges.listen(
+      _onAuthStateChanged,
+    );
 
     // 현재 사용자 확인
     final currentUser = _authService.currentUser;
@@ -89,9 +93,99 @@ class AuthManager extends ChangeNotifier {
     } else {
       _status = AuthStatus.authenticated;
       await _loadUserData(user);
+      await _importGuestSajuDraftIfPresent(user.uid);
     }
 
     notifyListeners();
+  }
+
+  Future<Map<String, dynamic>?> _loadGuestSajuDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(guestSajuDraftKey);
+      if (raw == null || raw.isEmpty) return null;
+
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        return decoded.cast<String, dynamic>();
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _clearGuestSajuDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(guestSajuDraftKey);
+    } catch (_) {}
+  }
+
+  Future<void> _importGuestSajuDraftIfPresent(String firebaseUid) async {
+    if (_profileService == null) return;
+
+    final draft = await _loadGuestSajuDraft();
+    if (draft == null) return;
+
+    try {
+      final savedAtRaw = draft['savedAt'] as String?;
+      if (savedAtRaw != null) {
+        final savedAt = DateTime.tryParse(savedAtRaw);
+        if (savedAt != null &&
+            savedAt.isBefore(
+              DateTime.now().subtract(const Duration(days: 2)),
+            )) {
+          await _clearGuestSajuDraft();
+          return;
+        }
+      }
+
+      final birthDateRaw = draft['birthDate'] as String?;
+      final birthHour = (draft['birthHour'] as num?)?.toInt();
+      final gender = draft['gender'] as String?;
+      final isLunar = draft['isLunar'] as bool?;
+      final mbti = draft['mbti'] as String?;
+      final displayName = draft['name'] as String?;
+
+      final birthDate = birthDateRaw != null
+          ? DateTime.tryParse(birthDateRaw)
+          : null;
+      if (birthDate == null ||
+          birthHour == null ||
+          gender == null ||
+          isLunar == null) {
+        return;
+      }
+
+      final existing = _userProfile;
+      final shouldImportFullSaju = existing == null || !existing.hasSajuInfo;
+      final shouldImportMbti =
+          (existing?.mbti == null || existing!.mbti!.isEmpty) &&
+          (mbti != null && mbti.isNotEmpty);
+      final shouldImportName =
+          (existing?.displayName == null || existing!.displayName!.isEmpty) &&
+          (displayName != null && displayName.isNotEmpty);
+
+      if (!shouldImportFullSaju && !shouldImportMbti && !shouldImportName) {
+        await _clearGuestSajuDraft();
+        return;
+      }
+
+      _userProfile = await _profileService!.upsertProfile(
+        firebaseUid: firebaseUid,
+        birthDate: shouldImportFullSaju ? birthDate : null,
+        birthHour: shouldImportFullSaju ? birthHour : null,
+        gender: shouldImportFullSaju ? gender : null,
+        isLunar: shouldImportFullSaju ? isLunar : null,
+        mbti: shouldImportFullSaju ? mbti : (shouldImportMbti ? mbti : null),
+        displayName: shouldImportName ? displayName : null,
+      );
+
+      await _clearGuestSajuDraft();
+    } catch (e) {
+      debugPrint('⚠️  Failed to import guest saju draft: $e');
+    }
   }
 
   /// 사용자 데이터 로드 (프로필 + 크레딧)
@@ -113,7 +207,10 @@ class AuthManager extends ChangeNotifier {
 
         // 크레딧 초기화 (신규 가입 보너스: 0회, 필요시 변경)
         if (_userProfile != null) {
-          await _creditService!.initializeCredit(_userProfile!.id, initialBalance: 0);
+          await _creditService!.initializeCredit(
+            _userProfile!.id,
+            initialBalance: 0,
+          );
         }
       }
 
@@ -275,7 +372,7 @@ class AuthManager extends ChangeNotifier {
 
     // Firebase 계정 삭제
     final success = await _authService.deleteAccount();
-    
+
     if (success) {
       _status = AuthStatus.unauthenticated;
       _firebaseUser = null;

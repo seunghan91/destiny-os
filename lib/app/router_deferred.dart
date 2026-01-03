@@ -39,6 +39,10 @@ import '../features/ai_consultation/presentation/pages/consultation_page.dart'
 import '../features/tojung/presentation/pages/tojung_premium_page.dart'
     deferred as tojung;
 
+// Physiognomy (관상 분석)
+import '../features/physiognomy/presentation/pages/physiognomy_premium_page.dart'
+    deferred as physiognomy;
+
 // Settings
 import '../features/settings/presentation/pages/settings_page.dart'
     deferred as settings;
@@ -152,6 +156,23 @@ final GoRouter appRouterDeferred = GoRouter(
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               return tojung.TojungPremiumPage();
+            }
+            return const DeferredLoadingIndicator();
+          },
+        );
+      },
+    ),
+
+    // 관상 종합분석 (Deferred)
+    GoRoute(
+      path: '/physiognomy-premium',
+      name: 'physiognomyPremium',
+      builder: (context, state) {
+        return FutureBuilder(
+          future: physiognomy.loadLibrary(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return physiognomy.PhysiognomyPremiumPage();
             }
             return const DeferredLoadingIndicator();
           },

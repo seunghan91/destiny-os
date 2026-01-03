@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
@@ -5,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
@@ -32,6 +35,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
   bool _isLunar = false;
   String? _selectedMbti;
 
+  final AuthManager _authManager = AuthManager();
+
   // 분석 옵션
   bool _analyzeSaju = true;
   bool _analyzeMbti = true;
@@ -46,13 +51,126 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat();
+
+    _authManager.addListener(_onAuthChanged);
+    _restoreProfileDraft();
   }
 
   @override
   void dispose() {
+    _authManager.removeListener(_onAuthChanged);
     _nameController.dispose();
     _loadingController.dispose();
     super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (!mounted) return;
+    _restoreProfileDraft();
+  }
+
+  int? _inferSijuIndexFromBirthHour(int birthHour) {
+    for (var i = 0; i < sijuList.length; i++) {
+      final s = sijuList[i];
+      final start = s.startHour;
+      final end = s.endHour;
+
+      if (start < end) {
+        if (birthHour >= start && birthHour < end) return i;
+      } else {
+        if (birthHour >= start || birthHour < end) return i;
+      }
+    }
+    return null;
+  }
+
+  int _computeBirthHourForDraft() {
+    if (_selectedSiju != null) {
+      return (_selectedSiju!.startHour + 1) % 24;
+    }
+    return 12;
+  }
+
+  Future<void> _restoreProfileDraft() async {
+    if (!mounted) return;
+
+    if (_authManager.isAuthenticated) {
+      final p = _authManager.userProfile;
+      if (p == null) return;
+
+      if (p.displayName != null && p.displayName!.isNotEmpty) {
+        _nameController.text = p.displayName!;
+      }
+
+      setState(() {
+        _birthDate = p.birthDate;
+        _gender = (p.gender?.isNotEmpty == true) ? p.gender! : _gender;
+        _isLunar = p.isLunar;
+        _selectedMbti = (p.mbti?.isNotEmpty == true) ? p.mbti : _selectedMbti;
+
+        if (p.birthHour != null) {
+          final idx = _inferSijuIndexFromBirthHour(p.birthHour!);
+          _selectedSijuIndex = idx;
+          _selectedSiju = (idx != null) ? sijuList[idx] : null;
+        }
+      });
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(AuthManager.guestSajuDraftKey);
+    if (raw == null || raw.isEmpty || !mounted) return;
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return;
+      final data = decoded.cast<String, dynamic>();
+
+      final birthDateRaw = data['birthDate'] as String?;
+      final birthHour = (data['birthHour'] as num?)?.toInt();
+      final gender = data['gender'] as String?;
+      final isLunar = data['isLunar'] as bool?;
+      final mbti = data['mbti'] as String?;
+      final name = data['name'] as String?;
+
+      final birthDate = birthDateRaw != null
+          ? DateTime.tryParse(birthDateRaw)
+          : null;
+      if (name != null && name.isNotEmpty) {
+        _nameController.text = name;
+      }
+
+      setState(() {
+        _birthDate = birthDate ?? _birthDate;
+        if (gender != null && gender.isNotEmpty) _gender = gender;
+        if (isLunar != null) _isLunar = isLunar;
+        if (mbti != null && mbti.isNotEmpty) _selectedMbti = mbti;
+
+        if (birthHour != null) {
+          final idx = _inferSijuIndexFromBirthHour(birthHour);
+          _selectedSijuIndex = idx;
+          _selectedSiju = (idx != null) ? sijuList[idx] : null;
+        }
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _saveGuestProfileDraft({int? birthHour}) async {
+    if (_authManager.isAuthenticated) return;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    final payload = <String, dynamic>{
+      'savedAt': DateTime.now().toIso8601String(),
+      'birthDate': _birthDate?.toIso8601String(),
+      'birthHour': birthHour,
+      'gender': _gender,
+      'isLunar': _isLunar,
+      'mbti': _selectedMbti,
+      'name': _nameController.text,
+    };
+
+    await prefs.setString(AuthManager.guestSajuDraftKey, jsonEncode(payload));
   }
 
   @override
@@ -232,6 +350,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
             ),
             onChanged: (value) {
               setState(() {});
+              _saveGuestProfileDraft(birthHour: _computeBirthHourForDraft());
             },
           ),
         ),
@@ -473,6 +592,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
       onTap: () {
         HapticFeedback.selectionClick();
         setState(() => _isLunar = !_isLunar);
+        _saveGuestProfileDraft(birthHour: _computeBirthHourForDraft());
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -653,6 +773,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
       onTap: () {
         HapticFeedback.selectionClick();
         setState(() => _gender = value);
+        _saveGuestProfileDraft(birthHour: _computeBirthHourForDraft());
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -718,6 +839,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           initialType: _selectedMbti,
           onTypeSelected: (type) {
             setState(() => _selectedMbti = type);
+            _saveGuestProfileDraft(birthHour: _computeBirthHourForDraft());
           },
         ),
       ],
@@ -805,7 +927,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 12),
         Text(
-          '입력된 정보는 분석에만 사용되며 저장되지 않습니다',
+          '비로그인 상태에서는 기기에 임시 저장되며, 로그인하면 계정에 저장됩니다',
           style: AppTypography.caption.copyWith(
             color: AppColors.textTertiaryOf(context),
           ),
@@ -1141,6 +1263,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     );
                     HapticFeedback.mediumImpact();
                     setState(() => _birthDate = selectedDate);
+                    _saveGuestProfileDraft(
+                      birthHour: _computeBirthHourForDraft(),
+                    );
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
@@ -1275,6 +1400,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                     onPressed: () {
                       HapticFeedback.mediumImpact();
                       setState(() => _birthDate = tempDate);
+                      _saveGuestProfileDraft(
+                        birthHour: _computeBirthHourForDraft(),
+                      );
                       Navigator.pop(context);
                     },
                     child: Text(
@@ -1320,6 +1448,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
           _selectedSijuIndex = index;
           _selectedSiju = siju;
         });
+
+        _saveGuestProfileDraft(birthHour: _computeBirthHourForDraft());
       },
     );
   }
@@ -1422,6 +1552,8 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         0,
       );
     }
+
+    _saveGuestProfileDraft(birthHour: birthHour);
 
     // 로그인된 사용자의 경우 사주 정보를 Supabase에 저장
     _saveSajuInfoIfLoggedIn(birthHour);

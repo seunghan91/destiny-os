@@ -12,6 +12,7 @@ import '../features/ai_consultation/presentation/pages/consultation_page.dart';
 import '../features/share/presentation/pages/share_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/tojung/presentation/pages/tojung_premium_page.dart';
+import '../features/physiognomy/presentation/pages/physiognomy_premium_page.dart';
 
 /// 앱 라우터 설정
 final GoRouter appRouter = GoRouter(
@@ -64,6 +65,13 @@ final GoRouter appRouter = GoRouter(
       path: '/tojung-premium',
       name: 'tojungPremium',
       builder: (context, state) => const TojungPremiumPage(),
+    ),
+
+    // 관상 종합분석
+    GoRoute(
+      path: '/physiognomy-premium',
+      name: 'physiognomyPremium',
+      builder: (context, state) => const PhysiognomyPremiumPage(),
     ),
 
     // 궁합 분석

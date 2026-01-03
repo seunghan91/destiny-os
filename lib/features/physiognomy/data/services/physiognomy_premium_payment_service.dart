@@ -2,9 +2,10 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/apps_in_toss/apps_in_toss_service.dart';
 import '../../../../core/services/auth/auth_manager.dart';
-import 'tojung_premium_access_service.dart';
+import 'physiognomy_premium_access_service.dart';
 
-class TojungPremiumPaymentService {
+/// 관상 프리미엄 결제 서비스 (5,000원 1회권)
+class PhysiognomyPremiumPaymentService {
   static const int price = 5000;
 
   static Future<bool> purchaseOneReport() async {
@@ -20,23 +21,23 @@ class TojungPremiumPaymentService {
       }
 
       final bridge = AppsInTossBridge();
-      final orderId = 'tojung_premium_${DateTime.now().millisecondsSinceEpoch}';
+      final orderId = 'physiognomy_${DateTime.now().millisecondsSinceEpoch}';
 
       final paymentRequest = PaymentRequest(
         orderId: orderId,
-        orderName: '심층 토정비결 종합분석 1회',
+        orderName: '관상 종합분석 1회 (사주·토정·MBTI 통합)',
         amount: price,
       );
 
       final result = await bridge.requestPayment(paymentRequest);
 
       if (result.success) {
-        await TojungPremiumAccessService.addCredits(
+        await PhysiognomyPremiumAccessService.addCredits(
           1,
           paymentId: result.paymentKey,
-          description: '토정비결 종합분석 1회권 구매',
+          description: '관상 종합분석 1회권 구매',
         );
-        bridge.showToast('결제가 완료되었습니다! 토정비결 종합분석 1회권이 지급되었어요.');
+        bridge.showToast('결제가 완료되었습니다! 관상 종합분석 1회권이 지급되었어요.');
         return true;
       }
 

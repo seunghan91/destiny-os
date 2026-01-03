@@ -1,38 +1,47 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
 import '../../../../core/services/auth/auth_manager.dart';
-import '../../../ai_consultation/data/services/ai_consultation_service.dart';
 import '../../../saju/presentation/bloc/destiny_bloc.dart';
-import '../../data/services/tojung_premium_access_service.dart';
-import '../../data/services/tojung_premium_payment_service.dart';
-import '../../data/services/tojung_premium_storage_service.dart';
+import '../../data/services/physiognomy_premium_access_service.dart';
+import '../../data/services/physiognomy_premium_payment_service.dart';
+import '../../data/services/physiognomy_storage_service.dart';
+import '../../data/services/physiognomy_analysis_service.dart';
+import '../../data/services/image_picker_service.dart';
 
-class TojungPremiumPage extends StatefulWidget {
-  const TojungPremiumPage({super.key});
+class PhysiognomyPremiumPage extends StatefulWidget {
+  const PhysiognomyPremiumPage({super.key});
 
   @override
-  State<TojungPremiumPage> createState() => _TojungPremiumPageState();
+  State<PhysiognomyPremiumPage> createState() => _PhysiognomyPremiumPageState();
 }
 
-class _TojungPremiumPageState extends State<TojungPremiumPage> {
-  final AIConsultationService _aiService = AIConsultationService();
+class _PhysiognomyPremiumPageState extends State<PhysiognomyPremiumPage> {
+  final PhysiognomyAnalysisService _analysisService =
+      PhysiognomyAnalysisService();
 
   bool _loadingAccess = true;
   int _remainingCredits = 0;
   bool _isPurchasing = false;
-  bool _isGenerating = false;
-  bool _isAuthenticated = AuthManager().isAuthenticated;
+  bool _isAnalyzing = false;
   String? _report;
   String? _errorMessage;
   String? _infoMessage;
+  String? _analysisStep;
+
+  Uint8List? _selectedImageBytes;
+
+  bool get _isAuthenticated => AuthManager().isAuthenticated;
 
   Future<void> _openRefundPolicy() async {
     final uri = Uri.parse('https://destiny-os-2026.web.app/refund');
@@ -42,41 +51,12 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
   @override
   void initState() {
     super.initState();
-    AuthManager().addListener(_onAuthChanged);
     _loadAccess();
   }
 
-  @override
-  void dispose() {
-    AuthManager().removeListener(_onAuthChanged);
-    super.dispose();
-  }
-
-  void _onAuthChanged() {
-    if (!mounted) return;
-
-    final next = AuthManager().isAuthenticated;
-    if (next == _isAuthenticated) return;
-
-    setState(() {
-      _isAuthenticated = next;
-
-      if (!_isAuthenticated) {
-        _remainingCredits = 0;
-        _report = null;
-        _errorMessage = null;
-        _infoMessage = null;
-      }
-    });
-
-    if (next) {
-      _loadAccess();
-    }
-  }
-
   Future<void> _loadAccess() async {
-    await TojungPremiumAccessService.initializeIfNeeded();
-    final credits = await TojungPremiumAccessService.getCredits();
+    await PhysiognomyPremiumAccessService.initializeIfNeeded();
+    final credits = await PhysiognomyPremiumAccessService.getCredits();
     if (!mounted) return;
     setState(() {
       _remainingCredits = credits;
@@ -89,7 +69,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('로그인이 필요합니다'),
-        content: const Text('토정비결 전용 1회권 결제/보관/재열람은 회원(로그인) 기반으로 제공됩니다.'),
+        content: const Text('관상 종합분석 1회권 결제/보관/재열람은 회원(로그인) 기반으로 제공됩니다.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -113,7 +93,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
       return;
     }
 
-    final items = await TojungPremiumStorageService.listReports(limit: 20);
+    final items = await PhysiognomyStorageService.listReports(limit: 20);
     if (!mounted) return;
 
     if (items.isEmpty) {
@@ -152,7 +132,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '지난 토정비결 보고서',
+                  '지난 관상 분석 보고서',
                   style: AppTypography.titleMedium.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimaryOf(context),
@@ -168,7 +148,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                       final r = items[index];
                       return ListTile(
                         title: Text(
-                          '${r.year} 종합분석',
+                          '관상 종합분석',
                           style: AppTypography.titleSmall.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
@@ -312,7 +292,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
     });
 
     try {
-      final ok = await TojungPremiumPaymentService.purchaseOneReport();
+      final ok = await PhysiognomyPremiumPaymentService.purchaseOneReport();
       if (!ok) {
         setState(() {
           _errorMessage = '결제에 실패했습니다. 잠시 후 다시 시도해주세요.';
@@ -330,7 +310,31 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
     }
   }
 
-  Future<void> _generateReport(DestinySuccess data) async {
+  Future<void> _selectImage() async {
+    if (!kIsWeb) {
+      setState(() {
+        _errorMessage = '현재 웹(PWA/Apps in Toss)에서만 지원됩니다.';
+      });
+      return;
+    }
+
+    try {
+      final imageBytes = await ImagePickerService.pickImage();
+      if (imageBytes != null) {
+        setState(() {
+          _selectedImageBytes = imageBytes;
+          _errorMessage = null;
+          _infoMessage = '사진이 선택되었습니다. 분석을 시작하세요.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = '사진 선택 중 오류: $e';
+      });
+    }
+  }
+
+  Future<void> _runAnalysis(DestinySuccess data) async {
     if (!AuthManager().isAuthenticated) {
       _showLoginRequiredDialog();
       return;
@@ -343,86 +347,100 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
       return;
     }
 
+    if (_selectedImageBytes == null) {
+      setState(() {
+        _errorMessage = '먼저 얼굴 사진을 선택해주세요.';
+      });
+      return;
+    }
+
     setState(() {
-      _isGenerating = true;
+      _isAnalyzing = true;
       _errorMessage = null;
       _infoMessage = null;
       _report = null;
+      _analysisStep = '얼굴 특징 분석 중...';
     });
 
     try {
       final chart = data.sajuChart;
       final tenGods = data.tenGods;
       final fortune = data.fortune2026;
-
-      final sajuInfo =
-          '사주팔자: ${chart.fullChart}, '
-          '일주: ${chart.dayPillar.fullPillar}(${chart.dayPillar.hanjaRepresentation}), '
-          '일간: ${chart.dayMaster}(${chart.dayMasterElement}), '
-          '월지: ${chart.monthPillar.earthlyBranch}, '
-          '강한 십성: ${tenGods.dominantGod}, '
-          '부족한 오행(보완): ${chart.complementaryElement}, '
-          '띠: ${chart.zodiacAnimal}';
-
       final mbtiType = data.mbtiType.type;
-      final fortuneScore = fortune.overallScore.toInt();
 
-      final userMessage =
-          '심층 토정비결(신년운세) 방식으로 2026년 종합분석 보고서를 작성해줘.\n'
-          '반드시 아래 형식을 지켜서, 매우 구체적인 실행 조언까지 포함해줘.\n\n'
-          '## 1) 한 장 요약\n'
-          '- 올해의 키워드 3개\n'
-          '- 총운 요약 5줄\n\n'
-          '## 2) 사주(타고난 기질) vs MBTI(현재 성향) 통합\n'
-          '- 강점/리스크\n'
-          '- 올해 흔들리는 지점\n\n'
-          '## 3) 2026 월별 흐름(1~12월)\n'
-          '- 각 월마다: 테마 / 좋은 행동 2개 / 피할 행동 2개 / 체크포인트 1개\n\n'
-          '## 4) 분야별 심층 조언\n'
-          '- 재물/일/관계/건강: 각각 핵심전략 + 실수패턴 + 체크리스트\n\n'
-          '## 5) 30일 실행 플랜\n'
-          '- 주차별(1~4주) 해야 할 일\n\n'
-          '## 6) 올해의 경고 3개\n'
-          '- 왜 위험한지와 회피법\n\n'
-          '마지막에는 “다음에 더 깊게 볼 질문 3개”를 제안해줘.';
-
-      final report = await _aiService.generateResponse(
-        userMessage: userMessage,
-        consultationType: '토정비결 종합분석',
-        sajuInfo: sajuInfo,
-        mbtiType: mbtiType,
-        fortuneScore: fortuneScore,
-        taskType: AITaskType.analysis,
-      );
-
-      final sajuSnapshot = <String, dynamic>{
+      final sajuData = <String, dynamic>{
         'full_chart': chart.fullChart,
         'day_master': chart.dayMaster,
         'day_master_element': chart.dayMasterElement,
         'dominant_god': tenGods.dominantGod,
         'complementary_element': chart.complementaryElement,
+        'zodiac_animal': chart.zodiacAnimal,
+        'fortune_score': fortune.overallScore.toInt(),
+        'year_theme': fortune.yearTheme,
       };
 
-      final savedId = await TojungPremiumStorageService.saveReport(
-        reportMarkdown: report,
-        year: 2026,
+      setState(() => _analysisStep = '관상 분석 중...');
+
+      // 전체 분석 파이프라인 실행
+      final result = await _analysisService.runFullAnalysis(
+        imageBytes: _selectedImageBytes!,
+        sajuData: sajuData,
+        tojungSummary: null, // 토정비결 요약은 선택적
         mbti: mbtiType,
-        sajuSnapshot: sajuSnapshot,
-        model: 'analysis',
-        metadata: <String, dynamic>{'fortuneScore': fortuneScore},
+      );
+
+      setState(() => _analysisStep = '리포트 저장 중...');
+
+      // 이미지 업로드
+      String? imagePath;
+      try {
+        imagePath = await PhysiognomyStorageService.uploadFaceImage(
+          _selectedImageBytes!,
+        );
+      } catch (e) {
+        debugPrint('⚠️ Image upload failed (non-critical): $e');
+      }
+
+      // 카드 이미지 저장 (있는 경우)
+      String? cardImagePath;
+      if (result.cardImageBytes != null) {
+        try {
+          // 임시 ID로 저장 후 업데이트
+          cardImagePath = await PhysiognomyStorageService.saveCardImage(
+            result.cardImageBytes!,
+            DateTime.now().millisecondsSinceEpoch.toString(),
+          );
+        } catch (e) {
+          debugPrint('⚠️ Card image save failed (non-critical): $e');
+        }
+      }
+
+      // DB에 저장
+      final savedId = await PhysiognomyStorageService.saveReport(
+        reportMarkdown: result.reportMarkdown,
+        imagePath: imagePath,
+        cardImagePath: cardImagePath,
+        featuresJson: result.faceFeatures,
+        sajuSnapshot: sajuData,
+        mbti: mbtiType,
+        model: 'gemini-2.5-flash',
+        metadata: <String, dynamic>{
+          'fortuneScore': fortune.overallScore.toInt(),
+          'hasCardImage': result.cardImageBytes != null,
+        },
       );
 
       if (savedId == null) {
-        // 저장 실패 시 이용권 차감은 하지 않음 (사용자 보호)
         if (!mounted) return;
         setState(() {
-          _report = report;
+          _report = result.reportMarkdown;
           _infoMessage = '보고서는 생성되었지만 저장에 실패했습니다. 네트워크를 확인 후 다시 시도해주세요.';
         });
         return;
       }
 
-      final consumed = await TojungPremiumAccessService.consumeOne();
+      // 크레딧 차감
+      final consumed = await PhysiognomyPremiumAccessService.consumeOne();
       if (!consumed) {
         throw Exception('1회권 차감에 실패했습니다.');
       }
@@ -430,17 +448,20 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
       await _loadAccess();
       if (!mounted) return;
       setState(() {
-        _report = report;
-        _infoMessage = '저장 완료 (id: $savedId)';
+        _report = result.reportMarkdown;
+        _infoMessage = '분석 완료! (저장 ID: $savedId)';
+        _selectedImageBytes = null; // 초기화
+        _analysisStep = null;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = '보고서 생성 중 오류가 발생했습니다: $e';
+        _errorMessage = '분석 중 오류가 발생했습니다: $e';
+        _analysisStep = null;
       });
     } finally {
       if (mounted) {
-        setState(() => _isGenerating = false);
+        setState(() => _isAnalyzing = false);
       }
     }
   }
@@ -451,7 +472,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
       builder: (context, state) {
         if (state is! DestinySuccess) {
           return Scaffold(
-            appBar: AppBar(title: const Text('심층 토정비결')),
+            appBar: AppBar(title: const Text('관상 종합분석')),
             body: const Center(child: Text('분석 데이터가 없습니다.\n먼저 사주 분석을 진행해주세요.')),
           );
         }
@@ -459,20 +480,20 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
         return Scaffold(
           backgroundColor: AppColors.backgroundOf(context),
           appBar: AppBar(
-            title: const Text('심층 토정비결'),
+            title: const Text('관상 종합분석'),
             backgroundColor: AppColors.surfaceOf(context),
             elevation: 0,
           ),
           body: SafeArea(
             child: _loadingAccess
                 ? const Center(child: CircularProgressIndicator())
-                : Padding(
+                : SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '사주 + 토정비결 + MBTI\n종합분석 & 신년운세',
+                          '관상 + 사주 + 토정 + MBTI\n통합 신년운세 리포트',
                           style: AppTypography.headlineSmall.copyWith(
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimaryOf(context),
@@ -480,24 +501,34 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '전용 1회권(5,000원)으로 종합 보고서를 생성합니다.',
+                          '정면 얼굴 사진을 업로드하면 AI가 관상을 분석하고,\n사주·토정·MBTI와 통합하여 2026 신년운세를 제공합니다.',
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.textSecondaryOf(context),
                             height: 1.45,
                           ),
                         ),
                         const SizedBox(height: 16),
+
+                        // 사진 가이드
+                        _buildPhotoGuide(),
+                        const SizedBox(height: 12),
+
+                        // 사진 선택 버튼
+                        _buildImageSelector(),
+                        const SizedBox(height: 12),
+
                         _FeatureCard(
                           title: '포함 내용',
                           items: const [
-                            '한 장 요약(키워드/총운)',
-                            '사주+MBTI 통합 분석',
-                            '월별(1~12월) 흐름',
-                            '재물/일/관계/건강 심층 조언',
-                            '30일 실행 플랜',
+                            '얼굴형/오관 관상 분석',
+                            '사주+토정+MBTI 통합 해석',
+                            '2026 신년운세 (연애/재물/직장/건강)',
+                            '실행 체크리스트',
+                            '요약 카드 이미지',
                           ],
                         ),
                         const SizedBox(height: 12),
+
                         _FeatureCard(
                           title: '잔여 이용권',
                           items: [
@@ -507,16 +538,12 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                           ],
                         ),
                         const SizedBox(height: 10),
+
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
-                            onPressed: (_isPurchasing || _isGenerating)
+                            onPressed: (_isPurchasing || _isAnalyzing)
                                 ? null
-                                : !_isAuthenticated
-                                ? () {
-                                    HapticFeedback.lightImpact();
-                                    _showLoginRequiredDialog();
-                                  }
                                 : _openHistory,
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -528,9 +555,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                               ),
                             ),
                             child: Text(
-                              _isAuthenticated
-                                  ? '지난 보고서 보기'
-                                  : '로그인 후 지난 보고서 보기',
+                              '지난 보고서 보기',
                               style: AppTypography.titleSmall.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimaryOf(context),
@@ -538,6 +563,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                             ),
                           ),
                         ),
+
                         if (_infoMessage != null) ...[
                           const SizedBox(height: 12),
                           Container(
@@ -558,6 +584,7 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                             ),
                           ),
                         ],
+
                         if (_errorMessage != null) ...[
                           const SizedBox(height: 12),
                           Container(
@@ -578,43 +605,80 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                             ),
                           ),
                         ],
-                        const SizedBox(height: 12),
-                        if (_report != null)
-                          Expanded(
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceOf(context),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: AppColors.borderOf(context),
-                                ),
-                              ),
-                              child: Markdown(data: _report!, selectable: true),
+
+                        if (_analysisStep != null) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withAlpha(10),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          )
-                        else
-                          const Spacer(),
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _analysisStep!,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 12),
+
+                        if (_report != null)
+                          Container(
+                            width: double.infinity,
+                            constraints: const BoxConstraints(maxHeight: 400),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceOf(context),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.borderOf(context),
+                              ),
+                            ),
+                            child: Markdown(data: _report!, selectable: true),
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // 메인 액션 버튼
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(
-                            onPressed: (_isPurchasing || _isGenerating)
+                            onPressed: (_isPurchasing || _isAnalyzing)
                                 ? null
                                 : !_isAuthenticated
                                 ? () {
                                     HapticFeedback.lightImpact();
                                     _showLoginRequiredDialog();
                                   }
-                                : (_remainingCredits > 0)
+                                : (_remainingCredits > 0 &&
+                                      _selectedImageBytes != null)
                                 ? () {
                                     HapticFeedback.lightImpact();
-                                    _generateReport(state);
+                                    _runAnalysis(state);
                                   }
-                                : () {
+                                : (_remainingCredits <= 0)
+                                ? () {
                                     HapticFeedback.lightImpact();
                                     _purchase();
-                                  },
+                                  }
+                                : null,
                             style: FilledButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               backgroundColor: AppColors.primary,
@@ -624,15 +688,17 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                               ),
                             ),
                             child: Text(
-                              _isGenerating
-                                  ? '보고서 생성 중…'
+                              _isAnalyzing
+                                  ? '분석 중...'
                                   : _isPurchasing
-                                  ? '결제 진행 중…'
+                                  ? '결제 진행 중...'
                                   : !_isAuthenticated
                                   ? '로그인 후 이용하기'
-                                  : (_remainingCredits > 0)
-                                  ? '종합분석 생성하기 (1회 사용)'
-                                  : '5,000원 결제 후 1회 이용권 받기',
+                                  : (_remainingCredits <= 0)
+                                  ? '5,000원 결제 후 1회 이용권 받기'
+                                  : (_selectedImageBytes == null)
+                                  ? '먼저 사진을 선택해주세요'
+                                  : '관상 종합분석 시작 (1회 사용)',
                               style: AppTypography.titleSmall.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
@@ -640,19 +706,21 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
                             ),
                           ),
                         ),
+
                         const SizedBox(height: 10),
                         Text(
-                          '안내: 보고서 생성(실행) 즉시 디지털 콘텐츠가 제공되며, 실행 후 환불이 제한될 수 있어요.',
+                          '⚠️ 면책: 이 분석은 전통 관상학 기반 엔터테인먼트입니다. 과학적 검증이 아니며, 중요한 의사결정 근거로 사용하지 마세요.',
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondaryOf(context),
+                            color: AppColors.textTertiaryOf(context),
                             height: 1.35,
                           ),
                         ),
+
                         const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
-                            onPressed: (_isPurchasing || _isGenerating)
+                            onPressed: (_isPurchasing || _isAnalyzing)
                                 ? null
                                 : () => context.pop(),
                             style: OutlinedButton.styleFrom(
@@ -679,6 +747,152 @@ class _TojungPremiumPageState extends State<TojungPremiumPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPhotoGuide() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceOf(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderOf(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('📸', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Text(
+                '사진 가이드',
+                style: AppTypography.titleSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimaryOf(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...[
+            '정면 사진 (얼굴이 카메라를 정확히 바라봄)',
+            '머리 상단 ~ 턱선까지 모두 포함',
+            '밝은 조명, 그림자 최소화',
+            '안경/마스크/과한 필터 제거 권장',
+          ].map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '• ',
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      e,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondaryOf(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageSelector() {
+    return GestureDetector(
+      onTap: (_isAnalyzing || _isPurchasing) ? null : _selectImage,
+      child: Container(
+        width: double.infinity,
+        height: 160,
+        decoration: BoxDecoration(
+          color: _selectedImageBytes != null
+              ? AppColors.primary.withAlpha(10)
+              : AppColors.surfaceOf(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _selectedImageBytes != null
+                ? AppColors.primary
+                : AppColors.borderOf(context),
+            width: _selectedImageBytes != null ? 2 : 1,
+          ),
+        ),
+        child: _selectedImageBytes != null
+            ? Stack(
+                children: [
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.memory(
+                        _selectedImageBytes!,
+                        height: 140,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedImageBytes = null;
+                          _infoMessage = null;
+                        });
+                      },
+                      icon: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_a_photo_rounded,
+                    size: 48,
+                    color: AppColors.textTertiaryOf(context),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '정면 얼굴 사진 선택',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondaryOf(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '탭하여 사진 업로드',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textTertiaryOf(context),
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }
@@ -728,7 +942,6 @@ class _FeatureCard extends StatelessWidget {
                       e,
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondaryOf(context),
-                        height: 1.45,
                       ),
                     ),
                   ),

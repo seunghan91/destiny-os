@@ -1,54 +1,101 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../../core/services/auth/auth_manager.dart';
 
 class TojungPremiumAccessService {
-  static const String _initializedKey = 'tojung_premium_initialized';
-  static const String _creditsKey = 'tojung_premium_credits';
-
-  static const int initialFreeCredits = 0;
-
-  static Future<void> resetToInitialCredits() async {
-    await setCredits(initialFreeCredits);
+  static SupabaseClient? get _client {
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
   }
 
-  static Future<void> setCredits(int credits) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_creditsKey, credits);
-    await prefs.setBool(_initializedKey, true);
-  }
+  static String? get _firebaseUid => AuthManager().firebaseUser?.uid;
 
   static Future<void> initializeIfNeeded() async {
-    final prefs = await SharedPreferences.getInstance();
-    final initialized = prefs.getBool(_initializedKey) ?? false;
-    if (initialized) return;
-
-    await prefs.setInt(_creditsKey, initialFreeCredits);
-    await prefs.setBool(_initializedKey, true);
+    // server-backed: no-op
   }
 
   static Future<int> getCredits() async {
-    final prefs = await SharedPreferences.getInstance();
-    await initializeIfNeeded();
-    return prefs.getInt(_creditsKey) ?? 0;
+    final client = _client;
+    final firebaseUid = _firebaseUid;
+
+    if (client == null || firebaseUid == null) return 0;
+
+    try {
+      final result = await client.rpc(
+        'tojung_get_pass_balance',
+        params: {'p_firebase_uid': firebaseUid},
+      );
+
+      if (result is int) return result;
+      if (result is num) return result.toInt();
+      return int.tryParse(result.toString()) ?? 0;
+    } catch (e) {
+      debugPrint('❌ Failed to load tojung pass balance: $e');
+      return 0;
+    }
+  }
+
+  static Future<int> addCredits(
+    int amount, {
+    String? paymentId,
+    String? description,
+  }) async {
+    final client = _client;
+    final firebaseUid = _firebaseUid;
+
+    if (client == null || firebaseUid == null) return 0;
+
+    try {
+      final result = await client.rpc(
+        'tojung_add_pass',
+        params: {
+          'p_firebase_uid': firebaseUid,
+          'p_amount': amount,
+          'p_payment_id': paymentId,
+          'p_description': description,
+        },
+      );
+
+      if (result is List && result.isNotEmpty) {
+        final first = result.first;
+        if (first is Map) {
+          return (first['new_balance'] as num?)?.toInt() ?? 0;
+        }
+      }
+      return await getCredits();
+    } catch (e) {
+      debugPrint('❌ Failed to add tojung pass: $e');
+      return await getCredits();
+    }
   }
 
   static Future<bool> consumeOne() async {
-    final prefs = await SharedPreferences.getInstance();
-    await initializeIfNeeded();
+    final client = _client;
+    final firebaseUid = _firebaseUid;
 
-    final current = prefs.getInt(_creditsKey) ?? 0;
-    if (current <= 0) return false;
+    if (client == null || firebaseUid == null) return false;
 
-    await prefs.setInt(_creditsKey, current - 1);
-    return true;
-  }
+    try {
+      final result = await client.rpc(
+        'tojung_consume_pass',
+        params: {'p_firebase_uid': firebaseUid},
+      );
 
-  static Future<int> addCredits(int amount) async {
-    final prefs = await SharedPreferences.getInstance();
-    await initializeIfNeeded();
+      if (result is List && result.isNotEmpty) {
+        final first = result.first;
+        if (first is Map) {
+          return first['success'] == true;
+        }
+      }
 
-    final current = prefs.getInt(_creditsKey) ?? 0;
-    final next = current + amount;
-    await prefs.setInt(_creditsKey, next);
-    return next;
+      return false;
+    } catch (e) {
+      debugPrint('❌ Failed to consume tojung pass: $e');
+      return false;
+    }
   }
 }

@@ -172,6 +172,12 @@ ALTER TABLE dating_likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dating_matches ENABLE ROW LEVEL SECURITY;
 
 -- Service role 전체 접근
+DROP POLICY IF EXISTS "Service role full access on dating_profiles" ON dating_profiles;
+DROP POLICY IF EXISTS "Service role full access on dating_preferences" ON dating_preferences;
+DROP POLICY IF EXISTS "Service role full access on dating_recommendations" ON dating_recommendations;
+DROP POLICY IF EXISTS "Service role full access on dating_likes" ON dating_likes;
+DROP POLICY IF EXISTS "Service role full access on dating_matches" ON dating_matches;
+
 CREATE POLICY "Service role full access on dating_profiles" ON dating_profiles
     FOR ALL USING (auth.role() = 'service_role');
 CREATE POLICY "Service role full access on dating_preferences" ON dating_preferences
@@ -185,6 +191,15 @@ CREATE POLICY "Service role full access on dating_matches" ON dating_matches
 
 -- Anon 역할 (Firebase Auth 사용)
 -- dating_profiles: active 상태만 읽기 가능 (다른 사용자 프로필 보기)
+DROP POLICY IF EXISTS "Anon can read active dating_profiles" ON dating_profiles;
+DROP POLICY IF EXISTS "Anon can insert dating_profiles" ON dating_profiles;
+DROP POLICY IF EXISTS "Anon can update own dating_profiles" ON dating_profiles;
+DROP POLICY IF EXISTS "Anon can manage dating_preferences" ON dating_preferences;
+DROP POLICY IF EXISTS "Anon can manage dating_recommendations" ON dating_recommendations;
+DROP POLICY IF EXISTS "Anon can manage dating_likes" ON dating_likes;
+DROP POLICY IF EXISTS "Anon can read dating_matches" ON dating_matches;
+DROP POLICY IF EXISTS "Anon can insert dating_matches" ON dating_matches;
+
 CREATE POLICY "Anon can read active dating_profiles" ON dating_profiles
     FOR SELECT USING (status = 'active');
 

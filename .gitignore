@@ -49,3 +49,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 node_modules
+
+# Apple Sign In Private Keys (보안 민감 정보)
+*.p8
+assets/apple/*.p8
+assets/apple/AuthKey_*.p8

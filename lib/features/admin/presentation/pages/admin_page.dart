@@ -29,17 +29,29 @@ class _AdminPageState extends State<AdminPage> {
   bool _hasMoreData = true;
   late ScrollController _scrollController;
 
+  // 비밀번호 인증 상태
+  bool _isAuthenticated = false;
+  final TextEditingController _passwordController = TextEditingController();
+  static const String _adminPassword = 'destiny2026'; // TODO: 환경변수로 이동
+
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-    _fetchUsers();
+
+    // 인증되지 않았으면 비밀번호 입력 다이얼로그 표시
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isAuthenticated) {
+        _showPasswordDialog();
+      }
+    });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -87,6 +99,74 @@ class _AdminPageState extends State<AdminPage> {
       setState(() {
         _isLoadingMore = false;
       });
+    }
+  }
+
+  // 비밀번호 입력 다이얼로그
+  Future<void> _showPasswordDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('관리자 인증'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('관리자 비밀번호를 입력하세요'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: '비밀번호',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+              onSubmitted: (_) => _checkPassword(),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(false);
+              context.pop(); // 관리자 페이지에서 나가기
+            },
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: _checkPassword,
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != true && mounted) {
+      // 인증 실패 시 페이지에서 나가기
+      context.pop();
+    }
+  }
+
+  // 비밀번호 확인
+  void _checkPassword() {
+    if (_passwordController.text == _adminPassword) {
+      setState(() {
+        _isAuthenticated = true;
+      });
+      Navigator.of(context).pop(true);
+      _fetchUsers(); // 인증 성공 시 데이터 로드
+    } else {
+      // 비밀번호 틀림
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('비밀번호가 올바르지 않습니다'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      _passwordController.clear();
     }
   }
 
@@ -212,7 +292,9 @@ class _AdminPageState extends State<AdminPage> {
       ),
       // ✅ FIX 8: 에러 상태 UI 추가
       // ✅ FIX 9: Pagination - ScrollController 추가, ListView.builder로 변경
-      body: _isLoading
+      body: !_isAuthenticated
+          ? const Center(child: CircularProgressIndicator())
+          : _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? _buildErrorWidget()

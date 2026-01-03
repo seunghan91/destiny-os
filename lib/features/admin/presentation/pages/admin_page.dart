@@ -391,6 +391,14 @@ class _AdminPageState extends State<AdminPage> {
                             ? user['mbti'].toString().toUpperCase()
                             : '미등록';
 
+                        // 생시 정보
+                        final birthHour = user['birth_hour'] as int?;
+                        final birthTimeDisplay = birthHour != null ? ' ${birthHour}시' : '';
+
+                        // 음력/양력 정보
+                        final isLunar = user['is_lunar'] as bool? ?? false;
+                        final calendarType = isLunar ? '음력' : '양력';
+
                         return ListTile(
                           onTap: () => _replayResult(user),
                           tileColor: AppColors.surfaceOf(context),
@@ -424,7 +432,7 @@ class _AdminPageState extends State<AdminPage> {
                             children: [
                               const SizedBox(height: 4),
                               Text(
-                                '생일: ${DateFormat('yyyy-MM-dd').format(birthDate)} ($genderDisplay)',
+                                '생일: ${DateFormat('yyyy-MM-dd').format(birthDate)}$birthTimeDisplay ($calendarType, $genderDisplay)',
                                 style: AppTypography.bodySmall.copyWith(
                                   color: AppColors.textSecondaryOf(context),
                                 ),

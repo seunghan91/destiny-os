@@ -267,29 +267,26 @@ class ResultNavigationGrid extends StatelessWidget {
 
               // 2026년 조언 리스트
               _buildSectionTitle(context, '2026년 핵심 조언'),
-              ...gap.recommendations
-                  .map(
-                    (rec) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '• ',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Expanded(
-                            child: Text(
-                              rec,
-                              style: AppTypography.bodyMedium.copyWith(
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        ],
+              ...gap.recommendations.map(
+                (rec) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '• ',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-                    ),
+                      Expanded(
+                        child: Text(
+                          rec,
+                          style: AppTypography.bodyMedium.copyWith(height: 1.5),
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+              ),
 
               const SizedBox(height: 32),
 
@@ -334,7 +331,7 @@ class ResultNavigationGrid extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'AI 상담 5회권 (5,000원)',
+                        'AI 상담 5회권(5,000원) - 베타테스트 기간 무료',
                         style: AppTypography.caption.copyWith(
                           color: Colors.white.withAlpha(200),
                         ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
@@ -33,13 +35,9 @@ class _ConsultationPageState extends State<ConsultationPage>
   bool _isTyping = false;
   int _remainingCredits = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _loadCredits();
-    _loadPreviousSession();
-    _checkPaymentRequired();
+  Future<void> _openRefundPolicy() async {
+    final uri = Uri.parse('https://destiny-os-2026.web.app/refund');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   /// 결제 필요 여부 확인 및 다이얼로그 표시
@@ -439,158 +437,221 @@ class _ConsultationPageState extends State<ConsultationPage>
 
   /// 결제 다이얼로그 표시
   void _showPaymentDialog() {
+    var refundPolicyAgreed = false;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.payment_rounded, color: AppColors.primary),
-            const SizedBox(width: 8),
-            const Text('AI 운세 상담'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              ConsultationPaymentService.getPurchaseMessage(),
-              style: AppTypography.bodyMedium.copyWith(height: 1.6),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.fortuneGood.withAlpha(15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.fortuneGood.withAlpha(30)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.payment_rounded, color: AppColors.primary),
+              const SizedBox(width: 8),
+              const Text('AI 운세 상담'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ConsultationPaymentService.getPurchaseMessage(),
+                style: AppTypography.bodyMedium.copyWith(height: 1.6),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.credit_card_rounded,
-                    color: AppColors.fortuneGood,
-                    size: 24,
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.fortuneGood.withAlpha(15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.fortuneGood.withAlpha(30),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '크레딧 5회',
-                          style: AppTypography.titleSmall.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.fortuneGood,
-                          ),
-                        ),
-                        Text(
-                          '5,000원',
-                          style: AppTypography.headlineSmall.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.credit_card_rounded,
+                      color: AppColors.fortuneGood,
+                      size: 24,
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceOf(context),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderOf(context)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 18,
-                    color: AppColors.textSecondaryOf(context),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '중요 안내: 결제한 크레딧(사용권)은 “회원(로그인) 계정”에만 유지됩니다.\n'
-                      '비로그인(게스트) 상태에서 결제/사용한 크레딧은 브라우저/앱 데이터 삭제, 기기 변경, 재설치, 캐시 초기화 등으로 소실될 수 있으며, 이 경우 복구/이전이 불가합니다.\n'
-                      '회원가입(로그인)을 하지 않아 발생한 크레딧 소실/이용 불가 등 문제에 대해 서비스 제공자는 책임을 지지 않습니다.',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textSecondaryOf(context),
-                        height: 1.45,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '크레딧 5회',
+                            style: AppTypography.titleSmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.fortuneGood,
+                            ),
+                          ),
+                          Text(
+                            '5,000원',
+                            style: AppTypography.headlineSmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              '취소',
-              style: TextStyle(color: AppColors.textSecondaryOf(context)),
-            ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundOf(context),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderOf(context)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: refundPolicyAgreed,
+                      onChanged: (v) {
+                        setDialogState(() {
+                          refundPolicyAgreed = v ?? false;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondaryOf(context),
+                            height: 1.45,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text:
+                                  '[필수] 질문(질의) 실행 즉시 디지털 콘텐츠가 제공되며, 실행 후 환불이 제한될 수 있음을 확인했고, ',
+                            ),
+                            TextSpan(
+                              text: '환불(청약철회) 정책',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                decoration: TextDecoration.underline,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = _openRefundPolicy,
+                            ),
+                            const TextSpan(text: '에 동의합니다.'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceOf(context),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderOf(context)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 18,
+                      color: AppColors.textSecondaryOf(context),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '중요 안내: 결제한 크레딧(사용권)은 “회원(로그인) 계정”에만 유지됩니다.\n'
+                        '비로그인(게스트) 상태에서 결제/사용한 크레딧은 브라우저/앱 데이터 삭제, 기기 변경, 재설치, 캐시 초기화 등으로 소실될 수 있으며, 이 경우 복구/이전이 불가합니다.\n'
+                        '회원가입(로그인)을 하지 않아 발생한 크레딧 소실/이용 불가 등 문제에 대해 서비스 제공자는 책임을 지지 않습니다.',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textSecondaryOf(context),
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          if (kIsWeb)
+          actions: [
             TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await _handleBetaRetry();
-              },
+              onPressed: () => Navigator.pop(context),
               child: Text(
-                '베타테스트니까 그냥 다시하기',
+                '취소',
                 style: TextStyle(color: AppColors.textSecondaryOf(context)),
               ),
             ),
-          if (!UnifiedCreditService.isLoggedIn)
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                // 설정 > 계정 섹션에서 바로 로그인 가능
-                this.context.push('/settings');
-                ScaffoldMessenger.of(this.context).showSnackBar(
-                  const SnackBar(
-                    content: Text('결제한 크레딧을 유지하려면 회원가입/로그인이 필요합니다.'),
-                    behavior: SnackBarBehavior.floating,
+            if (kIsWeb)
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _handleBetaRetry();
+                },
+                child: Text(
+                  '베타테스트니까 그냥 다시하기',
+                  style: TextStyle(color: AppColors.textSecondaryOf(context)),
+                ),
+              ),
+            if (!UnifiedCreditService.isLoggedIn)
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // 설정 > 계정 섹션에서 바로 로그인 가능
+                  this.context.push('/settings');
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    const SnackBar(
+                      content: Text('결제한 크레딧을 유지하려면 회원가입/로그인이 필요합니다.'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.person_outline, size: 20),
+                label: const Text('회원가입/로그인 후 결제하기'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
                   ),
-                );
-              },
-              icon: const Icon(Icons.person_outline, size: 20),
-              label: const Text('회원가입/로그인 후 결제하기'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              )
+            else
+              ElevatedButton.icon(
+                onPressed: refundPolicyAgreed
+                    ? () async {
+                        Navigator.pop(context);
+                        await _handlePayment();
+                      }
+                    : null,
+                icon: const Icon(Icons.payment_rounded, size: 20),
+                label: const Text('결제하기'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
-            )
-          else
-            ElevatedButton.icon(
-              onPressed: () async {
-                Navigator.pop(context);
-                await _handlePayment();
-              },
-              icon: const Icon(Icons.payment_rounded, size: 20),
-              label: const Text('결제하기'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -978,23 +1039,24 @@ class _ConsultationPageState extends State<ConsultationPage>
                   : MarkdownBody(
                       data: message.content,
                       selectable: true,
-                      styleSheet: MarkdownStyleSheet.fromTheme(
-                        Theme.of(context),
-                      ).copyWith(
-                        p: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimaryOf(context),
-                          height: 1.5,
-                        ),
-                        strong: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimaryOf(context),
-                          height: 1.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        listBullet: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textPrimaryOf(context),
-                          height: 1.5,
-                        ),
-                      ),
+                      styleSheet:
+                          MarkdownStyleSheet.fromTheme(
+                            Theme.of(context),
+                          ).copyWith(
+                            p: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textPrimaryOf(context),
+                              height: 1.5,
+                            ),
+                            strong: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textPrimaryOf(context),
+                              height: 1.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            listBullet: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textPrimaryOf(context),
+                              height: 1.5,
+                            ),
+                          ),
                     ),
             ),
           ),
@@ -1103,45 +1165,59 @@ class _ConsultationPageState extends State<ConsultationPage>
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: InputDecoration(
-                hintText: '질문을 최대한 상세하게 입력해주세요...',
-                hintStyle: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondaryOf(context),
-                ),
-                filled: true,
-                fillColor: AppColors.backgroundOf(context),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onSubmitted: _sendMessage,
+          Text(
+            '안내: 이 질의는 실행 즉시 제공되며, 실행 후 환불이 제한될 수 있어요.',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondaryOf(context),
+              height: 1.35,
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: () => _sendMessage(_messageController.text),
-            icon: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  decoration: InputDecoration(
+                    hintText: '질문을 최대한 상세하게 입력해주세요...',
+                    hintStyle: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondaryOf(context),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundOf(context),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onSubmitted: _sendMessage,
+                ),
               ),
-              child: Icon(
-                Icons.send,
-                color: Theme.of(context).colorScheme.onPrimary,
-                size: 20,
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () => _sendMessage(_messageController.text),
+                icon: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.send,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: 20,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

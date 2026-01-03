@@ -16,6 +16,10 @@
         "destination": "/terms.html"
       },
       {
+        "source": "/refund",
+        "destination": "/refund.html"
+      },
+      {
         "source": "/about",
         "destination": "/about.html"
       },

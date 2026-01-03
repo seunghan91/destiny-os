@@ -237,9 +237,11 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 8),
         Text(
-          '결과에 "OOO님의 운세"로 표시됩니다',
+          '이름은 선택이에요. 입력할수록 결과가 더 정교해져요\n'
+          '결과에는 "OOO님의 운세"로 표시됩니다 (실명/자연스러운 닉네임 권장)',
           style: AppTypography.caption.copyWith(
             color: AppColors.textTertiaryOf(context),
+            height: 1.35,
           ),
         ),
       ],
@@ -993,7 +995,9 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
 
             final primary = Theme.of(context).colorScheme.primary;
             final surface = Theme.of(context).colorScheme.surface;
-            final surfaceVariant = Theme.of(context).colorScheme.surfaceContainerHighest;
+            final surfaceVariant = Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest;
 
             return AlertDialog(
               backgroundColor: surface,

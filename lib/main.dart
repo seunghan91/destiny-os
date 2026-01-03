@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/app.dart';
@@ -18,6 +19,11 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 웹에서 해시(#) 없는 URL 사용
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
 
   // 초기 렌더를 최대한 빠르게 보여주기 위해 runApp을 먼저 실행하고,
   // 무거운 초기화(Firebase/Supabase/DI 등)는 부트스트랩 화면 뒤에서 진행한다.

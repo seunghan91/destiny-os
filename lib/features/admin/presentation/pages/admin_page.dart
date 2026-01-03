@@ -16,7 +16,7 @@ class AdminPage extends StatefulWidget {
 }
 
 class _AdminPageState extends State<AdminPage> {
-  final _supabase = Supabase.instance.client;
+  SupabaseClient? _supabase;
   List<Map<String, dynamic>> _users = [];
   bool _isLoading = true;
   // ✅ FIX 6: 에러 상태 추가
@@ -32,26 +32,31 @@ class _AdminPageState extends State<AdminPage> {
   // 비밀번호 인증 상태
   bool _isAuthenticated = false;
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _passwordFocus = FocusNode();
   static const String _adminPassword = '!tmdgks20'; // TODO: 환경변수로 이동
 
   @override
   void initState() {
     super.initState();
+
+    // Supabase 클라이언트 초기화
+    try {
+      _supabase = Supabase.instance.client;
+    } catch (e) {
+      debugPrint('⚠️ Supabase 초기화 실패: $e');
+      _error = 'Supabase 연결에 실패했습니다';
+      _isLoading = false;
+    }
+
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-
-    // 인증되지 않았으면 비밀번호 입력 다이얼로그 표시
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_isAuthenticated) {
-        _showPasswordDialog();
-      }
-    });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     _passwordController.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -72,14 +77,14 @@ class _AdminPageState extends State<AdminPage> {
 
   // ✅ FIX 9: 더 많은 데이터 로드
   Future<void> _loadMoreUsers() async {
-    if (_isLoadingMore || !_hasMoreData) return;
+    if (_isLoadingMore || !_hasMoreData || _supabase == null) return;
 
     setState(() {
       _isLoadingMore = true;
     });
 
     try {
-      final newData = await _supabase
+      final newData = await _supabase!
           .from('user_results')
           .select()
           .order('created_at', ascending: false)
@@ -102,61 +107,12 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
-  // 비밀번호 입력 다이얼로그
-  Future<void> _showPasswordDialog() async {
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('관리자 인증'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('관리자 비밀번호를 입력하세요'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: '비밀번호',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
-              ),
-              onSubmitted: (_) => _checkPassword(),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-              context.pop(); // 관리자 페이지에서 나가기
-            },
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: _checkPassword,
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-
-    if (result != true && mounted) {
-      // 인증 실패 시 페이지에서 나가기
-      context.pop();
-    }
-  }
-
   // 비밀번호 확인
   void _checkPassword() {
     if (_passwordController.text == _adminPassword) {
       setState(() {
         _isAuthenticated = true;
       });
-      Navigator.of(context).pop(true);
       _fetchUsers(); // 인증 성공 시 데이터 로드
     } else {
       // 비밀번호 틀림
@@ -167,12 +123,21 @@ class _AdminPageState extends State<AdminPage> {
         ),
       );
       _passwordController.clear();
+      _passwordFocus.requestFocus();
     }
   }
 
   // ✅ FIX 7: 에러 처리 개선
   // ✅ FIX 9: Pagination - limit을 _pageSize로 변경
   Future<void> _fetchUsers() async {
+    if (_supabase == null) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Supabase 연결에 실패했습니다';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -182,7 +147,7 @@ class _AdminPageState extends State<AdminPage> {
     });
 
     try {
-      final data = await _supabase
+      final data = await _supabase!
           .from('user_results')
           .select()
           .order('created_at', ascending: false)
@@ -241,6 +206,89 @@ class _AdminPageState extends State<AdminPage> {
     context.push('/result');
   }
 
+  // 비밀번호 입력 UI
+  Widget _buildPasswordInput() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 64,
+                color: AppColors.primary,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                '관리자 인증',
+                style: AppTypography.titleLarge.copyWith(
+                  color: AppColors.textPrimaryOf(context),
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '관리자 비밀번호를 입력하세요',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondaryOf(context),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              TextField(
+                controller: _passwordController,
+                focusNode: _passwordFocus,
+                obscureText: true,
+                autofocus: true,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textPrimaryOf(context),
+                ),
+                decoration: InputDecoration(
+                  labelText: '비밀번호',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.lock),
+                  filled: true,
+                  fillColor: AppColors.surfaceOf(context),
+                ),
+                onSubmitted: (_) => _checkPassword(),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _checkPassword,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.primary,
+                ),
+                child: const Text(
+                  '확인',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => context.pop(),
+                child: Text(
+                  '취소',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondaryOf(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ✅ FIX 8: 에러 UI 빌더
   Widget _buildErrorWidget() {
     return Center(
@@ -293,7 +341,7 @@ class _AdminPageState extends State<AdminPage> {
       // ✅ FIX 8: 에러 상태 UI 추가
       // ✅ FIX 9: Pagination - ScrollController 추가, ListView.builder로 변경
       body: !_isAuthenticated
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildPasswordInput()
           : _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

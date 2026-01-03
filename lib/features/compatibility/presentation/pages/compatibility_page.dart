@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/typography.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../saju/data/services/saju_calculator.dart'
     hide CompatibilityResult;
 import '../../../saju/domain/entities/saju_chart.dart';
@@ -15,6 +16,7 @@ import '../../../saju/presentation/bloc/destiny_bloc.dart';
 import '../../../saju/presentation/widgets/mbti_dimension_selector.dart';
 import '../../../saju/presentation/widgets/siju_picker.dart';
 import '../../data/services/compatibility_calculator.dart';
+import '../widgets/compatibility_share_card.dart';
 
 /// 궁합 분석 페이지
 /// 두 사람의 사주를 비교하여 궁합을 분석
@@ -232,19 +234,8 @@ class _CompatibilityPageState extends State<CompatibilityPage>
           ),
           IconButton(
             icon: const Icon(Icons.share),
-            onPressed: () {
-              context.push(
-                '/share',
-                extra: {
-                  'type': 'compatibility',
-                  'compatibilityResult': _compatibilityResult,
-                  'partnerName': _partnerNameController.text.isNotEmpty
-                      ? _partnerNameController.text
-                      : '상대방',
-                  'myName': _myName,
-                },
-              );
-            },
+            tooltip: '궁합 결과 공유',
+            onPressed: () => _showShareDialog(),
           ),
         ],
       ),
@@ -2632,6 +2623,134 @@ class _CompatibilityPageState extends State<CompatibilityPage>
       debugPrint('❌ [CompatibilityPage] StackTrace: $stackTrace');
       // 저장 실패는 비치명적 (분석 결과는 이미 UI에 표시됨)
     }
+  }
+
+  /// 공유 다이얼로그 표시
+  void _showShareDialog() {
+    if (_compatibilityResult == null) return;
+
+    final shareCardKey = GlobalKey();
+    final partnerName = _partnerNameController.text.isNotEmpty
+        ? _partnerNameController.text
+        : '상대방';
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 공유 카드 미리보기 (스크롤 가능)
+            Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.7,
+              ),
+              child: SingleChildScrollView(
+                child: RepaintBoundary(
+                  key: shareCardKey,
+                  child: Transform.scale(
+                    scale: 0.5, // 화면에 맞게 축소
+                    child: CompatibilityShareCard(
+                      result: _compatibilityResult!,
+                      partnerName: partnerName,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // 공유 버튼
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // 취소 버튼
+                  ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                    label: const Text('닫기'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.surfaceOf(context),
+                      foregroundColor: AppColors.textPrimaryOf(context),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                  // 공유 버튼
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        // 다이얼로그 닫기
+                        Navigator.of(context).pop();
+
+                        // 로딩 표시
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+
+                        // 공유 텍스트 생성
+                        final shareText =
+                            ShareService.generateCompatibilityShareText(
+                          partnerName: partnerName,
+                          overallScore: _compatibilityResult!.overallScore,
+                        );
+
+                        // 이미지 캡처 및 공유
+                        await ShareService.captureAndShare(
+                          key: shareCardKey,
+                          fileName:
+                              'compatibility_${DateTime.now().millisecondsSinceEpoch}',
+                          shareText: shareText,
+                        );
+
+                        // 로딩 닫기
+                        if (mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      } catch (e) {
+                        // 로딩 닫기
+                        if (mounted) {
+                          Navigator.of(context).pop();
+                        }
+
+                        // 에러 메시지 표시
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('공유 중 오류가 발생했습니다: $e'),
+                              backgroundColor: AppColors.errorOf(context),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.share),
+                    label: const Text('공유하기'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryOf(context),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   void _analyzeCompatibility() {

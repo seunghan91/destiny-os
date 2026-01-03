@@ -264,11 +264,58 @@ class _AdminPageState extends State<AdminPage> {
     String userName,
   ) async {
     try {
-      final compatibilities = await _supabase!
-          .from('compatibility_results')
-          .select()
-          .eq('user_result_id', userResultId)
-          .order('created_at', ascending: false);
+      // 1. 해당 user_results의 firebase_uid 확인
+      final userResult = await _supabase!
+          .from('user_results')
+          .select('firebase_uid')
+          .eq('id', userResultId)
+          .maybeSingle();
+
+      List<dynamic> compatibilities = [];
+
+      // 2. firebase_uid가 있으면 같은 firebase_uid를 가진 모든 user_results의 궁합 기록 조회
+      if (userResult != null && userResult['firebase_uid'] != null) {
+        final firebaseUid = userResult['firebase_uid'] as String;
+
+        // 같은 firebase_uid를 가진 모든 user_results 찾기
+        final allUserResults = await _supabase!
+            .from('user_results')
+            .select('id')
+            .eq('firebase_uid', firebaseUid);
+
+        if (allUserResults.isNotEmpty) {
+          // 모든 user_result_id에 대한 궁합 기록 조회 (각각 개별 조회 후 합침)
+          final allCompatibilities = <Map<String, dynamic>>[];
+
+          for (final ur in allUserResults) {
+            final urId = ur['id'] as String;
+            final results = await _supabase!
+                .from('compatibility_results')
+                .select()
+                .eq('user_result_id', urId);
+
+            allCompatibilities.addAll(
+              List<Map<String, dynamic>>.from(results),
+            );
+          }
+
+          // created_at 기준으로 정렬
+          allCompatibilities.sort((a, b) {
+            final aTime = DateTime.parse(a['created_at'] as String);
+            final bTime = DateTime.parse(b['created_at'] as String);
+            return bTime.compareTo(aTime); // 최신순
+          });
+
+          compatibilities = allCompatibilities;
+        }
+      } else {
+        // firebase_uid가 없으면 기존 방식대로 조회
+        compatibilities = await _supabase!
+            .from('compatibility_results')
+            .select()
+            .eq('user_result_id', userResultId)
+            .order('created_at', ascending: false);
+      }
 
       if (!mounted) return;
 

@@ -1341,7 +1341,7 @@ class _InputPageState extends State<InputPage> with TickerProviderStateMixin {
                 secretTapCount++;
                 if (secretTapCount >= 5) {
                   Navigator.pop(context);
-                  context.push('/admin');
+                  context.go('/admin');
                   secretTapCount = 0;
                 }
               },

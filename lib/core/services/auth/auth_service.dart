@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -14,21 +15,16 @@ class AuthResult {
   final User? user;
   final String? errorMessage;
 
-  AuthResult({
-    required this.success,
-    this.user,
-    this.errorMessage,
-  });
+  AuthResult({required this.success, this.user, this.errorMessage});
 
-  factory AuthResult.success(User user) => AuthResult(success: true, user: user);
-  factory AuthResult.failure(String message) => AuthResult(success: false, errorMessage: message);
+  factory AuthResult.success(User user) =>
+      AuthResult(success: true, user: user);
+  factory AuthResult.failure(String message) =>
+      AuthResult(success: false, errorMessage: message);
 }
 
 /// 인증 제공자 타입
-enum AuthProvider {
-  google,
-  apple,
-}
+enum AuthProvider { google, apple }
 
 /// Firebase Auth 기반 인증 서비스
 class AuthService {
@@ -37,9 +33,7 @@ class AuthService {
   AuthService._internal();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
 
   // 현재 사용자 스트림
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -61,6 +55,9 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       debugPrint('❌ Google Sign-In Firebase error: ${e.code} - ${e.message}');
       return AuthResult.failure(_getFirebaseAuthErrorMessage(e.code));
+    } on PlatformException catch (e) {
+      debugPrint('❌ Google Sign-In Platform error: ${e.code} - ${e.message}');
+      return AuthResult.failure(_getPlatformAuthErrorMessage(e.code));
     } catch (e) {
       debugPrint('❌ Google Sign-In error: $e');
       return AuthResult.failure('Google 로그인에 실패했습니다. 다시 시도해주세요.');
@@ -73,13 +70,17 @@ class AuthService {
     googleProvider.addScope('email');
     googleProvider.addScope('profile');
 
-    final UserCredential userCredential = await _auth.signInWithPopup(googleProvider);
-    
+    final UserCredential userCredential = await _auth.signInWithPopup(
+      googleProvider,
+    );
+
     if (userCredential.user != null) {
-      debugPrint('✅ Google Sign-In successful (Web): ${userCredential.user!.email}');
+      debugPrint(
+        '✅ Google Sign-In successful (Web): ${userCredential.user!.email}',
+      );
       return AuthResult.success(userCredential.user!);
     }
-    
+
     return AuthResult.failure('Google 로그인에 실패했습니다.');
   }
 
@@ -87,26 +88,29 @@ class AuthService {
   Future<AuthResult> _signInWithGoogleNative() async {
     // 기존 로그인 세션 정리
     await _googleSignIn.signOut();
-    
+
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    
+
     if (googleUser == null) {
       return AuthResult.failure('로그인이 취소되었습니다.');
     }
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
 
-    final UserCredential userCredential = await _auth.signInWithCredential(credential);
-    
+    final UserCredential userCredential = await _auth.signInWithCredential(
+      credential,
+    );
+
     if (userCredential.user != null) {
       debugPrint('✅ Google Sign-In successful: ${userCredential.user!.email}');
       return AuthResult.success(userCredential.user!);
     }
-    
+
     return AuthResult.failure('Google 로그인에 실패했습니다.');
   }
 
@@ -122,7 +126,9 @@ class AuthService {
       debugPrint('❌ Apple Sign-In Firebase error: ${e.code} - ${e.message}');
       return AuthResult.failure(_getFirebaseAuthErrorMessage(e.code));
     } on SignInWithAppleAuthorizationException catch (e) {
-      debugPrint('❌ Apple Sign-In authorization error: ${e.code} - ${e.message}');
+      debugPrint(
+        '❌ Apple Sign-In authorization error: ${e.code} - ${e.message}',
+      );
       if (e.code == AuthorizationErrorCode.canceled) {
         return AuthResult.failure('로그인이 취소되었습니다.');
       }
@@ -139,13 +145,17 @@ class AuthService {
     appleProvider.addScope('email');
     appleProvider.addScope('name');
 
-    final UserCredential userCredential = await _auth.signInWithPopup(appleProvider);
-    
+    final UserCredential userCredential = await _auth.signInWithPopup(
+      appleProvider,
+    );
+
     if (userCredential.user != null) {
-      debugPrint('✅ Apple Sign-In successful (Web): ${userCredential.user!.email}');
+      debugPrint(
+        '✅ Apple Sign-In successful (Web): ${userCredential.user!.email}',
+      );
       return AuthResult.success(userCredential.user!);
     }
-    
+
     return AuthResult.failure('Apple 로그인에 실패했습니다.');
   }
 
@@ -163,33 +173,34 @@ class AuthService {
       nonce: nonce,
     );
 
-    final oauthCredential = OAuthProvider('apple.com').credential(
-      idToken: appleCredential.identityToken,
-      rawNonce: rawNonce,
-    );
+    final oauthCredential = OAuthProvider(
+      'apple.com',
+    ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
 
-    final UserCredential userCredential = await _auth.signInWithCredential(oauthCredential);
+    final UserCredential userCredential = await _auth.signInWithCredential(
+      oauthCredential,
+    );
 
     // Apple은 첫 로그인 시에만 이름 제공, 이후에는 null
     // 필요시 displayName 업데이트
     if (userCredential.user != null) {
       final displayName = userCredential.user!.displayName;
-      if ((displayName == null || displayName.isEmpty) && 
+      if ((displayName == null || displayName.isEmpty) &&
           appleCredential.givenName != null) {
         final fullName = [
           appleCredential.givenName,
           appleCredential.familyName,
         ].where((n) => n != null && n.isNotEmpty).join(' ');
-        
+
         if (fullName.isNotEmpty) {
           await userCredential.user!.updateDisplayName(fullName);
         }
       }
-      
+
       debugPrint('✅ Apple Sign-In successful: ${userCredential.user!.email}');
       return AuthResult.success(userCredential.user!);
     }
-    
+
     return AuthResult.failure('Apple 로그인에 실패했습니다.');
   }
 
@@ -200,10 +211,10 @@ class AuthService {
       if (await _googleSignIn.isSignedIn()) {
         await _googleSignIn.signOut();
       }
-      
+
       // Firebase 로그아웃
       await _auth.signOut();
-      
+
       debugPrint('✅ Sign-Out successful');
     } catch (e) {
       debugPrint('❌ Sign-Out error: $e');
@@ -246,9 +257,13 @@ class AuthService {
 
   /// nonce 생성 (Apple Sign-In 보안용)
   String _generateNonce([int length = 32]) {
-    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
   }
 
   /// SHA256 해시 생성
@@ -263,10 +278,26 @@ class AuthService {
     switch (code) {
       case 'account-exists-with-different-credential':
         return '이미 다른 로그인 방식으로 가입된 계정입니다.';
+      case 'app-not-authorized':
+        return '앱 인증 설정에 문제가 있습니다. 관리자에게 문의해주세요.';
       case 'invalid-credential':
         return '인증 정보가 유효하지 않습니다.';
+      case 'invalid-api-key':
+        return '서비스 설정에 문제가 있습니다. 관리자에게 문의해주세요.';
+      case 'invalid-oauth-client-id':
+        return 'OAuth 클라이언트 설정에 문제가 있습니다. 관리자에게 문의해주세요.';
+      case 'missing-or-invalid-nonce':
+        return '인증 정보가 유효하지 않습니다. 다시 시도해주세요.';
       case 'operation-not-allowed':
         return '이 로그인 방식은 현재 사용할 수 없습니다.';
+      case 'popup-blocked':
+        return '브라우저에서 팝업이 차단되었습니다. 팝업 차단을 해제한 뒤 다시 시도해주세요.';
+      case 'popup-closed-by-user':
+        return '로그인이 취소되었습니다.';
+      case 'redirect_uri_mismatch':
+        return '로그인 설정에 문제가 있습니다. 관리자에게 문의해주세요.';
+      case 'unauthorized-domain':
+        return '허용되지 않은 도메인에서 로그인 요청이 발생했습니다. 관리자에게 문의해주세요.';
       case 'user-disabled':
         return '비활성화된 계정입니다.';
       case 'user-not-found':
@@ -277,8 +308,25 @@ class AuthService {
         return '네트워크 연결을 확인해주세요.';
       case 'too-many-requests':
         return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
-      case 'popup-closed-by-user':
+      case 'cancelled-popup-request':
         return '로그인이 취소되었습니다.';
+      case 'web-context-canceled':
+        return '로그인이 취소되었습니다.';
+      case 'web-context-cancelled':
+        return '로그인이 취소되었습니다.';
+      default:
+        return '로그인에 실패했습니다. 다시 시도해주세요.';
+    }
+  }
+
+  String _getPlatformAuthErrorMessage(String code) {
+    switch (code) {
+      case 'network_error':
+        return '네트워크 연결을 확인해주세요.';
+      case 'sign_in_canceled':
+        return '로그인이 취소되었습니다.';
+      case 'sign_in_failed':
+        return '로그인에 실패했습니다. 다시 시도해주세요.';
       default:
         return '로그인에 실패했습니다. 다시 시도해주세요.';
     }

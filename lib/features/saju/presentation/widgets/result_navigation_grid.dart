@@ -43,6 +43,7 @@ class ResultNavigationGrid extends StatelessWidget {
                         title: '대운 흐름',
                         subtitle: '10년 단위 운세',
                         color: AppColors.water,
+                        isPremium: true,
                         onTap: () {
                           HapticFeedback.lightImpact();
                           context.push('/daewoon');
@@ -70,6 +71,7 @@ class ResultNavigationGrid extends StatelessWidget {
                         title: '관상 분석',
                         subtitle: '정면 사진으로 종합 리포트',
                         color: AppColors.primary,
+                        isPremium: true,
                         onTap: () {
                           HapticFeedback.lightImpact();
                           _showPhysiognomyPremiumBottomSheet(context);
@@ -101,6 +103,7 @@ class ResultNavigationGrid extends StatelessWidget {
                         title: '심층 토정비결',
                         subtitle: '2026 종합 리포트',
                         color: AppColors.primary,
+                        isPremium: true,
                         onTap: () {
                           HapticFeedback.lightImpact();
                           context.push('/tojung-premium');
@@ -590,6 +593,7 @@ class _NavigationCard extends StatelessWidget {
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
+  final bool isPremium;
 
   const _NavigationCard({
     required this.icon,
@@ -597,6 +601,7 @@ class _NavigationCard extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.onTap,
+    this.isPremium = false,
   });
 
   @override
@@ -619,16 +624,43 @@ class _NavigationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: color.withAlpha(25),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(icon, style: const TextStyle(fontSize: 22)),
-              ),
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(icon, style: const TextStyle(fontSize: 22)),
+                  ),
+                ),
+                const Spacer(),
+                if (isPremium)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(16),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.primary.withAlpha(45),
+                      ),
+                    ),
+                    child: Text(
+                      'PREMIUM',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
             Text(

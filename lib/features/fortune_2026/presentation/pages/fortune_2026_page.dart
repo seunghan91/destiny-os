@@ -767,9 +767,19 @@ class _Fortune2026PageState extends State<Fortune2026Page> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTypography.labelLarge),
+                Text(
+                  title,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: const Color(0xFF6B4423), // 어두운 갈색 (다크모드 대응)
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(description, style: AppTypography.bodySmall),
+                Text(
+                  description,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: const Color(0xFF8B6F47), // 중간 톤 갈색
+                  ),
+                ),
               ],
             ),
           ),

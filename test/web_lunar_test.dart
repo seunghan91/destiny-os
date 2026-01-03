@@ -13,12 +13,13 @@ void main() {
     });
 
     test('lunar can calculate 60甲子 (sexagenary cycle) for 2026', () {
-      // 2026년은 병오년 (丙午年)
+      // 사주에서 새해는 입춘부터 시작
+      // 2026-01-01은 입춘 전이므로 아직 을사년 (乙巳年)
       final lunar = Lunar.fromDate(DateTime(2026, 1, 1));
       final yearGanZhi = lunar.getYearInGanZhi();
 
-      // 2026년은 병오년이어야 함
-      expect(yearGanZhi, equals('병오'));
+      // 입춘 전이므로 을사년이어야 함
+      expect(yearGanZhi, equals('乙巳'));
     });
 
     test('lunar can calculate month pillar (월주)', () {
@@ -61,11 +62,13 @@ void main() {
 
     test('lunar handles edge cases: year boundaries', () {
       // 연말연초 경계 테스트
+      // 사주에서는 입춘 전까지 이전 년도로 간주
       final lastDay2025 = Lunar.fromDate(DateTime(2025, 12, 31));
       final firstDay2026 = Lunar.fromDate(DateTime(2026, 1, 1));
 
       expect(lastDay2025.getYearInGanZhi(), isNotNull);
-      expect(firstDay2026.getYearInGanZhi(), equals('병오'));
+      // 2026-01-01은 입춘 전이므로 아직 을사년
+      expect(firstDay2026.getYearInGanZhi(), equals('乙巳'));
     });
 
     test('lunar package performance on web', () {

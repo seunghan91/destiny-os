@@ -37,7 +37,7 @@ class _AdminPageState extends State<AdminPage> {
   static const String _adminPassword = '!tmdgks20'; // TODO: 환경변수로 이동
 
   // Drawer 메뉴 선택 상태
-  int _selectedMenuIndex = 0; // 0: 사용자 목록, 1: 고객센터 문의
+  int _selectedMenuIndex = 0; // 0: 사용자 목록, 1: 고객센터 문의, 2: 관상 분석, 3: 토정비결
 
   // 검색 및 필터 상태
   final TextEditingController _searchController = TextEditingController();
@@ -713,6 +713,30 @@ class _AdminPageState extends State<AdminPage> {
               Navigator.pop(context); // Drawer 닫기
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.face),
+            title: const Text('관상 분석 결과'),
+            selected: _selectedMenuIndex == 2,
+            onTap: () {
+              setState(() {
+                _selectedMenuIndex = 2;
+                _fetchPhysiognomyReports();
+              });
+              Navigator.pop(context); // Drawer 닫기
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.auto_awesome),
+            title: const Text('토정비결 결과'),
+            selected: _selectedMenuIndex == 3,
+            onTap: () {
+              setState(() {
+                _selectedMenuIndex = 3;
+                _fetchTojungReports();
+              });
+              Navigator.pop(context); // Drawer 닫기
+            },
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),
@@ -735,7 +759,13 @@ class _AdminPageState extends State<AdminPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
-        title: Text(_selectedMenuIndex == 0 ? '사용자 목록' : '고객센터 문의'),
+        title: Text(_selectedMenuIndex == 0
+            ? '사용자 목록'
+            : _selectedMenuIndex == 1
+                ? '고객센터 문의'
+                : _selectedMenuIndex == 2
+                    ? '관상 분석 결과'
+                    : '토정비결 결과'),
         backgroundColor: AppColors.backgroundOf(context),
         foregroundColor: AppColors.textPrimaryOf(context),
       ),
@@ -746,7 +776,11 @@ class _AdminPageState extends State<AdminPage> {
           ? _buildPasswordInput()
           : _selectedMenuIndex == 0
               ? _buildUserListScreen()
-              : _buildSupportTicketsScreen(),
+              : _selectedMenuIndex == 1
+                  ? _buildSupportTicketsScreen()
+                  : _selectedMenuIndex == 2
+                      ? _buildPhysiognomyReportsScreen()
+                      : _buildTojungReportsScreen(),
     );
   }
 
@@ -1283,6 +1317,220 @@ class _AdminPageState extends State<AdminPage> {
               onTap: () => _showSupportTicketDetail(t),
             );
           },
+        );
+      },
+    );
+  }
+
+  // ============================================
+  // 관상 분석 결과 관리
+  // ============================================
+
+  Future<void> _fetchPhysiognomyReports() async {
+    if (_supabase == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final response = await _supabase!
+          .from('physiognomy_reports')
+          .select('id, firebase_uid, mbti, created_at, expires_at')
+          .order('created_at', ascending: false)
+          .limit(100);
+
+      if (!mounted) return;
+      setState(() {
+        _physiognomyReports = List<Map<String, dynamic>>.from(response);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = '관상 분석 결과 로드 실패: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Widget _buildPhysiognomyReportsScreen() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(_error!, style: AppTypography.bodyMedium),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchPhysiognomyReports,
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_physiognomyReports.isEmpty) {
+      return const Center(
+        child: Text('관상 분석 결과가 없습니다.'),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _physiognomyReports.length,
+      itemBuilder: (context, index) {
+        final report = _physiognomyReports[index];
+        final id = report['id'] as String;
+        final firebaseUid = report['firebase_uid'] as String? ?? '비회원';
+        final mbti = report['mbti'] as String? ?? '-';
+        final createdAt = report['created_at'] != null
+            ? DateTime.parse(report['created_at'] as String)
+            : null;
+        final expiresAt = report['expires_at'] != null
+            ? DateTime.parse(report['expires_at'] as String)
+            : null;
+
+        final isExpired = expiresAt != null && expiresAt.isBefore(DateTime.now());
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            leading: const Icon(Icons.face),
+            title: Text('ID: ${id.substring(0, 8)}...'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('회원 ID: $firebaseUid'),
+                Text('MBTI: $mbti'),
+                if (createdAt != null)
+                  Text('생성: ${DateFormat('yyyy-MM-dd HH:mm').format(createdAt)}'),
+                if (expiresAt != null)
+                  Text(
+                    '만료: ${DateFormat('yyyy-MM-dd').format(expiresAt)} ${isExpired ? '(만료됨)' : ''}',
+                    style: TextStyle(
+                      color: isExpired ? AppColors.error : AppColors.textSecondaryOf(context),
+                    ),
+                  ),
+              ],
+            ),
+            trailing: isExpired
+                ? const Icon(Icons.access_time, color: Colors.red)
+                : const Icon(Icons.check_circle, color: Colors.green),
+          ),
+        );
+      },
+    );
+  }
+
+  // ============================================
+  // 토정비결 결과 관리
+  // ============================================
+
+  Future<void> _fetchTojungReports() async {
+    if (_supabase == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final response = await _supabase!
+          .from('tojung_reports')
+          .select('id, firebase_uid, user_profile_id, year, mbti, created_at, model, tokens_in, tokens_out')
+          .order('created_at', ascending: false)
+          .limit(100);
+
+      if (!mounted) return;
+      setState(() {
+        _tojungReports = List<Map<String, dynamic>>.from(response);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = '토정비결 결과 로드 실패: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Widget _buildTojungReportsScreen() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(_error!, style: AppTypography.bodyMedium),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchTojungReports,
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_tojungReports.isEmpty) {
+      return const Center(
+        child: Text('토정비결 결과가 없습니다.'),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _tojungReports.length,
+      itemBuilder: (context, index) {
+        final report = _tojungReports[index];
+        final id = report['id'] as String;
+        final firebaseUid = report['firebase_uid'] as String? ?? '비회원';
+        final userProfileId = report['user_profile_id'] as String?;
+        final year = report['year'] as int? ?? 2026;
+        final mbti = report['mbti'] as String? ?? '-';
+        final createdAt = report['created_at'] != null
+            ? DateTime.parse(report['created_at'] as String)
+            : null;
+        final model = report['model'] as String? ?? '-';
+        final tokensIn = report['tokens_in'] as int? ?? 0;
+        final tokensOut = report['tokens_out'] as int? ?? 0;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            leading: const Icon(Icons.auto_awesome),
+            title: Text('ID: ${id.substring(0, 8)}...'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('회원 ID: $firebaseUid'),
+                if (userProfileId != null)
+                  Text('프로필 ID: ${userProfileId.substring(0, 8)}...'),
+                Text('연도: $year년'),
+                Text('MBTI: $mbti'),
+                if (createdAt != null)
+                  Text('생성: ${DateFormat('yyyy-MM-dd HH:mm').format(createdAt)}'),
+                Text('모델: $model'),
+                Text('토큰: $tokensIn → $tokensOut'),
+              ],
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+          ),
         );
       },
     );

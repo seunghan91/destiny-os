@@ -32,7 +32,7 @@ class _AdminPageState extends State<AdminPage> {
   // 비밀번호 인증 상태
   bool _isAuthenticated = false;
   final TextEditingController _passwordController = TextEditingController();
-  static const String _adminPassword = 'destiny2026'; // TODO: 환경변수로 이동
+  static const String _adminPassword = '!tmdgks20'; // TODO: 환경변수로 이동
 
   @override
   void initState() {

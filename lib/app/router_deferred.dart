@@ -36,6 +36,9 @@ import '../features/daily_fortune/presentation/pages/daily_fortune_page.dart'
 import '../features/ai_consultation/presentation/pages/consultation_page.dart'
     deferred as consultation;
 
+import '../features/tojung/presentation/pages/tojung_premium_page.dart'
+    deferred as tojung;
+
 // Settings
 import '../features/settings/presentation/pages/settings_page.dart'
     deferred as settings;
@@ -133,6 +136,22 @@ final GoRouter appRouterDeferred = GoRouter(
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               return daewoon.DaewoonPage();
+            }
+            return const DeferredLoadingIndicator();
+          },
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/tojung-premium',
+      name: 'tojungPremium',
+      builder: (context, state) {
+        return FutureBuilder(
+          future: tojung.loadLibrary(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return tojung.TojungPremiumPage();
             }
             return const DeferredLoadingIndicator();
           },

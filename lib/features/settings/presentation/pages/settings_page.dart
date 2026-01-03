@@ -353,6 +353,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 Divider(height: 1, color: AppColors.borderLightOf(context)),
                 _buildActionTile(
+                  title: '환불(청약철회) 정책',
+                  icon: Icons.receipt_long_outlined,
+                  onTap: () =>
+                      _openUrl('https://destiny-os-2026.web.app/refund'),
+                ),
+                Divider(height: 1, color: AppColors.borderLightOf(context)),
+                _buildActionTile(
                   title: '고객센터',
                   subtitle: '문의 내용을 남겨주세요',
                   icon: Icons.support_agent_outlined,

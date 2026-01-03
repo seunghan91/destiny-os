@@ -18,15 +18,42 @@ class ResultNavigationGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-              '더 알아보기',
-              style: AppTypography.titleMedium.copyWith(
-                fontWeight: FontWeight.w600,
+        Row(
+          children: [
+            Text(
+                  '더 알아보기',
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+                .animate()
+                .fadeIn(duration: 300.ms, delay: 100.ms)
+                .slideX(begin: -0.1, end: 0, duration: 300.ms),
+            const SizedBox(width: 10),
+            InkWell(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _showPhysiognomyPremiumBottomSheet(context);
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(18),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.primary.withAlpha(55)),
+                ),
+                child: Text(
+                  '[관상 분석]',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            )
-            .animate()
-            .fadeIn(duration: 300.ms, delay: 100.ms)
-            .slideX(begin: -0.1, end: 0, duration: 300.ms),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
 
         // 2x2 그리드
@@ -37,8 +64,13 @@ class ResultNavigationGrid extends StatelessWidget {
                   _NavigationCard(
                         icon: '📊',
                         title: '대운 흐름',
+                        badgeLabel: '[심층 토정비결]',
                         subtitle: '10년 단위 운세',
                         color: AppColors.water,
+                        onBadgeTap: () {
+                          HapticFeedback.lightImpact();
+                          context.push('/tojung-premium');
+                        },
                         onTap: () {
                           HapticFeedback.lightImpact();
                           context.push('/daewoon');
@@ -146,6 +178,128 @@ class ResultNavigationGrid extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  void _showPhysiognomyPremiumBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceOf(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.grey300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(25),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Center(
+                      child: Text('🧑‍🦰', style: TextStyle(fontSize: 28)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '관상 분석 (프리미엄)',
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryOf(context),
+                          ),
+                        ),
+                        Text(
+                          '정면 얼굴 사진으로 사주·토정·MBTI 통합 리포트',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondaryOf(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildAnalysisCard(
+                context,
+                title: '사진 가이드',
+                content:
+                    '정면(얼굴 정면이 화면을 향하도록)\n머리 상단부터 귀·턱선까지 모두 포함\n밝은 조명/그림자 최소화\n안경/마스크/과한 필터는 피해주세요',
+                icon: '📸',
+              ),
+              const SizedBox(height: 12),
+              _buildAnalysisCard(
+                context,
+                title: '분석에 포함',
+                content:
+                    '얼굴 특징 요약(오관/얼굴형 중심)\n사주+토정비결+MBTI 통합 해석\n신년운세 리포트 톤(연애/재물/직장/건강)',
+                icon: '🧩',
+              ),
+              const SizedBox(height: 12),
+              _buildAnalysisCard(
+                context,
+                title: '가격',
+                content: '1회 종합 리포트 5,000원',
+                icon: '💳',
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('관상 분석은 준비 중입니다.')),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryOf(context),
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    '사진 업로드로 시작',
+                    style: AppTypography.labelLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -408,6 +562,8 @@ class _NavigationCard extends StatelessWidget {
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
+  final String? badgeLabel;
+  final VoidCallback? onBadgeTap;
 
   const _NavigationCard({
     required this.icon,
@@ -415,56 +571,109 @@ class _NavigationCard extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.onTap,
+    this.badgeLabel,
+    this.onBadgeTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceOf(context),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(13),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onTapUp: (details) {
+            final canUseBadge = badgeLabel != null && onBadgeTap != null;
+            if (canUseBadge) {
+              const badgeTapWidth = 120.0;
+              const badgeTapTop = 48.0;
+              const badgeTapBottom = 92.0;
+
+              final isInBadgeZone =
+                  details.localPosition.dx >=
+                      (constraints.maxWidth - badgeTapWidth) &&
+                  details.localPosition.dy >= badgeTapTop &&
+                  details.localPosition.dy <= badgeTapBottom;
+
+              if (isInBadgeZone) {
+                onBadgeTap?.call();
+                return;
+              }
+            }
+
+            onTap();
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceOf(context),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(13),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: color.withAlpha(25),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(icon, style: const TextStyle(fontSize: 22)),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(icon, style: const TextStyle(fontSize: 22)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: AppTypography.titleSmall.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (badgeLabel != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withAlpha(18),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: AppColors.primary.withAlpha(55),
+                          ),
+                        ),
+                        child: Text(
+                          badgeLabel!,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textTertiaryOf(context),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: AppTypography.titleSmall.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textTertiaryOf(context),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

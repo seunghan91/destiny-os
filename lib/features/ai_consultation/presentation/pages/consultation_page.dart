@@ -35,6 +35,15 @@ class _ConsultationPageState extends State<ConsultationPage>
   bool _isTyping = false;
   int _remainingCredits = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadCredits();
+    _loadPreviousSession();
+    _checkPaymentRequired();
+  }
+
   Future<void> _openRefundPolicy() async {
     final uri = Uri.parse('https://destiny-os-2026.web.app/refund');
     await launchUrl(uri, mode: LaunchMode.externalApplication);

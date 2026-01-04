@@ -23,6 +23,10 @@ class DailyFortuneModel extends DailyFortune {
     required super.luckyItem,
     required super.caution,
     required super.advice,
+    super.loveCaution,
+    super.wealthCaution,
+    super.healthCaution,
+    super.careerCaution,
     super.morningFortune,
     super.afternoonFortune,
     super.eveningFortune,
@@ -51,6 +55,10 @@ class DailyFortuneModel extends DailyFortune {
       luckyItem: json['luckyItem'] as String,
       caution: json['caution'] as String,
       advice: json['advice'] as String,
+      loveCaution: json['loveCaution'] as String?,
+      wealthCaution: json['wealthCaution'] as String?,
+      healthCaution: json['healthCaution'] as String?,
+      careerCaution: json['careerCaution'] as String?,
       morningFortune: json['morningFortune'] != null
           ? TimeFortuneModel.fromJson(
               json['morningFortune'] as Map<String, dynamic>,
@@ -96,6 +104,10 @@ class DailyFortuneModel extends DailyFortune {
       'luckyItem': luckyItem,
       'caution': caution,
       'advice': advice,
+      if (loveCaution != null) 'loveCaution': loveCaution,
+      if (wealthCaution != null) 'wealthCaution': wealthCaution,
+      if (healthCaution != null) 'healthCaution': healthCaution,
+      if (careerCaution != null) 'careerCaution': careerCaution,
       if (morningFortune != null)
         'morningFortune': (morningFortune! as TimeFortuneModel).toJson(),
       if (afternoonFortune != null)

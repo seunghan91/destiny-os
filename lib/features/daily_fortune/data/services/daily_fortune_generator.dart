@@ -47,6 +47,9 @@ class DailyFortuneGenerator {
       sajuChart,
     );
 
+    // 카테고리별 주의사항 생성
+    final cautions = _generateCautions(scores);
+
     return DailyFortuneModel(
       date: DateTime(date.year, date.month, date.day),
       dayName: dayStemBranch['dayName']!,
@@ -68,6 +71,10 @@ class DailyFortuneGenerator {
       luckyItem: luckyItems['item']!,
       caution: messages['caution']!,
       advice: messages['advice']!,
+      loveCaution: cautions['love'],
+      wealthCaution: cautions['wealth'],
+      healthCaution: cautions['health'],
+      careerCaution: cautions['career'],
       morningFortune: includePremium
           ? _generateTimeFortune('06:00-12:00', '오전', scores, random)
           : null,
@@ -394,5 +401,55 @@ class DailyFortuneGenerator {
       weeklyTheme: weeklyTheme,
       weeklyAdvice: weeklyAdvice,
     );
+  }
+
+  /// 카테고리별 주의사항 생성
+  Map<String, String> _generateCautions(Map<String, int> scores) {
+    return {
+      'love': _getLoveCaution(scores['love']!),
+      'wealth': _getWealthCaution(scores['wealth']!),
+      'health': _getHealthCaution(scores['health']!),
+      'career': _getCareerCaution(scores['career']!),
+    };
+  }
+
+  String _getLoveCaution(int score) {
+    if (score >= 80) {
+      return '기대가 높아지면 실망도 커집니다. 상대방에게 과한 기대를 하지 않도록 주의하세요.';
+    } else if (score >= 60) {
+      return '사소한 말실수가 오해를 부를 수 있습니다. 농담도 조심하세요.';
+    } else {
+      return '감정적 대응은 상황을 악화시킵니다. 요구보다 경청에 집중하세요.';
+    }
+  }
+
+  String _getWealthCaution(int score) {
+    if (score >= 80) {
+      return '좋은 기회처럼 보여도 숨겨진 리스크가 있을 수 있습니다. 서류와 조건을 꼼꼼히 확인하세요.';
+    } else if (score >= 60) {
+      return '지인의 금전 요청이나 보증 부탁에 신중하게 대응하세요.';
+    } else {
+      return '예상치 못한 지출이 발생할 수 있습니다. 여유 자금을 확보해두세요.';
+    }
+  }
+
+  String _getHealthCaution(int score) {
+    if (score >= 80) {
+      return '컨디션이 좋다고 무리하면 피로가 누적됩니다. 과식과 과음은 삼가세요.';
+    } else if (score >= 60) {
+      return '소화기 계통에 주의하세요. 찬 음식이나 자극적인 음식은 피하는 것이 좋습니다.';
+    } else {
+      return '두통이나 피로감이 올 수 있습니다. 무리한 일정은 조정하세요.';
+    }
+  }
+
+  String _getCareerCaution(int score) {
+    if (score >= 80) {
+      return '동료와의 경쟁 의식이 높아질 수 있습니다. 성과를 드러내기보다 협력을 강조하세요.';
+    } else if (score >= 60) {
+      return '상사와의 소통에서 오해가 생기지 않도록 명확히 표현하세요.';
+    } else {
+      return '중요한 보고나 발표는 다시 한번 점검하세요. 논쟁보다 양보가 현명합니다.';
+    }
   }
 }

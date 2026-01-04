@@ -323,8 +323,8 @@ class SajuCalculator {
         return samePolarity ? '비견' : '겁재';
       case 'generates': // 식상 (내가 생하는 오행)
         return samePolarity ? '식신' : '상관';
-      case 'overcomes': // 재성 (내가 극하는 오행) - 같은 음양=정재, 다른 음양=편재
-        return samePolarity ? '정재' : '편재';
+      case 'overcomes': // 재성 (내가 극하는 오행) - 같은 음양=편재, 다른 음양=정재
+        return samePolarity ? '편재' : '정재';
       case 'generated': // 인성 (나를 생하는 오행)
         return samePolarity ? '편인' : '정인';
       case 'overcome': // 관성 (나를 극하는 오행)
@@ -403,6 +403,7 @@ class SajuCalculator {
         theme: theme.theme,
         description: theme.description,
         fortuneScore: theme.score,
+        caution: theme.caution,
       ));
     }
 
@@ -412,7 +413,7 @@ class SajuCalculator {
   }
 
   /// 대운 테마 결정
-  ({String theme, String description, double score}) _getDaewoonTheme(
+  ({String theme, String description, double score, String caution}) _getDaewoonTheme(
     Pillar daewoonPillar,
     String dayMaster,
   ) {
@@ -425,38 +426,44 @@ class SajuCalculator {
       case 'same':
         return (
           theme: '자아 확립의 시기',
-          description: '비겁운으로 자아 정체성이 강화되고 독립심이 높아지는 시기입니다.',
+          description: '비겁운으로 자아 정체성이 강화되고 독립심이 높아지는 시기입니다. 자신감이 생기고 주도적으로 일을 추진할 수 있습니다.',
           score: 65.0,
+          caution: '고집이 세지고 타인과 충돌하기 쉽습니다. 경쟁심이 과하면 외로워질 수 있으니 협력하는 자세를 기르세요.',
         );
       case 'generates':
         return (
           theme: '표현과 성취의 시기',
-          description: '식상운으로 창의력이 빛나고 재능을 발휘할 수 있는 시기입니다.',
+          description: '식상운으로 창의력이 빛나고 재능을 발휘할 수 있는 시기입니다. 예술, 언변, 표현력이 좋아집니다.',
           score: 75.0,
+          caution: '말이 많아지고 예민해질 수 있습니다. 과한 자기표현은 독이 되니 표현 전에 한 번 더 생각하세요.',
         );
       case 'overcomes':
         return (
           theme: '재물 축적의 시기',
-          description: '재성운으로 경제적 기회가 많아지고 재물이 축적되는 시기입니다.',
+          description: '재성운으로 경제적 기회가 많아지고 재물이 축적되는 시기입니다. 사업이나 투자에 유리합니다.',
           score: 80.0,
+          caution: '욕심이 과하면 손실이 생깁니다. 무리한 투자나 사업 확장은 신중히 판단하고, 보증은 절대 서지 마세요.',
         );
       case 'generated':
         return (
           theme: '학습과 성장의 시기',
-          description: '인성운으로 학문적 성취와 정신적 성장이 이루어지는 시기입니다.',
+          description: '인성운으로 학문적 성취와 정신적 성장이 이루어지는 시기입니다. 배움의 기회가 많아집니다.',
           score: 70.0,
+          caution: '이론에 치우쳐 실행력이 떨어질 수 있습니다. 생각만 하지 말고 행동으로 옮기세요. 우유부단함을 경계하세요.',
         );
       case 'overcome':
         return (
-          theme: '도전과 발전의 시기',
-          description: '관성운으로 사회적 지위와 명예를 얻을 수 있는 시기입니다.',
+          theme: '도전과 시련의 시기',
+          description: '관성운으로 사회적 지위와 명예를 얻을 수 있는 시기입니다. 책임감이 커지고 인정받을 기회가 옵니다.',
           score: 72.0,
+          caution: '스트레스와 압박이 커집니다. 건강 관리에 특히 신경 쓰고, 무리하면 오히려 잃는 것이 많아집니다.',
         );
       default:
         return (
           theme: '안정의 시기',
-          description: '평온하게 흘러가는 시기입니다.',
+          description: '평온하게 흘러가는 시기입니다. 큰 변화 없이 안정적인 생활이 가능합니다.',
           score: 60.0,
+          caution: '안정적이지만 자칫 무기력해질 수 있습니다. 작은 목표를 세워 성취감을 느껴보세요.',
         );
     }
   }
@@ -510,7 +517,7 @@ class SajuCalculator {
 
   /// 특정 연도와의 궁합 분석 (2026 병오년용)
   /// [isFireBeneficial]: 화(火) 기운이 이 사람에게 도움이 되는지 여부
-  ({double score, bool isFireBeneficial, String analysis}) analyzeYearCompatibility(
+  ({double score, bool isFireBeneficial, String analysis, String caution}) analyzeYearCompatibility(
     SajuChart chart,
     {int year = 2026}
   ) {
@@ -525,37 +532,44 @@ class SajuCalculator {
     double score;
     bool isFireBeneficial;
     String analysis;
+    String caution;
 
     switch (relationship) {
       case 'same': // 화일간 → 비겁운 (강해짐)
         score = 70.0;
         isFireBeneficial = true;
-        analysis = '2026년 화기가 당신의 기운과 같습니다. 자신감이 넘치지만 과열 주의가 필요합니다.';
+        analysis = '2026년 화기가 당신의 기운과 같습니다. 자신감이 넘치고 적극적으로 활동할 수 있는 해입니다. 주도적으로 일을 추진하기 좋습니다.';
+        caution = '쉽게 흥분하거나 충동적인 결정을 할 수 있습니다. 중요한 일은 하루 미뤄서 판단하세요. 다툼과 경쟁에 휘말리지 않도록 주의하세요.';
         break;
       case 'generates': // 목일간 → 식상운 (재능 발휘)
         score = 85.0;
         isFireBeneficial = true;
-        analysis = '2026년은 당신의 재능이 빛나는 해입니다. 표현하고 창작하세요!';
+        analysis = '2026년은 재능을 표현하기 좋은 해입니다. 창의력과 표현력이 빛나며, 새로운 시도가 좋은 결과로 이어질 수 있습니다.';
+        caution = '말과 행동이 과해지기 쉽습니다. 특히 SNS나 공개적 발언에서 논란이 생기지 않도록 주의하세요. 절제가 필요합니다.';
         break;
       case 'overcomes': // 수일간 → 재성운 (재물)
         score = 80.0;
         isFireBeneficial = true;
-        analysis = '2026년 화기를 잘 다스리면 재물운이 따릅니다. 투자와 사업에 유리합니다.';
+        analysis = '2026년 재물운이 따릅니다. 새로운 수입원이 생기거나 투자에서 이익을 볼 수 있습니다. 경제적 기회를 잡기 좋은 해입니다.';
+        caution = '욕심을 부리면 오히려 손해를 볼 수 있습니다. 투자는 분산하고 확실한 것에만 집중하세요. 보증은 절대 금물입니다.';
         break;
       case 'generated': // 토일간 → 인성운 (배움)
         score = 65.0;
         isFireBeneficial = false;
-        analysis = '2026년 화기가 당신을 자극합니다. 배움과 성장의 기회로 삼으세요.';
+        analysis = '2026년 화기가 당신에게 에너지를 줍니다. 학습과 자기계발에 유리하며, 새로운 지식을 얻기 좋은 해입니다.';
+        caution = '너무 많은 것을 배우려 하면 지칠 수 있습니다. 선택과 집중이 중요하며, 건강 관리에도 신경 쓰세요.';
         break;
       case 'overcome': // 금일간 → 관성운 (도전)
         score = 55.0;
         isFireBeneficial = false;
-        analysis = '2026년 화기가 강하니 무리하지 마세요. 방어적 자세가 현명합니다.';
+        analysis = '2026년은 도전의 해입니다. 어려움이 있지만 이를 극복하면 한 단계 성장할 수 있습니다. 인내심이 중요합니다.';
+        caution = '화기가 강해 압박감을 느낄 수 있습니다. 직장이나 사업에서 무리한 확장은 피하고, 건강 검진을 미리 받아두세요.';
         break;
       default:
         score = 60.0;
         isFireBeneficial = false;
-        analysis = '2026년 평온한 흐름이 예상됩니다.';
+        analysis = '2026년 큰 변화 없이 평온한 흐름이 예상됩니다. 안정적인 한 해를 보낼 수 있습니다.';
+        caution = '무기력해지지 않도록 작은 목표를 세워보세요. 현상 유지에 안주하지 말고 조금씩 발전해 나가세요.';
     }
 
     // 사주 내 화기 비율에 따른 조정
@@ -564,7 +578,8 @@ class SajuCalculator {
       // 화가 많은 사주 → 2026년에 과열 가능성
       score -= 10;
       isFireBeneficial = false;
-      analysis += ' 화기가 과다할 수 있으니 휴식을 충분히 취하세요.';
+      analysis += ' 부족했던 화기를 보충받는 좋은 시기입니다.';
+      caution += ' 다만 화기가 과다해질 수 있으니 휴식을 충분히 취하세요.';
     } else if (fireRatio < 0.1) {
       // 화가 부족한 사주 → 2026년에 보완
       score += 10;
@@ -576,6 +591,7 @@ class SajuCalculator {
       score: score.clamp(0, 100),
       isFireBeneficial: isFireBeneficial,
       analysis: analysis,
+      caution: caution,
     );
   }
 

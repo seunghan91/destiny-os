@@ -9,6 +9,7 @@ class Daewoon extends Equatable {
   final String theme;      // 이 시기의 테마
   final String description;
   final double fortuneScore;  // 운세 점수 (0~100)
+  final String? caution;   // 주의사항
 
   const Daewoon({
     required this.startAge,
@@ -17,6 +18,7 @@ class Daewoon extends Equatable {
     required this.theme,
     required this.description,
     required this.fortuneScore,
+    this.caution,
   });
 
   /// 현재 대운인지 확인
@@ -52,7 +54,7 @@ class Daewoon extends Equatable {
   }
 
   @override
-  List<Object?> get props => [startAge, endAge, pillar, theme, description, fortuneScore];
+  List<Object?> get props => [startAge, endAge, pillar, theme, description, fortuneScore, caution];
 }
 
 /// 대운 목록 (인생 전체 대운)

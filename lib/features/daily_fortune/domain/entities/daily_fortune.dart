@@ -21,6 +21,10 @@ class DailyFortune {
     required this.luckyItem,
     required this.caution,
     required this.advice,
+    this.loveCaution,
+    this.wealthCaution,
+    this.healthCaution,
+    this.careerCaution,
     this.morningFortune,
     this.afternoonFortune,
     this.eveningFortune,
@@ -57,6 +61,12 @@ class DailyFortune {
 
   // 한마디 조언
   final String advice;
+
+  // 카테고리별 주의사항
+  final String? loveCaution;
+  final String? wealthCaution;
+  final String? healthCaution;
+  final String? careerCaution;
 
   // 프리미엄 기능
   final TimeFortune? morningFortune; // 오전 운세
